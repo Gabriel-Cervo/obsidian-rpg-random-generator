@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-rpg-random-generator",
+  "name": "Gerador de RPG",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Gera NPCs, locais, missões, encontros, rumores e masmorras de cinco salas para fantasia medieval.",
+  "author": "Gabriel Cervo",
+  "isDesktopOnly": true
+}
+
