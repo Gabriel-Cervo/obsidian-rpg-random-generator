@@ -17,11 +17,14 @@
 }
 
 .rpg-generator-category {
-  position: relative;
   box-sizing: border-box;
   min-height: 40px;
-  display: block;
-  padding: 8px 30px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 5px;
+  min-width: 0;
+  padding: 8px 10px;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s);
   background: var(--background-primary);
@@ -33,15 +36,11 @@
 }
 
 .rpg-generator-category-icon {
-  position: absolute;
-  top: 50%;
-  left: 10px;
   display: flex;
   width: 20px;
   height: 20px;
   align-items: center;
   justify-content: center;
-  transform: translateY(-50%);
   pointer-events: none;
 }
 
@@ -52,9 +51,12 @@
 
 .rpg-generator-category-label {
   display: block;
-  width: 100%;
+  min-width: 0;
+  width: auto;
   text-align: center;
-  overflow-wrap: normal;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: normal;
   white-space: normal;
 }
 
