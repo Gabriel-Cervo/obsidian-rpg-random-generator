@@ -283,59 +283,59 @@ var NPC_ROLES = [
   "mensageira de uma guilda"
 ];
 var NPC_MORALITIES = [
-  "de cora\xE7\xE3o leal",
-  "guiado pela ambi\xE7\xE3o",
-  "de moral duvidosa",
-  "movido por uma culpa antiga",
-  "devoto de uma causa justa",
-  "cruel quando se sente amea\xE7ado",
-  "obcecado por reconhecimento",
-  "disposto a quebrar qualquer promessa",
-  "mais gentil do que aparenta",
-  "convencido de que o fim justifica os meios"
+  "\xE9 de cora\xE7\xE3o leal",
+  "est\xE1 sempre em busca de uma vantagem",
+  "tem moral duvidosa",
+  "carrega uma culpa antiga",
+  "dedica-se a uma causa justa",
+  "reage com crueldade quando \xE9 amea\xE7ado",
+  "busca reconhecimento a qualquer custo",
+  "quebra promessas quando isso lhe conv\xE9m",
+  "\xE9 mais gentil do que aparenta",
+  "acredita que os fins justificam os meios"
 ];
 var NPC_APPEARANCES = [
   "tem uma cicatriz fina atravessando o queixo e olhos atentos demais",
-  "\xE9 baixo e robusto, com m\xE3os manchadas de tinta e fuligem",
-  "tem cabelos presos com fios coloridos e uma capa cheia de remendos",
-  "parece sempre cansado, mas nunca deixa de observar as portas",
+  "tem baixa estatura, m\xE3os manchadas de tinta e fuligem",
+  "prende os cabelos com fios coloridos e usa uma capa cheia de remendos",
+  "trabalha como se n\xE3o dormisse h\xE1 dias, mas nunca deixa de observar as portas",
   "usa roupas pr\xE1ticas cobertas por pequenos amuletos de prote\xE7\xE3o",
-  "tem uma voz suave que contrasta com a express\xE3o severa",
+  "fala com uma voz suave, apesar da express\xE3o severa",
   "carrega uma bolsa pesada de ingredientes, cartas e ferramentas",
-  "tem um sorriso f\xE1cil e uma marca de queimadura no pulso esquerdo",
-  "\xE9 elegante demais para o lugar onde foi encontrado",
+  "sorri com facilidade, mas esconde uma queimadura no pulso esquerdo",
+  "veste-se com eleg\xE2ncia demais para o lugar onde foi encontrado",
   "fala com as m\xE3os e muda de assunto quando o passado \xE9 mencionado"
 ];
 var NPC_PERSONALITIES = [
-  "faz perguntas antes de responder",
-  "tenta transformar qualquer conversa em uma negocia\xE7\xE3o",
-  "ri nos momentos mais inconvenientes",
-  "memoriza o nome de todos que encontra",
-  "n\xE3o suporta ficar em sil\xEAncio",
-  "oferece conselhos que nunca foram solicitados",
-  "parece estar sempre esperando uma trai\xE7\xE3o",
-  "trata desconhecidos como velhos amigos",
-  "finge n\xE3o entender quando uma pergunta \xE9 perigosa",
-  "fala de forma direta e raramente se desculpa"
+  "fazer perguntas antes de responder",
+  "tentar transformar qualquer conversa em uma negocia\xE7\xE3o",
+  "rir nos momentos mais inconvenientes",
+  "memorizar o nome de todos que encontra",
+  "procurar qualquer desculpa para continuar falando",
+  "oferecer conselhos que nunca foram solicitados",
+  "esperar uma trai\xE7\xE3o a cada conversa",
+  "tratar desconhecidos como velhos amigos",
+  "fingir n\xE3o entender quando uma pergunta \xE9 perigosa",
+  "falar de forma direta e raramente se desculpar"
 ];
 var NPC_MOTIVATIONS = [
-  "procura uma pessoa desaparecida antes que a trilha esfrie",
-  "junta dinheiro para comprar a liberdade de algu\xE9m querido",
-  "tenta recuperar um objeto que roubou da pessoa errada",
-  "busca uma oportunidade para provar seu valor \xE0 pr\xF3pria comunidade",
-  "quer encontrar um lugar seguro para come\xE7ar de novo",
-  "investiga sinais de uma amea\xE7a que ningu\xE9m mais acredita existir",
-  "pretende quitar uma d\xEDvida feita com uma criatura sobrenatural",
-  "espera descobrir quem est\xE1 sabotando seu trabalho"
+  "encontrar uma pessoa desaparecida antes que a trilha esfrie",
+  "juntar dinheiro para comprar a liberdade de algu\xE9m querido",
+  "recuperar um objeto que roubou da pessoa errada",
+  "provar seu valor \xE0 pr\xF3pria comunidade",
+  "encontrar um lugar seguro para come\xE7ar de novo",
+  "investigar sinais de uma amea\xE7a que ningu\xE9m mais acredita existir",
+  "quitar uma d\xEDvida feita com uma criatura sobrenatural",
+  "descobrir quem est\xE1 sabotando seu trabalho"
 ];
 var NPC_COMPLICATIONS = [
   "em segredo, mant\xE9m uma d\xEDvida com a guilda dos ladr\xF5es",
-  "est\xE1 sendo seguido por algu\xE9m que conhece sua verdadeira identidade",
+  "algu\xE9m conhece sua verdadeira identidade e n\xE3o para de seguir seus passos",
   "carrega uma carta que pode iniciar uma guerra local",
   "prometeu entregar uma informa\xE7\xE3o falsa antes do amanhecer",
   "esconde que foi respons\xE1vel pelo problema que agora tenta resolver",
   "tem um aliado poderoso, mas n\xE3o sabe se ainda pode confiar nele",
-  "foi marcado por uma maldi\xE7\xE3o que piora sempre que mente",
+  "carrega uma maldi\xE7\xE3o que piora sempre que mente",
   "deve escolher entre salvar sua reputa\xE7\xE3o e salvar uma vida"
 ];
 var ANIMAL_COMPANIONS = [
@@ -363,46 +363,46 @@ var LOCATION_NAMES = [
   "Fortaleza de Sal"
 ];
 var LOCATION_TYPES = [
-  "um posto de com\xE9rcio constru\xEDdo sobre ru\xEDnas muito mais antigas",
-  "um lugar de passagem onde viajantes deixam oferendas antes de seguir viagem",
+  "um posto de com\xE9rcio constru\xEDdo sobre as ru\xEDnas de uma estrada imperial",
+  "um lugar de passagem onde viajantes deixam uma moeda antes de seguir",
   "uma comunidade isolada que parece pr\xF3spera demais para a regi\xE3o",
-  "um ref\xFAgio escondido entre ra\xEDzes, neblina e pedras cobertas de musgo",
-  "um santu\xE1rio abandonado que ainda recebe visitantes durante a madrugada",
-  "uma constru\xE7\xE3o torta, ampliada tantas vezes que nenhum c\xF4modo combina com o outro",
-  "uma antiga fortifica\xE7\xE3o tomada por plantas, animais e pequenos sinais de vida recente"
+  "um ref\xFAgio escondido entre ra\xEDzes grossas e pedras cobertas de musgo",
+  "uma fortaleza abandonada que ainda recebe ordens durante a madrugada",
+  "uma constru\xE7\xE3o torta, ampliada por gera\xE7\xF5es sem um \xFAnico plano",
+  "uma antiga torre de vigia tomada por vinhas e ninhos"
 ];
 var LOCATION_ATMOSPHERES = [
-  "O ar cheira a chuva, ferro e flores esmagadas.",
-  "O lugar \xE9 silencioso, exceto por um som ritmado vindo de algum ponto subterr\xE2neo.",
-  "As pessoas falam baixo e evitam olhar para a mesma dire\xE7\xE3o.",
+  "Cheira a chuva, ferro e flores esmagadas.",
+  "De vez em quando, algo bate do outro lado das paredes.",
+  "Os moradores falam baixo e deixam uma cadeira vazia em cada mesa.",
   "Luzes quentes aparecem nas janelas mesmo quando o local deveria estar vazio.",
-  "A temperatura muda sempre que algu\xE9m menciona o nome de um antigo morador.",
-  "Marcas recentes foram deixadas sobre s\xEDmbolos que parecem ter s\xE9culos de idade."
+  "A temperatura cai quando algu\xE9m pronuncia o nome do antigo dono.",
+  "Marcas recentes cobrem s\xEDmbolos gastos pelo tempo."
 ];
 var LOCATION_FEATURES = [
-  "Uma porta sem fechadura s\xF3 se abre quando algu\xE9m conta uma lembran\xE7a verdadeira.",
-  "Um mapa incompleto mostra caminhos que n\xE3o existem mais durante o dia.",
-  "A \xE1gua local reflete lugares que ficam a quil\xF4metros dali.",
-  "Um morador oferece abrigo, mas pede que ningu\xE9m acenda fogo depois da meia-noite.",
-  "Uma est\xE1tua muda de posi\xE7\xE3o sempre que o grupo deixa de observ\xE1-la.",
-  "H\xE1 uma sala que todos conhecem, mas ningu\xE9m admite ter visitado."
+  "A porta dos fundos s\xF3 abre quando algu\xE9m conta uma lembran\xE7a verdadeira.",
+  "Um mapa incompleto mostra caminhos que desaparecem ao amanhecer.",
+  "A \xE1gua do po\xE7o reflete lugares que ficam a quil\xF4metros dali.",
+  "Uma anfitri\xE3 oferece abrigo, mas exige que ningu\xE9m acenda fogo depois da meia-noite.",
+  "A est\xE1tua da pra\xE7a muda de posi\xE7\xE3o quando ningu\xE9m est\xE1 olhando.",
+  "Todos conhecem uma sala da casa, mas ningu\xE9m admite ter entrado nela."
 ];
 var LOCATION_HOOKS = [
-  "Algu\xE9m est\xE1 pagando para que aventureiros descubram o que existe sob o lugar.",
-  "Um visitante desapareceu depois de seguir uma m\xFAsica que vinha de dentro das paredes.",
-  "O local ser\xE1 destru\xEDdo em poucos dias se ningu\xE9m interromper um ritual silencioso.",
-  "A comunidade precisa decidir entre abandonar sua casa ou aceitar a prote\xE7\xE3o de uma criatura perigosa.",
-  "Um objeto valioso est\xE1 escondido \xE0 vista de todos, mas s\xF3 pode ser reconhecido por quem conhece sua hist\xF3ria."
+  "Algu\xE9m paga bem por qualquer informa\xE7\xE3o sobre o que existe sob o lugar.",
+  "Um visitante sumiu depois de seguir uma m\xFAsica vinda de dentro das paredes.",
+  "Um ritual silencioso destruir\xE1 o lugar em poucos dias.",
+  "A comunidade precisa escolher entre partir ou aceitar a prote\xE7\xE3o de uma criatura perigosa.",
+  "Um objeto valioso est\xE1 \xE0 vista de todos, mas ningu\xE9m reconhece o que ele \xE9."
 ];
 var QUEST_GIVERS = [
-  "uma velha cart\xF3grafa",
-  "um mensageiro ferido",
-  "a l\xEDder de uma pequena comunidade",
-  "um nobre que tenta n\xE3o parecer desesperado",
+  "uma autoridade local",
+  "uma testemunha ferida",
+  "a lideran\xE7a de uma pequena comunidade",
+  "uma pessoa da nobreza que tenta n\xE3o parecer desesperada",
   "uma crian\xE7a que repete palavras de um sonho",
-  "um comerciante que perdeu seu comboio",
-  "uma sacerdotisa que recebeu um press\xE1gio imposs\xEDvel",
-  "um prisioneiro que oferece informa\xE7\xF5es em troca de prote\xE7\xE3o"
+  "a pessoa respons\xE1vel por um comboio perdido",
+  "algu\xE9m que recebeu um press\xE1gio imposs\xEDvel",
+  "uma pessoa presa que oferece informa\xE7\xF5es em troca de prote\xE7\xE3o"
 ];
 var QUEST_OBJECTIVES = [
   "recuperar um objeto roubado antes que ele seja vendido",
@@ -415,12 +415,12 @@ var QUEST_OBJECTIVES = [
   "levar uma mensagem que n\xE3o pode ser escrita"
 ];
 var QUEST_COMPLICATIONS = [
-  "A pessoa que pediu ajuda n\xE3o contou toda a verdade.",
+  "O contratante esconde uma parte da hist\xF3ria.",
   "O alvo da miss\xE3o tamb\xE9m acredita estar fazendo a coisa certa.",
   "A recompensa pertence a algu\xE9m que n\xE3o pretende entreg\xE1-la voluntariamente.",
   "Cada tentativa de resolver o problema fortalece a amea\xE7a escondida.",
-  "H\xE1 um prazo curto, mas agir depressa pode colocar inocentes em perigo.",
-  "Um aliado confi\xE1vel est\xE1 secretamente trabalhando para os dois lados."
+  "O prazo \xE9 curto, mas agir depressa pode colocar inocentes em perigo.",
+  "Um aliado confi\xE1vel trabalha secretamente para os dois lados."
 ];
 var QUEST_REWARDS = [
   "uma rel\xEDquia que aponta para um segredo maior",
@@ -440,62 +440,62 @@ var ENCOUNTER_ENVIRONMENTS = [
   "uma trilha de montanha durante uma tempestade"
 ];
 var ENCOUNTER_SITUATIONS = [
-  "um grupo de viajantes bloqueia a passagem e pede ajuda para mover algo que n\xE3o deveria estar vivo",
-  "uma criatura ferida tenta impedir que algu\xE9m se aproxime de uma pequena caixa de madeira",
+  "uma carro\xE7a quebrada bloqueia a passagem, e seus ocupantes pedem ajuda para conter algo preso sob a lona",
+  "uma criatura ferida protege uma caixa de madeira que ainda se move",
   "guardas discutem sobre um prisioneiro que afirma conhecer o futuro de cada pessoa presente",
-  "um inc\xEAndio come\xE7a debaixo da terra enquanto uma caravana tenta atravessar o local",
-  "uma prociss\xE3o silenciosa carrega uma est\xE1tua que parece acompanhar o grupo com os olhos",
-  "um duelo est\xE1 prestes a come\xE7ar, mas os dois combatentes pedem que os aventureiros escolham um lado",
-  "uma crian\xE7a oferece um mapa em troca de ser levada para longe de uma criatura invis\xEDvel"
+  "um inc\xEAndio come\xE7a sob o ch\xE3o enquanto uma caravana tenta atravessar",
+  "uma prociss\xE3o carrega uma est\xE1tua que parece acompanhar o grupo com os olhos",
+  "um duelo est\xE1 prestes a come\xE7ar, mas os dois combatentes pedem que os aventureiros escolham o vencedor",
+  "uma crian\xE7a oferece um mapa em troca de prote\xE7\xE3o contra algo invis\xEDvel"
 ];
 var ENCOUNTER_TWISTS = [
-  "O perigo vis\xEDvel \xE9 apenas uma distra\xE7\xE3o para algo que j\xE1 entrou no acampamento.",
-  "A suposta v\xEDtima organizou a situa\xE7\xE3o e est\xE1 testando quem aparece para ajudar.",
-  "Resolver o encontro pela for\xE7a faz com que uma amea\xE7a muito maior seja libertada.",
-  "Os envolvidos n\xE3o querem vencer; querem atrasar o grupo at\xE9 que outra coisa aconte\xE7a.",
-  "A criatura tem um motivo leg\xEDtimo para estar ali e oferece uma troca inesperada.",
-  "Entre os presentes existe algu\xE9m usando o rosto de uma pessoa conhecida pelos aventureiros."
+  "O perigo vis\xEDvel serve apenas para manter os olhos longe do acampamento.",
+  "A suposta v\xEDtima armou a cena para descobrir quem viria ajud\xE1-la.",
+  "Vencer pela for\xE7a abre uma passagem que estava selada.",
+  "Os envolvidos s\xF3 querem ganhar tempo at\xE9 a mar\xE9 subir.",
+  "A criatura tem um motivo leg\xEDtimo e oferece uma troca.",
+  "Uma das pessoas presentes usa o rosto de algu\xE9m conhecido pelo grupo."
 ];
 var ENCOUNTER_CHOICES = [
-  "O grupo pode negociar, investigar os arredores ou assumir o risco de passar \xE0 for\xE7a.",
-  "A melhor solu\xE7\xE3o exige escolher quem ser\xE1 protegido e quem ficar\xE1 para tr\xE1s.",
-  "Se ningu\xE9m agir, o problema se espalhar\xE1 para a pr\xF3xima comunidade no caminho.",
-  "Uma decis\xE3o r\xE1pida pode evitar uma luta, mas deixar\xE1 uma d\xEDvida dif\xEDcil de explicar.",
-  "Os aventureiros t\xEAm poucos minutos para descobrir qual dos sinais \xE9 uma armadilha."
+  "H\xE1 tempo para negociar, investigar ou passar \xE0 for\xE7a, mas n\xE3o para fazer os tr\xEAs.",
+  "Para resolver o problema, ser\xE1 preciso escolher quem ficar\xE1 para tr\xE1s.",
+  "Se ningu\xE9m agir, o problema alcan\xE7ar\xE1 a pr\xF3xima comunidade antes do amanhecer.",
+  "Uma decis\xE3o r\xE1pida evita a luta, mas cria uma d\xEDvida.",
+  "O grupo precisa descobrir qual dos sinais \xE9 uma armadilha antes que todos desapare\xE7am."
 ];
 var RUMOR_SUBJECTS = [
   "o sino enterrado sob a pra\xE7a",
-  "a rainha que nunca aparece em p\xFAblico",
-  "a estrada que muda de lugar durante a lua nova",
-  "um po\xE7o que devolve objetos perdidos",
-  "o ferreiro que n\xE3o envelhece",
+  "a rainha da cidade",
+  "a estrada velha do norte",
+  "um po\xE7o no centro da aldeia",
+  "o ferreiro da rua baixa",
   "as luzes vistas no topo da montanha",
-  "um navio que navega sem tripula\xE7\xE3o",
-  "a criatura que vive dentro do moinho"
+  "um navio sem tripula\xE7\xE3o",
+  "a criatura do moinho"
 ];
 var RUMOR_CLAIMS = [
-  "\xE9 poss\xEDvel ouvir uma segunda voz quando algu\xE9m toca sua borda",
-  "a pessoa que governa a regi\xE3o fez um pacto para manter a paz",
-  "quem segue suas marcas encontra um lugar que n\xE3o existia no dia anterior",
-  "ele devolve qualquer coisa, mas sempre troca uma mem\xF3ria por isso",
-  "ele guarda um nome que poderia derrubar uma fam\xEDlia inteira",
-  "elas s\xE3o sinais de que uma antiga porta est\xE1 prestes a se abrir",
-  "ele transporta passageiros para portos que desapareceram dos mapas",
-  "ela protege uma passagem usada por algo que n\xE3o deveria estar acordado"
+  "toca sozinho \xE0 meia-noite",
+  "nunca aparece em p\xFAblico porque deixou seu corpo em outra cidade",
+  "muda de lugar durante a lua nova",
+  "devolve objetos perdidos, mas cobra uma mem\xF3ria em troca",
+  "n\xE3o envelhece desde que encontrou um martelo enterrado",
+  "s\xE3o sinais de que uma antiga porta est\xE1 prestes a se abrir",
+  "leva passageiros para portos que desapareceram dos mapas",
+  "protege uma passagem usada por algo que ainda est\xE1 acordado"
 ];
 var RUMOR_TRUTHS = [
-  "O rumor \xE9 verdadeiro, mas a consequ\xEAncia foi exagerada.",
-  "O rumor \xE9 falso; algu\xE9m o espalhou para esconder uma pista mais importante.",
-  "O rumor \xE9 parcialmente verdadeiro: o fen\xF4meno existe, mas sua causa \xE9 outra.",
-  "O rumor \xE9 verdadeiro, embora s\xF3 aconte\xE7a quando uma condi\xE7\xE3o espec\xEDfica \xE9 cumprida.",
-  "O rumor come\xE7ou como uma mentira, mas tornou-se verdadeiro depois de um acontecimento recente."
+  "\xE9 verdade, mas a consequ\xEAncia foi exagerada",
+  "\xE9 uma mentira espalhada para esconder uma pista mais importante",
+  "h\xE1 algo de verdade nisso, mas a causa \xE9 outra",
+  "s\xF3 acontece quando uma condi\xE7\xE3o espec\xEDfica \xE9 cumprida",
+  "come\xE7ou como mentira e se tornou verdade depois de um acontecimento recente"
 ];
 var DUNGEON_ENTRIES = [
-  "A entrada e o guardi\xE3o: o acesso est\xE1 escondido em um lugar banal, mas um guardi\xE3o exige que os invasores deixem para tr\xE1s algo que consideram valioso.",
-  "O desafio: um mecanismo antigo, uma escolha moral ou uma pista incompleta impede o avan\xE7o sem exigir necessariamente um combate.",
-  "O contratempo: o caminho seguro desaba e revela que algu\xE9m chegou antes do grupo, levando consigo parte daquilo que os aventureiros procuravam.",
-  "O confronto: a amea\xE7a principal usa o pr\xF3prio ambiente como arma e oferece uma barganha tentadora antes de lutar at\xE9 o fim.",
-  "A recompensa e a revela\xE7\xE3o: o pr\xEAmio resolve um problema imediato, mas prova que a masmorra era apenas uma pe\xE7a de um conflito muito maior."
+  "Entrada: o acesso fica atr\xE1s de uma porta comum, mas um guardi\xE3o pede que cada visitante deixe algo para tr\xE1s antes de passar.",
+  "Desafio: um mecanismo antigo abre o caminho depois de uma escolha dif\xEDcil ou da interpreta\xE7\xE3o de uma pista incompleta.",
+  "Contratempo: o ch\xE3o cede, separa o grupo e revela que algu\xE9m chegou antes, levando parte do tesouro.",
+  "Confronto: a amea\xE7a principal conhece os nomes dos invasores e oferece uma barganha antes de atacar.",
+  "Recompensa: o pr\xEAmio resolve um problema imediato, mas traz o nome de quem construiu o lugar e o pr\xF3ximo alvo da disputa."
 ];
 var DUNGEON_THEMES = [
   "uma ordem de curandeiros que desapareceu sem deixar corpos",
@@ -530,8 +530,8 @@ function generateNpc(random) {
   const personality = random.pick(NPC_PERSONALITIES);
   const motivation = random.pick(NPC_MOTIVATIONS);
   const complication = random.pick(NPC_COMPLICATIONS);
-  const companion = random.chance(0.3) ? ` Como companhia, mant\xE9m ${random.pick(ANIMAL_COMPANIONS)}.` : "";
-  const text = `${name} \xE9 ${people.article} ${people.noun} que trabalha como ${role}, ${morality}. ${name} ${appearance}. ${name} ${personality} e ${motivation}. Em segredo, ${name.toLocaleLowerCase("pt-BR")} ${complication}.${companion}`;
+  const companion = random.chance(0.3) ? ` Viaja com ${random.pick(ANIMAL_COMPANIONS)}.` : "";
+  const text = `${name} \xE9 ${people.article} ${people.noun} que trabalha como ${role} e ${morality}. ${sentenceCase(appearance)}. Costuma ${personality}. Procura ${motivation}. Em segredo, ${complication}.${companion}`;
   return result("npc", `NPC - ${name}`, text);
 }
 function generateLocation(random) {
@@ -551,7 +551,7 @@ function generateQuest(random) {
   const reward = random.pick(QUEST_REWARDS);
   const location = random.pick(LOCATION_NAMES);
   const giverDetail = random.pick(QUEST_GIVERS);
-  const text = `${giverName}, ${giverDetail}, procura aventureiros para ${objective} em ${location}. ${complication} Se tiverem sucesso, receber\xE3o ${reward}.`;
+  const text = `${giverName}, ${giverDetail}, procura aventureiros para ${objective} na regi\xE3o de ${location}. ${complication} Se tiverem sucesso, receber\xE3o ${reward}.`;
   return result("quest", `Miss\xE3o - ${sentenceCase(objective)}`, text);
 }
 function generateEncounter(random) {
@@ -566,7 +566,7 @@ function generateRumor(random) {
   const subject = random.pick(RUMOR_SUBJECTS);
   const claim = random.pick(RUMOR_CLAIMS);
   const truth = random.pick(RUMOR_TRUTHS);
-  const text = `O rumor diz que ${subject} ${claim}. Verdade oculta: ${truth}`;
+  const text = `Corre o boato de que ${subject} ${claim}. Para o mestre: ${truth}.`;
   return result("rumor", `Rumor - ${sentenceCase(subject)}`, text);
 }
 function generateDungeon(random) {

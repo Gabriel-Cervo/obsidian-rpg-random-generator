@@ -55,9 +55,9 @@ function generateNpc(random: Random): GenerationResult {
   const personality = random.pick(NPC_PERSONALITIES);
   const motivation = random.pick(NPC_MOTIVATIONS);
   const complication = random.pick(NPC_COMPLICATIONS);
-  const companion = random.chance(0.3) ? ` Como companhia, mantém ${random.pick(ANIMAL_COMPANIONS)}.` : "";
+  const companion = random.chance(0.3) ? ` Viaja com ${random.pick(ANIMAL_COMPANIONS)}.` : "";
 
-  const text = `${name} é ${people.article} ${people.noun} que trabalha como ${role}, ${morality}. ${name} ${appearance}. ${name} ${personality} e ${motivation}. Em segredo, ${name.toLocaleLowerCase("pt-BR")} ${complication}.${companion}`;
+  const text = `${name} é ${people.article} ${people.noun} que trabalha como ${role} e ${morality}. ${sentenceCase(appearance)}. Costuma ${personality}. Procura ${motivation}. Em segredo, ${complication}.${companion}`;
   return result("npc", `NPC - ${name}`, text);
 }
 
@@ -81,7 +81,7 @@ function generateQuest(random: Random): GenerationResult {
   const location = random.pick(LOCATION_NAMES);
   const giverDetail = random.pick(QUEST_GIVERS);
 
-  const text = `${giverName}, ${giverDetail}, procura aventureiros para ${objective} em ${location}. ${complication} Se tiverem sucesso, receberão ${reward}.`;
+  const text = `${giverName}, ${giverDetail}, procura aventureiros para ${objective} na região de ${location}. ${complication} Se tiverem sucesso, receberão ${reward}.`;
   return result("quest", `Missão - ${sentenceCase(objective)}`, text);
 }
 
@@ -100,7 +100,7 @@ function generateRumor(random: Random): GenerationResult {
   const claim = random.pick(RUMOR_CLAIMS);
   const truth = random.pick(RUMOR_TRUTHS);
 
-  const text = `O rumor diz que ${subject} ${claim}. Verdade oculta: ${truth}`;
+  const text = `Corre o boato de que ${subject} ${claim}. Para o mestre: ${truth}.`;
   return result("rumor", `Rumor - ${sentenceCase(subject)}`, text);
 }
 

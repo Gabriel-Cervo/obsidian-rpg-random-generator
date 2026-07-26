@@ -24,9 +24,17 @@ describe("geradores de RPG", () => {
     expect(roomLines[4]).toMatch(/^5\. /);
   });
 
-  it("inclui a verdade oculta nos rumores", () => {
+  it("inclui a informação reservada ao mestre nos rumores", () => {
     const generated = generate("rumor", new Random(() => 0.4));
-    expect(generated.text).toContain("Verdade oculta:");
+    expect(generated.text).toContain("Para o mestre:");
+  });
+
+  it("menciona o nome do NPC apenas na abertura", () => {
+    const generated = generate("npc", new Random(() => 0.37));
+    const name = generated.title.replace(/^NPC - /, "");
+    const occurrences = generated.text.split(name).length - 1;
+
+    expect(occurrences).toBe(1);
+    expect(generated.text).not.toContain(`${name}. ${name}`);
   });
 });
-
