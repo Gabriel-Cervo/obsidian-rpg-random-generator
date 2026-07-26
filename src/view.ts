@@ -97,8 +97,9 @@ export class GeneratorView extends ItemView {
           "aria-label": definition.id === "dungeon" ? "Masmorra de cinco salas" : definition.label,
         },
       });
-      setIcon(button, definition.icon);
-      button.createSpan({ text: definition.label });
+      const icon = button.createSpan({ cls: "rpg-generator-category-icon" });
+      setIcon(icon, definition.icon);
+      button.createSpan({ cls: "rpg-generator-category-label", text: definition.label });
       button.addEventListener("click", () => this.selectCategory(definition.id));
       this.categoryButtons.set(definition.id, button);
     }

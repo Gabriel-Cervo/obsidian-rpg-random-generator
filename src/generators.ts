@@ -114,10 +114,10 @@ function generateDungeon(random: Random): GenerationResult {
 export const GENERATORS: readonly GeneratorDefinition[] = [
   { id: "npc", label: LABELS.npc, icon: "user-round", generate: generateNpc },
   { id: "location", label: LABELS.location, icon: "map", generate: generateLocation },
-  { id: "quest", label: LABELS.quest, icon: "scroll-text", generate: generateQuest },
-  { id: "encounter", label: LABELS.encounter, icon: "swords", generate: generateEncounter },
-  { id: "rumor", label: LABELS.rumor, icon: "message-circle-question", generate: generateRumor },
-  { id: "dungeon", label: LABELS.dungeon, icon: "castle", generate: generateDungeon },
+  { id: "quest", label: LABELS.quest, icon: "file-text", generate: generateQuest },
+  { id: "encounter", label: LABELS.encounter, icon: "target", generate: generateEncounter },
+  { id: "rumor", label: LABELS.rumor, icon: "message-circle", generate: generateRumor },
+  { id: "dungeon", label: LABELS.dungeon, icon: "box", generate: generateDungeon },
 ];
 
 const generatorMap = new Map(GENERATORS.map((definition) => [definition.id, definition]));

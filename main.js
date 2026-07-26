@@ -580,10 +580,10 @@ ${rooms}`;
 var GENERATORS = [
   { id: "npc", label: LABELS.npc, icon: "user-round", generate: generateNpc },
   { id: "location", label: LABELS.location, icon: "map", generate: generateLocation },
-  { id: "quest", label: LABELS.quest, icon: "scroll-text", generate: generateQuest },
-  { id: "encounter", label: LABELS.encounter, icon: "swords", generate: generateEncounter },
-  { id: "rumor", label: LABELS.rumor, icon: "message-circle-question", generate: generateRumor },
-  { id: "dungeon", label: LABELS.dungeon, icon: "castle", generate: generateDungeon }
+  { id: "quest", label: LABELS.quest, icon: "file-text", generate: generateQuest },
+  { id: "encounter", label: LABELS.encounter, icon: "target", generate: generateEncounter },
+  { id: "rumor", label: LABELS.rumor, icon: "message-circle", generate: generateRumor },
+  { id: "dungeon", label: LABELS.dungeon, icon: "box", generate: generateDungeon }
 ];
 var generatorMap = new Map(GENERATORS.map((definition) => [definition.id, definition]));
 function getGenerator(id) {
@@ -667,8 +667,9 @@ var GeneratorView = class extends import_obsidian.ItemView {
           "aria-label": definition.id === "dungeon" ? "Masmorra de cinco salas" : definition.label
         }
       });
-      (0, import_obsidian.setIcon)(button, definition.icon);
-      button.createSpan({ text: definition.label });
+      const icon = button.createSpan({ cls: "rpg-generator-category-icon" });
+      (0, import_obsidian.setIcon)(icon, definition.icon);
+      button.createSpan({ cls: "rpg-generator-category-label", text: definition.label });
       button.addEventListener("click", () => this.selectCategory(definition.id));
       this.categoryButtons.set(definition.id, button);
     }
