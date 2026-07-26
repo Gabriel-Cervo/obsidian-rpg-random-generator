@@ -18,15 +18,18 @@
 
 .rpg-generator-category {
   position: relative;
+  box-sizing: border-box;
   min-height: 40px;
   display: block;
-  padding: 7px 34px;
+  padding: 8px 30px;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s);
   background: var(--background-primary);
   color: var(--text-normal);
   cursor: pointer;
-  font: inherit;
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-small);
+  line-height: 1.2;
 }
 
 .rpg-generator-category-icon {
@@ -50,10 +53,9 @@
 .rpg-generator-category-label {
   display: block;
   width: 100%;
-  overflow: hidden;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: normal;
+  white-space: normal;
 }
 
 .rpg-generator-category:hover {
