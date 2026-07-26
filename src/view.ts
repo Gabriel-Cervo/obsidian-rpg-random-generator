@@ -1,4 +1,4 @@
-import { ItemView, Notice, TFolder, ViewStateResult, WorkspaceLeaf, setIcon } from "obsidian";
+import { ItemView, Notice, TFolder, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { generate, GENERATORS } from "./generators";
 import { Random } from "./random";
 import type { GeneratorId, GenerationResult } from "./types";
@@ -97,8 +97,6 @@ export class GeneratorView extends ItemView {
           "aria-label": definition.id === "dungeon" ? "Masmorra de cinco salas" : definition.label,
         },
       });
-      const icon = button.createSpan({ cls: "rpg-generator-category-icon" });
-      setIcon(icon, definition.icon);
       button.createSpan({ cls: "rpg-generator-category-label", text: definition.label });
       button.addEventListener("click", () => this.selectCategory(definition.id));
       this.categoryButtons.set(definition.id, button);

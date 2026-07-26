@@ -20,33 +20,18 @@
   box-sizing: border-box;
   min-height: 40px;
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  column-gap: 5px;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 7px 8px;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s);
   background: var(--background-primary);
   color: var(--text-normal);
   cursor: pointer;
   font-family: var(--font-interface);
-  font-size: var(--font-ui-small);
+  font-size: var(--font-ui-smaller);
   line-height: 1.2;
-}
-
-.rpg-generator-category-icon {
-  display: flex;
-  width: 20px;
-  height: 20px;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.rpg-generator-category-icon svg {
-  width: 20px;
-  height: 20px;
 }
 
 .rpg-generator-category-label {
@@ -55,9 +40,8 @@
   width: auto;
   text-align: center;
   overflow: hidden;
-  overflow-wrap: anywhere;
-  word-break: normal;
-  white-space: normal;
+  overflow-wrap: break-word;
+  white-space: nowrap;
 }
 
 .rpg-generator-category:hover {

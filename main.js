@@ -667,8 +667,6 @@ var GeneratorView = class extends import_obsidian.ItemView {
           "aria-label": definition.id === "dungeon" ? "Masmorra de cinco salas" : definition.label
         }
       });
-      const icon = button.createSpan({ cls: "rpg-generator-category-icon" });
-      (0, import_obsidian.setIcon)(icon, definition.icon);
       button.createSpan({ cls: "rpg-generator-category-label", text: definition.label });
       button.addEventListener("click", () => this.selectCategory(definition.id));
       this.categoryButtons.set(definition.id, button);
