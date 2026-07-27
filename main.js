@@ -22,10 +22,125 @@ __export(main_exports, {
   default: () => RpgRandomGeneratorPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
+
+// src/settings-tab.ts
+var import_obsidian = require("obsidian");
+
+// src/settings.ts
+var DEFAULT_SETTINGS = {
+  outputFolder: ""
+};
+var OUTPUT_FOLDER_VALIDATION_REASONS = {
+  notText: "A pasta de sa\xEDda deve ser um texto.",
+  absolute: "A pasta de sa\xEDda deve ser relativa ao vault.",
+  emptySegment: "A pasta de sa\xEDda n\xE3o pode conter segmentos vazios.",
+  traversal: "A pasta de sa\xEDda n\xE3o pode conter '.' ou '..'.",
+  invalidCharacter: 'A pasta de sa\xEDda cont\xE9m um caractere inv\xE1lido (< > : " | ? ou *).',
+  trailingDotSpace: "A pasta de sa\xEDda n\xE3o pode conter segmentos terminados em ponto ou espa\xE7o.",
+  reservedDeviceName: "A pasta de sa\xEDda n\xE3o pode conter nomes de dispositivos reservados do Windows (CON, PRN, AUX, NUL, COM1\u2013COM9 ou LPT1\u2013LPT9)."
+};
+function invalid(code) {
+  return {
+    valid: false,
+    code,
+    reason: OUTPUT_FOLDER_VALIDATION_REASONS[code]
+  };
+}
+function validateOutputFolder(input) {
+  if (typeof input !== "string") return invalid("notText");
+  const trimmed = input.trim();
+  if (trimmed.length === 0) {
+    return { valid: true, value: "" };
+  }
+  const slashPath = trimmed.replace(/\\/g, "/");
+  if (slashPath.startsWith("/") || /^\\\\/.test(trimmed) || /^[A-Za-z]:/.test(slashPath)) {
+    return invalid("absolute");
+  }
+  const withoutTrailingSeparators = slashPath.replace(/\/+$/g, "");
+  if (withoutTrailingSeparators.length === 0) {
+    return invalid("absolute");
+  }
+  if (/[ \t]$/.test(input) && !/[\\/]\s*$/.test(input)) {
+    return invalid("trailingDotSpace");
+  }
+  const rawSegments = withoutTrailingSeparators.split("/");
+  if (rawSegments.some((segment) => segment.trim().length === 0)) {
+    return invalid("emptySegment");
+  }
+  const segments = rawSegments.map((segment) => segment.trim());
+  if (segments.some((segment) => segment === "." || segment === "..")) {
+    return invalid("traversal");
+  }
+  if (segments.some((segment) => /[<>:"|?*]/.test(segment))) {
+    return invalid("invalidCharacter");
+  }
+  if (rawSegments.some((segment) => /[\u0000-\u001f\u007f]/.test(segment))) {
+    return invalid("invalidCharacter");
+  }
+  if (rawSegments.some((segment) => /[. ]$/.test(segment))) {
+    return invalid("trailingDotSpace");
+  }
+  if (segments.some((segment) => /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$/i.test(segment))) {
+    return invalid("reservedDeviceName");
+  }
+  return { valid: true, value: segments.join("/") };
+}
+function normalizeOutputFolder(input) {
+  const validation = validateOutputFolder(input);
+  return validation.valid ? validation.value : DEFAULT_SETTINGS.outputFolder;
+}
+function normalizeSettings(input) {
+  const outputFolder = typeof input === "object" && input !== null && "outputFolder" in input ? input.outputFolder : void 0;
+  return { outputFolder: normalizeOutputFolder(outputFolder) };
+}
+
+// src/settings-tab.ts
+var DESCRIPTION = "Pasta relativa ao vault onde as notas geradas ser\xE3o salvas. Deixe vazio para usar a raiz.";
+var RpgRandomGeneratorSettingTab = class extends import_obsidian.PluginSettingTab {
+  constructor(app, plugin, dependencies) {
+    super(app, plugin);
+    this.saveQueue = Promise.resolve();
+    this.settings = dependencies.settings;
+    this.saveSettings = dependencies.saveSettings;
+  }
+  display() {
+    const { containerEl } = this;
+    containerEl.empty();
+    new import_obsidian.Setting(containerEl).setName("Gerador de RPG").setHeading();
+    const folderSetting = new import_obsidian.Setting(containerEl).setName("Pasta de sa\xEDda").setDesc(DESCRIPTION);
+    folderSetting.addText((text) => {
+      text.setPlaceholder("Raiz do vault").setValue(this.settings.outputFolder || DEFAULT_SETTINGS.outputFolder).onChange((value) => {
+        void this.handleOutputFolderChange(folderSetting, value);
+      });
+    });
+  }
+  async handleOutputFolderChange(setting, input) {
+    const validation = validateOutputFolder(input);
+    if (!validation.valid) {
+      this.showValidationError(setting, validation);
+      return;
+    }
+    const nextSettings = { outputFolder: validation.value };
+    const save = this.saveQueue.catch(() => void 0).then(async () => {
+      await this.saveSettings(nextSettings);
+      this.settings.outputFolder = nextSettings.outputFolder;
+    });
+    this.saveQueue = save.catch(() => void 0);
+    try {
+      await save;
+      setting.setDesc(DESCRIPTION);
+    } catch (e) {
+      setting.setDesc("A pasta de sa\xEDda n\xE3o p\xF4de ser salva. Tente novamente.");
+    }
+  }
+  showValidationError(setting, validation) {
+    setting.setDesc(`Pasta inv\xE1lida: ${validation.reason}`);
+  }
+};
 
 // src/view.ts
-var import_obsidian = require("obsidian");
+var import_obsidian2 = require("obsidian");
 
 // src/names.ts
 var PEOPLE = [
@@ -296,7 +411,7 @@ var NPC_MORALITIES = [
 ];
 var NPC_APPEARANCES = [
   "tem uma cicatriz fina atravessando o queixo e olhos atentos demais",
-  "tem baixa estatura, m\xE3os manchadas de tinta e fuligem",
+  "tem baixa estatura e m\xE3os manchadas de tinta e fuligem",
   "prende os cabelos com fios coloridos e usa uma capa cheia de remendos",
   "trabalha como se n\xE3o dormisse h\xE1 dias, mas nunca deixa de observar as portas",
   "usa roupas pr\xE1ticas cobertas por pequenos amuletos de prote\xE7\xE3o",
@@ -372,7 +487,7 @@ var LOCATION_TYPES = [
   "uma antiga torre de vigia tomada por vinhas e ninhos"
 ];
 var LOCATION_ATMOSPHERES = [
-  "Cheira a chuva, ferro e flores esmagadas.",
+  "O local cheira a chuva, ferro e flores esmagadas.",
   "De vez em quando, algo bate do outro lado das paredes.",
   "Os moradores falam baixo e deixam uma cadeira vazia em cada mesa.",
   "Luzes quentes aparecem nas janelas mesmo quando o local deveria estar vazio.",
@@ -463,32 +578,24 @@ var ENCOUNTER_CHOICES = [
   "Uma decis\xE3o r\xE1pida evita a luta, mas cria uma d\xEDvida.",
   "O grupo precisa descobrir qual dos sinais \xE9 uma armadilha antes que todos desapare\xE7am."
 ];
-var RUMOR_SUBJECTS = [
-  "o sino enterrado sob a pra\xE7a",
-  "a rainha da cidade",
-  "a estrada velha do norte",
-  "um po\xE7o no centro da aldeia",
-  "o ferreiro da rua baixa",
-  "as luzes vistas no topo da montanha",
-  "um navio sem tripula\xE7\xE3o",
-  "a criatura do moinho"
+var RUMOR_PREMISES = [
+  { subject: "o sino enterrado sob a pra\xE7a", claim: "toca sozinho \xE0 meia-noite" },
+  { subject: "a rainha da cidade", claim: "nunca aparece em p\xFAblico porque deixou seu corpo em outra cidade" },
+  { subject: "a estrada velha do norte", claim: "muda de lugar durante a lua nova" },
+  { subject: "um po\xE7o no centro da aldeia", claim: "devolve objetos perdidos, mas cobra uma mem\xF3ria em troca" },
+  { subject: "o ferreiro da rua baixa", claim: "n\xE3o envelhece desde que encontrou um martelo enterrado" },
+  { subject: "as luzes vistas no topo da montanha", claim: "s\xE3o sinais de que uma antiga porta est\xE1 prestes a se abrir" },
+  { subject: "um navio sem tripula\xE7\xE3o", claim: "leva passageiros para portos que desapareceram dos mapas" },
+  { subject: "a criatura do moinho", claim: "protege uma passagem usada por algo que ainda est\xE1 acordado" }
 ];
-var RUMOR_CLAIMS = [
-  "toca sozinho \xE0 meia-noite",
-  "nunca aparece em p\xFAblico porque deixou seu corpo em outra cidade",
-  "muda de lugar durante a lua nova",
-  "devolve objetos perdidos, mas cobra uma mem\xF3ria em troca",
-  "n\xE3o envelhece desde que encontrou um martelo enterrado",
-  "s\xE3o sinais de que uma antiga porta est\xE1 prestes a se abrir",
-  "leva passageiros para portos que desapareceram dos mapas",
-  "protege uma passagem usada por algo que ainda est\xE1 acordado"
-];
+var RUMOR_SUBJECTS = RUMOR_PREMISES.map(({ subject }) => subject);
+var RUMOR_CLAIMS = RUMOR_PREMISES.map(({ claim }) => claim);
 var RUMOR_TRUTHS = [
   "\xE9 verdade, mas a consequ\xEAncia foi exagerada",
   "\xE9 uma mentira espalhada para esconder uma pista mais importante",
   "h\xE1 algo de verdade nisso, mas a causa \xE9 outra",
   "s\xF3 acontece quando uma condi\xE7\xE3o espec\xEDfica \xE9 cumprida",
-  "come\xE7ou como mentira e se tornou verdade depois de um acontecimento recente"
+  "come\xE7ou como uma mentira e se tornou verdade depois de um acontecimento recente"
 ];
 var DUNGEON_ENTRIES = [
   "Entrada: o acesso fica atr\xE1s de uma porta comum, mas um guardi\xE3o pede que cada visitante deixe algo para tr\xE1s antes de passar.",
@@ -515,8 +622,12 @@ var LABELS = {
   rumor: "Rumores",
   dungeon: "Masmorra"
 };
-function result(id, title, text) {
-  return { id, label: LABELS[id], title, text };
+function result(id, title, body) {
+  const content = {
+    plainText: body,
+    markdown: body
+  };
+  return { id, label: LABELS[id], title, content };
 }
 function sentenceCase(value) {
   return value.length === 0 ? value : value[0].toLocaleUpperCase("pt-BR") + value.slice(1);
@@ -531,7 +642,7 @@ function generateNpc(random) {
   const motivation = random.pick(NPC_MOTIVATIONS);
   const complication = random.pick(NPC_COMPLICATIONS);
   const companion = random.chance(0.3) ? ` Viaja com ${random.pick(ANIMAL_COMPANIONS)}.` : "";
-  const text = `${name} \xE9 ${people.article} ${people.noun} que trabalha como ${role} e ${morality}. ${sentenceCase(appearance)}. Costuma ${personality}. Procura ${motivation}. Em segredo, ${complication}.${companion}`;
+  const text = `${name} \xE9 ${people.article} ${people.noun} que trabalha como ${role} e ${morality}. ${sentenceCase(appearance)}. Costuma ${personality}. Procura ${motivation}. ${sentenceCase(complication)}.${companion}`;
   return result("npc", `NPC - ${name}`, text);
 }
 function generateLocation(random) {
@@ -551,7 +662,7 @@ function generateQuest(random) {
   const reward = random.pick(QUEST_REWARDS);
   const location = random.pick(LOCATION_NAMES);
   const giverDetail = random.pick(QUEST_GIVERS);
-  const text = `${giverName}, ${giverDetail}, procura aventureiros para ${objective} na regi\xE3o de ${location}. ${complication} Se tiverem sucesso, receber\xE3o ${reward}.`;
+  const text = `${giverName}, ${giverDetail}, procura aventureiros para ${objective} em ${location}. ${complication} Se tiverem sucesso, receber\xE3o ${reward}.`;
   return result("quest", `Miss\xE3o - ${sentenceCase(objective)}`, text);
 }
 function generateEncounter(random) {
@@ -563,11 +674,10 @@ function generateEncounter(random) {
   return result("encounter", `Encontro - ${sentenceCase(environment)}`, text);
 }
 function generateRumor(random) {
-  const subject = random.pick(RUMOR_SUBJECTS);
-  const claim = random.pick(RUMOR_CLAIMS);
+  const premise = random.pick(RUMOR_PREMISES);
   const truth = random.pick(RUMOR_TRUTHS);
-  const text = `Corre o boato de que ${subject} ${claim}. Para o mestre: ${truth}.`;
-  return result("rumor", `Rumor - ${sentenceCase(subject)}`, text);
+  const text = `Corre o boato de que ${premise.subject} ${premise.claim}. Para o mestre: ${truth}.`;
+  return result("rumor", `Rumor - ${sentenceCase(premise.subject)}`, text);
 }
 function generateDungeon(random) {
   const theme = random.pick(DUNGEON_THEMES);
@@ -595,29 +705,170 @@ function generate(id, random = new Random()) {
   return getGenerator(id).generate(random);
 }
 
+// src/formatters.ts
+function normalizeTitle(title) {
+  return title.replace(/\s+/g, " ").trim();
+}
+function normalizeBody(body) {
+  const normalized = body.replace(/\r\n?/g, "\n");
+  return normalized.replace(/^(?:[ \t]*\n)+/, "").replace(/(?:\n[ \t]*)+$/, "");
+}
+function formatWithHeading(level, title, body) {
+  const normalizedTitle = normalizeTitle(title);
+  const normalizedBody = normalizeBody(body);
+  const heading = `${"#".repeat(level)} ${normalizedTitle}`;
+  return normalizedBody.length > 0 ? `${heading}
+
+${normalizedBody}` : heading;
+}
+function formatPlainText(title, body) {
+  const normalizedTitle = normalizeTitle(title);
+  const normalizedBody = normalizeBody(body);
+  return normalizedBody.length > 0 ? `${normalizedTitle}
+
+${normalizedBody}` : normalizedTitle;
+}
+function toMarkdown(result2, headingLevel) {
+  return formatWithHeading(headingLevel, result2.title, result2.content.markdown);
+}
+function toPlainText(result2) {
+  return formatPlainText(result2.title, result2.content.plainText);
+}
+
+// src/output.ts
+var OutputFolderValidationError = class extends Error {
+  constructor(validation) {
+    super(validation.reason);
+    this.name = "OutputFolderValidationError";
+    this.code = validation.code;
+  }
+};
+var OutputFolderConflictError = class extends Error {
+  constructor(path) {
+    super(`A pasta de sa\xEDda n\xE3o pode ser criada porque existe um arquivo em '${path}'.`);
+    this.name = "OutputFolderConflictError";
+    this.path = path;
+  }
+};
+var FALLBACK_MARKDOWN_TITLE = "Sem t\xEDtulo";
+var INVALID_FILENAME_CHARACTERS = /[\\/:*?"<>|\u0000-\u001f\u007f]/g;
+function entryKind(entry) {
+  if ("type" in entry) return entry.type;
+  return entry.kind;
+}
+function joinVaultPath(folder, name) {
+  return folder.length > 0 ? `${folder}/${name}` : name;
+}
+function assertValidOutputFolder(outputFolder) {
+  const validation = validateOutputFolder(outputFolder);
+  if (!validation.valid) throw new OutputFolderValidationError(validation);
+  return validation.value;
+}
+function sanitizeMarkdownTitle(title) {
+  const sanitized = title.replace(INVALID_FILENAME_CHARACTERS, "-").replace(/\s+/g, " ").trim().replace(/[. ]+$/g, "").replace(/^-+|-+$/g, "").trim();
+  if (sanitized.length === 0 || sanitized === "." || sanitized === "..") {
+    return FALLBACK_MARKDOWN_TITLE;
+  }
+  return sanitized;
+}
+async function ensureOutputFolder(vault, outputFolder) {
+  const normalizedFolder = assertValidOutputFolder(outputFolder);
+  if (normalizedFolder.length === 0) return "";
+  const segments = normalizedFolder.split("/");
+  let currentPath = "";
+  for (const segment of segments) {
+    currentPath = joinVaultPath(currentPath, segment);
+    const existing = vault.getEntry(currentPath);
+    if (existing != null) {
+      if (entryKind(existing) === "file") {
+        throw new OutputFolderConflictError(currentPath);
+      }
+      continue;
+    }
+    await vault.createFolder(currentPath);
+  }
+  return normalizedFolder;
+}
+async function findAvailableMarkdownPath(vault, outputFolder, title) {
+  const normalizedFolder = assertValidOutputFolder(outputFolder);
+  const stem = sanitizeMarkdownTitle(title);
+  for (let suffix = 1; ; suffix += 1) {
+    const filename = suffix === 1 ? `${stem}.md` : `${stem} - ${suffix}.md`;
+    const path = joinVaultPath(normalizedFolder, filename);
+    if (vault.getEntry(path) == null) return { path, filename };
+  }
+}
+async function createMarkdownOutput(vault, options) {
+  const outputFolder = await ensureOutputFolder(vault, options.outputFolder);
+  const available = await findAvailableMarkdownPath(vault, outputFolder, options.title);
+  await vault.createFile(available.path, options.content);
+  return available;
+}
+var OutputService = class {
+  constructor(vault) {
+    this.vault = vault;
+  }
+  ensureOutputFolder(outputFolder) {
+    return ensureOutputFolder(this.vault, outputFolder);
+  }
+  findAvailableMarkdownPath(outputFolder, title) {
+    return findAvailableMarkdownPath(this.vault, outputFolder, title);
+  }
+  createMarkdown(optionsOrTitle, content, outputFolder = "") {
+    const options = typeof optionsOrTitle === "string" ? { title: optionsOrTitle, content: content != null ? content : "", outputFolder } : optionsOrTitle;
+    return createMarkdownOutput(this.vault, options);
+  }
+};
+
+// src/insertion-boundary.ts
+function calculateInsertionBoundaries(before, after) {
+  return {
+    prefix: boundaryBefore(before),
+    suffix: boundaryAfter(after)
+  };
+}
+function insertionText(before, after, markdown) {
+  const { prefix, suffix } = calculateInsertionBoundaries(before, after);
+  return `${prefix}${markdown}${suffix}`;
+}
+function boundaryBefore(text) {
+  if (text.length === 0 || text.endsWith("\n\n")) return "";
+  return text.endsWith("\n") ? "\n" : "\n\n";
+}
+function boundaryAfter(text) {
+  if (text.length === 0 || text.startsWith("\n\n")) return "";
+  return text.startsWith("\n") ? "\n" : "\n\n";
+}
+
 // src/view.ts
 var VIEW_TYPE_RPG_GENERATOR = "rpg-random-generator-view";
-function isGeneratorId(value) {
-  return typeof value === "string" && GENERATORS.some((definition) => definition.id === value);
-}
-function sanitizeFileName(value) {
-  return value.replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, " ").trim().replace(/[. ]+$/g, "") || "Resultado de RPG";
-}
-var GeneratorView = class extends import_obsidian.ItemView {
-  constructor(leaf) {
+var GeneratorView = class extends import_obsidian2.ItemView {
+  constructor(leaf, dependencies) {
     super(leaf);
+    this.dependencies = dependencies;
     this.selectedId = "npc";
     this.currentResult = null;
     this.resultKey = 0;
-    this.noteCreatedForKey = null;
+    this.renderVersion = 0;
     this.primaryButton = null;
     this.resultHeader = null;
     this.resultText = null;
     this.liveStatus = null;
-    this.copyButton = null;
-    this.noteButton = null;
-    this.clearButton = null;
+    this.copyTextButton = null;
+    this.copyMarkdownButton = null;
+    this.insertButton = null;
+    this.createButton = null;
+    this.insertDestination = null;
+    this.insertHelp = null;
     this.categoryButtons = /* @__PURE__ */ new Map();
+    this.renderComponent = null;
+    this.creatingNote = false;
+    this.registerEvent(
+      this.app.workspace.on("active-leaf-change", () => this.updateInsertionTarget())
+    );
+    this.registerEvent(
+      this.app.workspace.on("layout-change", () => this.updateInsertionTarget())
+    );
   }
   getViewType() {
     return VIEW_TYPE_RPG_GENERATOR;
@@ -629,21 +880,27 @@ var GeneratorView = class extends import_obsidian.ItemView {
     return "dice-5";
   }
   async onOpen() {
+    this.resetEphemeralState();
     this.renderView();
   }
   async onClose() {
+    this.renderVersion += 1;
+    this.removeRenderComponent();
     this.contentEl.empty();
   }
   getState() {
-    return { category: this.selectedId };
+    return {};
   }
-  async setState(state, result2) {
-    const nextState = state && typeof state === "object" ? state : {};
-    if (isGeneratorId(nextState.category)) {
-      this.selectedId = nextState.category;
-    }
-    await super.setState(state, result2);
+  async setState(_state, result2) {
+    await super.setState(_state, result2);
+    this.resetEphemeralState();
     this.renderView();
+  }
+  resetEphemeralState() {
+    this.selectedId = "npc";
+    this.currentResult = null;
+    this.resultKey += 1;
+    this.renderVersion += 1;
   }
   renderView() {
     this.contentEl.empty();
@@ -658,17 +915,23 @@ var GeneratorView = class extends import_obsidian.ItemView {
     categories.setAttr("role", "radiogroup");
     categories.setAttr("aria-labelledby", "rpg-generator-question");
     for (const definition of GENERATORS) {
+      const selected = definition.id === this.selectedId;
       const button = categories.createEl("button", {
-        cls: "rpg-generator-category",
+        cls: ["rpg-generator-category", ...selected ? ["is-selected"] : []],
         attr: {
           type: "button",
           role: "radio",
-          "aria-pressed": String(definition.id === this.selectedId),
+          "aria-checked": String(selected),
+          tabindex: selected ? "0" : "-1",
           "aria-label": definition.id === "dungeon" ? "Masmorra de cinco salas" : definition.label
         }
       });
       button.createSpan({ cls: "rpg-generator-category-label", text: definition.label });
       button.addEventListener("click", () => this.selectCategory(definition.id));
+      button.addEventListener(
+        "keydown",
+        (event) => this.handleCategoryKeydown(event, definition.id)
+      );
       this.categoryButtons.set(definition.id, button);
     }
     this.primaryButton = this.contentEl.createEl("button", {
@@ -683,57 +946,94 @@ var GeneratorView = class extends import_obsidian.ItemView {
     });
     this.resultText = resultSection.createDiv({ cls: "rpg-generator-result-text" });
     this.resultText.setAttr("tabindex", "0");
+    this.resultText.setAttr("aria-label", "Nenhum resultado gerado");
     this.liveStatus = resultSection.createEl("p", {
       cls: "rpg-generator-live-status",
       attr: { "aria-live": "polite" }
     });
     const actions = resultSection.createDiv({ cls: "rpg-generator-actions" });
-    this.copyButton = actions.createEl("button", {
-      cls: "rpg-generator-secondary",
-      attr: { type: "button" },
-      text: "Copiar"
+    this.copyTextButton = this.createActionButton(actions, "Copiar texto");
+    this.copyTextButton.addEventListener("click", () => void this.copyResult("text"));
+    this.copyMarkdownButton = this.createActionButton(actions, "Copiar Markdown");
+    this.copyMarkdownButton.addEventListener("click", () => void this.copyResult("markdown"));
+    const insertAction = actions.createDiv({ cls: "rpg-generator-insert-action" });
+    this.insertButton = this.createActionButton(insertAction, "Inserir na nota");
+    this.insertButton.addEventListener("click", () => this.insertResult());
+    this.insertDestination = insertAction.createSpan({ cls: "rpg-generator-insert-destination" });
+    this.createButton = this.createActionButton(actions, "Criar nota");
+    this.createButton.addEventListener("click", () => void this.createNote());
+    this.insertHelp = resultSection.createEl("p", {
+      cls: "rpg-generator-insert-help",
+      text: "Abra uma nota Markdown em modo de edi\xE7\xE3o para inserir o resultado."
     });
-    this.copyButton.addEventListener("click", () => void this.copyResult());
-    this.noteButton = actions.createEl("button", {
-      cls: "rpg-generator-secondary",
-      attr: { type: "button" },
-      text: "Criar nota"
-    });
-    this.noteButton.addEventListener("click", () => void this.createNote());
-    this.clearButton = resultSection.createEl("button", {
-      cls: "rpg-generator-clear",
-      attr: { type: "button" },
-      text: "Limpar resultado"
-    });
-    this.clearButton.addEventListener("click", () => this.clearResult());
     this.updateControls();
     this.updateResultText();
   }
+  createActionButton(parent, text) {
+    return parent.createEl("button", {
+      cls: "rpg-generator-secondary",
+      attr: { type: "button" },
+      text
+    });
+  }
   selectCategory(id) {
+    var _a;
+    if (id === this.selectedId) return;
     this.selectedId = id;
+    this.currentResult = null;
+    this.resultKey += 1;
+    this.renderVersion += 1;
     for (const [categoryId, button] of this.categoryButtons.entries()) {
       const selected = categoryId === id;
-      button.setAttr("aria-pressed", String(selected));
+      button.setAttr("aria-checked", String(selected));
+      button.setAttr("tabindex", selected ? "0" : "-1");
       button.toggleClass("is-selected", selected);
     }
     this.updateControls();
+    this.updateResultText();
+    (_a = this.liveStatus) == null ? void 0 : _a.setText("Resultado limpo ao trocar de categoria");
+  }
+  handleCategoryKeydown(event, id) {
+    var _a;
+    const ids = GENERATORS.map((definition) => definition.id);
+    const currentIndex = ids.indexOf(id);
+    if (currentIndex < 0) return;
+    let nextIndex = null;
+    switch (event.key) {
+      case "ArrowLeft":
+      case "ArrowUp":
+        nextIndex = (currentIndex - 1 + ids.length) % ids.length;
+        break;
+      case "ArrowRight":
+      case "ArrowDown":
+        nextIndex = (currentIndex + 1) % ids.length;
+        break;
+      case "Home":
+        nextIndex = 0;
+        break;
+      case "End":
+        nextIndex = ids.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    const nextId = ids[nextIndex];
+    this.selectCategory(nextId);
+    (_a = this.categoryButtons.get(nextId)) == null ? void 0 : _a.focus();
   }
   generateResult() {
     var _a;
-    this.currentResult = generate(this.selectedId, new Random());
-    this.resultKey += 1;
-    this.noteCreatedForKey = null;
-    this.updateControls();
-    this.updateResultText();
-    (_a = this.liveStatus) == null ? void 0 : _a.setText(`Novo resultado de ${this.currentResult.label} gerado`);
-  }
-  clearResult() {
-    var _a;
-    this.currentResult = null;
-    this.noteCreatedForKey = null;
-    this.updateControls();
-    this.updateResultText();
-    (_a = this.liveStatus) == null ? void 0 : _a.setText("Resultado limpo");
+    try {
+      const result2 = generate(this.selectedId, new Random());
+      this.currentResult = result2;
+      this.resultKey += 1;
+      this.updateControls();
+      this.updateResultText();
+      (_a = this.liveStatus) == null ? void 0 : _a.setText(`Novo resultado de ${result2.label} gerado`);
+    } catch (e) {
+      new import_obsidian2.Notice("N\xE3o foi poss\xEDvel gerar o resultado");
+    }
   }
   updateControls() {
     var _a;
@@ -742,69 +1042,195 @@ var GeneratorView = class extends import_obsidian.ItemView {
       this.primaryButton.setText(label);
     }
     const hasResult = this.currentResult !== null;
-    const noteAlreadyCreated = this.noteCreatedForKey === this.resultKey;
-    if (this.copyButton) this.copyButton.disabled = !hasResult;
-    if (this.noteButton) {
-      this.noteButton.disabled = !hasResult || noteAlreadyCreated;
-      this.noteButton.setText(noteAlreadyCreated ? "Nota criada" : "Criar nota");
+    const target = this.dependencies.getEditableTarget();
+    if (this.copyTextButton) this.copyTextButton.disabled = !hasResult;
+    if (this.copyMarkdownButton) this.copyMarkdownButton.disabled = !hasResult;
+    if (this.createButton) this.createButton.disabled = !hasResult || this.creatingNote;
+    if (this.insertButton) this.insertButton.disabled = !hasResult || target === null;
+    this.setInsertionTarget(target);
+  }
+  updateInsertionTarget() {
+    const target = this.dependencies.getEditableTarget();
+    this.setInsertionTarget(target);
+    if (this.insertButton) {
+      this.insertButton.disabled = this.currentResult === null || target === null;
     }
-    if (this.clearButton) this.clearButton.disabled = !hasResult;
+  }
+  setInsertionTarget(target) {
+    if (this.insertDestination) {
+      this.insertDestination.setText(target ? `Destino: ${target.file.name}` : "");
+    }
+    if (this.insertHelp) this.insertHelp.hidden = target !== null;
   }
   updateResultText() {
     if (!this.resultText || !this.resultHeader) return;
-    if (!this.currentResult) {
+    this.removeRenderComponent();
+    const result2 = this.currentResult;
+    const renderVersion = ++this.renderVersion;
+    this.resultText.empty();
+    if (!result2) {
       this.resultHeader.setText("Resultado");
       this.resultText.setText("Escolha um gerador e clique em \u201CGerar\u201D.");
       this.resultText.addClass("is-empty");
       this.resultText.setAttr("aria-label", "Nenhum resultado gerado");
       return;
     }
-    this.resultHeader.setText(this.currentResult.label);
-    this.resultText.setText(this.currentResult.text);
+    this.resultHeader.setText("Resultado");
     this.resultText.removeClass("is-empty");
-    this.resultText.setAttr("aria-label", `Resultado: ${this.currentResult.label}`);
-  }
-  async copyResult() {
-    if (!this.currentResult) return;
+    this.resultText.setAttr("aria-label", `Resultado: ${result2.label}`);
+    const rendered = document.createElement("div");
+    const renderComponent = this.addChild(new import_obsidian2.Component());
+    this.renderComponent = renderComponent;
     try {
-      await navigator.clipboard.writeText(this.currentResult.text);
-      new import_obsidian.Notice("Texto copiado");
+      void import_obsidian2.MarkdownRenderer.render(this.app, toMarkdown(result2, 1), rendered, "", renderComponent).then(() => {
+        if (renderVersion !== this.renderVersion || this.renderComponent !== renderComponent || !this.resultText) return;
+        this.resultText.empty();
+        while (rendered.firstChild) this.resultText.appendChild(rendered.firstChild);
+      }).catch(() => {
+        var _a;
+        if (renderVersion !== this.renderVersion || this.renderComponent !== renderComponent || !this.resultText) return;
+        this.resultText.setText("N\xE3o foi poss\xEDvel renderizar o resultado.");
+        (_a = this.liveStatus) == null ? void 0 : _a.setText("N\xE3o foi poss\xEDvel renderizar o resultado");
+      });
     } catch (e) {
-      new import_obsidian.Notice("N\xE3o foi poss\xEDvel copiar o texto");
+      if (renderVersion === this.renderVersion && this.renderComponent === renderComponent) {
+        this.removeRenderComponent();
+        this.resultText.setText("N\xE3o foi poss\xEDvel renderizar o resultado.");
+      }
     }
   }
-  async createNote() {
-    if (!this.currentResult || this.noteCreatedForKey === this.resultKey) return;
-    const folderPath = "Gerados";
-    const existingFolder = this.app.vault.getAbstractFileByPath(folderPath);
-    if (existingFolder && !(existingFolder instanceof import_obsidian.TFolder)) {
-      new import_obsidian.Notice("N\xE3o foi poss\xEDvel criar a nota: Gerados j\xE1 \xE9 um arquivo");
+  removeRenderComponent() {
+    if (!this.renderComponent) return;
+    this.removeChild(this.renderComponent);
+    this.renderComponent = null;
+  }
+  async copyResult(format) {
+    const result2 = this.currentResult;
+    if (!result2) return;
+    const content = format === "text" ? toPlainText(result2) : toMarkdown(result2, 1);
+    try {
+      await navigator.clipboard.writeText(content);
+      new import_obsidian2.Notice(format === "text" ? "Texto copiado" : "Markdown copiado");
+    } catch (e) {
+      new import_obsidian2.Notice("N\xE3o foi poss\xEDvel copiar o conte\xFAdo");
+    }
+  }
+  insertResult() {
+    var _a;
+    const result2 = this.currentResult;
+    if (!result2) return;
+    const target = this.dependencies.getEditableTarget();
+    this.setInsertionTarget(target);
+    if (!target) {
+      this.updateInsertionTarget();
+      new import_obsidian2.Notice("N\xE3o h\xE1 uma nota Markdown edit\xE1vel selecionada");
       return;
     }
     try {
-      if (!existingFolder) await this.app.vault.createFolder(folderPath);
-      const baseName = sanitizeFileName(this.currentResult.title);
-      let path = `${folderPath}/${baseName}.md`;
-      let suffix = 2;
-      while (this.app.vault.getAbstractFileByPath(path)) {
-        path = `${folderPath}/${baseName} - ${suffix}.md`;
-        suffix += 1;
-      }
-      const file = await this.app.vault.create(path, this.currentResult.text);
-      await this.app.workspace.getLeaf("tab").openFile(file);
-      this.noteCreatedForKey = this.resultKey;
-      this.updateControls();
-      new import_obsidian.Notice("Nota criada em Gerados");
+      const markdown = toMarkdown(result2, 2);
+      const replacement = this.insertionText(target.editor, markdown);
+      target.editor.replaceSelection(replacement);
+      target.editor.focus();
+      (_a = this.liveStatus) == null ? void 0 : _a.setText(`Resultado inserido em ${target.file.name}`);
+      new import_obsidian2.Notice(`Resultado inserido em ${target.file.name}`);
     } catch (e) {
-      new import_obsidian.Notice("N\xE3o foi poss\xEDvel criar a nota");
+      new import_obsidian2.Notice("N\xE3o foi poss\xEDvel inserir o resultado");
+    }
+  }
+  insertionText(editor, markdown) {
+    const from = editor.getCursor("from");
+    const to = editor.getCursor("to");
+    const start = { line: 0, ch: 0 };
+    const end = { line: editor.lastLine(), ch: editor.getLine(editor.lastLine()).length };
+    const before = editor.getRange(start, from);
+    const after = editor.getRange(to, end);
+    return insertionText(before, after, markdown);
+  }
+  async createNote() {
+    const result2 = this.currentResult;
+    if (!result2 || this.creatingNote) return;
+    this.creatingNote = true;
+    this.updateControls();
+    try {
+      const vaultAdapter = {
+        getEntry: (path) => {
+          const entry = this.app.vault.getAbstractFileByPath(path);
+          if (entry instanceof import_obsidian2.TFile) return { type: "file", path: entry.path };
+          if (entry instanceof import_obsidian2.TFolder) return { type: "folder", path: entry.path };
+          return null;
+        },
+        createFolder: async (path) => {
+          await this.app.vault.createFolder(path);
+        },
+        createFile: async (path, content) => {
+          await this.app.vault.create(path, content);
+        }
+      };
+      const created = await new OutputService(vaultAdapter).createMarkdown({
+        outputFolder: this.dependencies.settings.outputFolder,
+        title: result2.title,
+        content: toMarkdown(result2, 1)
+      });
+      let file;
+      try {
+        const abstractFile = this.app.vault.getAbstractFileByPath(created.path);
+        if (!(abstractFile instanceof import_obsidian2.TFile)) throw new Error("arquivo n\xE3o localizado");
+        file = abstractFile;
+        await this.app.workspace.getLeaf("tab").openFile(file);
+      } catch (error) {
+        const detail = error instanceof Error && error.message ? `: ${error.message}` : "";
+        new import_obsidian2.Notice(`Nota criada, mas n\xE3o foi poss\xEDvel abri-la${detail}`);
+        return;
+      }
+      new import_obsidian2.Notice(`Nota criada: ${created.filename}`);
+    } catch (error) {
+      const detail = error instanceof Error && error.message ? `: ${error.message}` : "";
+      new import_obsidian2.Notice(`N\xE3o foi poss\xEDvel criar a nota${detail}`);
+    } finally {
+      this.creatingNote = false;
+      this.updateControls();
     }
   }
 };
 
 // src/main.ts
-var RpgRandomGeneratorPlugin = class extends import_obsidian2.Plugin {
+var RpgRandomGeneratorPlugin = class extends import_obsidian3.Plugin {
+  constructor() {
+    super(...arguments);
+    this.lastEditableTarget = null;
+    this.settingsSaveQueue = Promise.resolve();
+  }
   async onload() {
-    this.registerView(VIEW_TYPE_RPG_GENERATOR, (leaf) => new GeneratorView(leaf));
+    this.rpgSettings = normalizeSettings(await this.loadData());
+    this.registerEvent(
+      this.app.workspace.on("active-leaf-change", (leaf) => this.captureFromLeaf(leaf))
+    );
+    this.registerEvent(
+      this.app.workspace.on("layout-change", () => this.captureFromActiveLeaf())
+    );
+    this.registerEvent(
+      this.app.workspace.on("file-open", () => this.captureFromActiveLeaf())
+    );
+    this.registerEvent(
+      this.app.workspace.on(
+        "editor-change",
+        (editor, info) => this.captureFromEditorChange(editor, info)
+      )
+    );
+    this.captureFromActiveLeaf();
+    this.registerView(
+      VIEW_TYPE_RPG_GENERATOR,
+      (leaf) => new GeneratorView(leaf, {
+        settings: this.rpgSettings,
+        getEditableTarget: () => this.getEditableTarget()
+      })
+    );
+    this.addSettingTab(
+      new RpgRandomGeneratorSettingTab(this.app, this, {
+        settings: this.rpgSettings,
+        saveSettings: (settings) => this.saveSettings(settings)
+      })
+    );
     this.addRibbonIcon("dice-5", "Abrir Gerador de RPG", () => {
       void this.activateView();
     });
@@ -813,6 +1239,58 @@ var RpgRandomGeneratorPlugin = class extends import_obsidian2.Plugin {
       name: "Abrir gerador de RPG",
       callback: () => void this.activateView()
     });
+  }
+  async saveSettings(settings) {
+    const save = this.settingsSaveQueue.catch(() => void 0).then(async () => {
+      await this.saveData({ outputFolder: settings.outputFolder });
+      this.rpgSettings.outputFolder = settings.outputFolder;
+    });
+    this.settingsSaveQueue = save.catch(() => void 0);
+    await save;
+  }
+  captureFromActiveLeaf() {
+    var _a;
+    this.captureFromLeaf((_a = this.app.workspace.activeLeaf) != null ? _a : null);
+  }
+  captureFromLeaf(leaf) {
+    if (!leaf || !(leaf.view instanceof import_obsidian3.MarkdownView)) return;
+    this.captureFromMarkdownView(leaf, leaf.view.editor);
+  }
+  captureFromEditorChange(editor, info) {
+    var _a, _b;
+    if (info instanceof import_obsidian3.MarkdownView) {
+      let matchingLeaf = null;
+      this.app.workspace.iterateAllLeaves((leaf) => {
+        if (!matchingLeaf && leaf.view === info) matchingLeaf = leaf;
+      });
+      if (matchingLeaf) this.captureFromMarkdownView(matchingLeaf, editor);
+      return;
+    }
+    const activeLeaf = this.app.workspace.activeLeaf;
+    if (!activeLeaf || !(activeLeaf.view instanceof import_obsidian3.MarkdownView) || activeLeaf.view.editor !== editor || ((_a = activeLeaf.view.file) == null ? void 0 : _a.path) !== ((_b = info.file) == null ? void 0 : _b.path)) return;
+    this.captureFromMarkdownView(activeLeaf, editor);
+  }
+  captureFromMarkdownView(leaf, viewEditor) {
+    const view = leaf.view;
+    if (!(view instanceof import_obsidian3.MarkdownView) || view.getMode() !== "source") return;
+    if (!view.file || !viewEditor || view.editor !== viewEditor) return;
+    this.lastEditableTarget = {
+      editor: view.editor,
+      file: view.file,
+      leaf
+    };
+  }
+  getEditableTarget() {
+    const target = this.lastEditableTarget;
+    if (!target) return null;
+    const vaultFile = this.app.vault.getAbstractFileByPath(target.file.path);
+    if (!(vaultFile instanceof import_obsidian3.TFile)) return null;
+    if (!(target.leaf.view instanceof import_obsidian3.MarkdownView) || target.leaf.view.getMode() !== "source") return null;
+    const viewFile = target.leaf.view.file;
+    if ((viewFile == null ? void 0 : viewFile.path) !== target.file.path || target.leaf.view.editor !== target.editor || vaultFile.path !== target.file.path) {
+      return null;
+    }
+    return target;
   }
   async activateView() {
     const existingLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_RPG_GENERATOR);
