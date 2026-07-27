@@ -38,8 +38,13 @@ const LABELS: Record<GeneratorId, string> = {
   dungeon: "Masmorra",
 };
 
-function result(id: GeneratorId, title: string, text: string): GenerationResult {
-  return { id, label: LABELS[id], title, text };
+function result(id: GeneratorId, title: string, body: string): GenerationResult {
+  const content = {
+    plainText: body,
+    markdown: body,
+  };
+
+  return { id, label: LABELS[id], title, content };
 }
 
 function sentenceCase(value: string): string {
@@ -68,7 +73,7 @@ function generateLocation(random: Random): GenerationResult {
   const feature = random.pick(LOCATION_FEATURES);
   const hook = random.pick(LOCATION_HOOKS);
 
-  const text = `${name} é ${type}. ${atmosphere} ${feature} ${hook}`;
+  const text = `${name} é ${type}. ${atmosphere} ${feature} ${hook}.`;
   return result("location", `Local - ${name}`, text);
 }
 

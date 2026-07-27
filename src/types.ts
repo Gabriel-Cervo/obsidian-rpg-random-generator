@@ -11,11 +11,16 @@ export const GENERATOR_IDS = [
 
 export type GeneratorId = (typeof GENERATOR_IDS)[number];
 
+export interface GenerationContent {
+  plainText: string;
+  markdown: string;
+}
+
 export interface GenerationResult {
   id: GeneratorId;
   label: string;
   title: string;
-  text: string;
+  content: GenerationContent;
 }
 
 export interface GeneratorDefinition {

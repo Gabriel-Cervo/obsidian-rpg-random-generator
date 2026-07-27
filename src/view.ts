@@ -1,5 +1,6 @@
 import { ItemView, Notice, TFolder, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { generate, GENERATORS } from "./generators";
+import { toMarkdown, toPlainText } from "./formatters";
 import { Random } from "./random";
 import type { GeneratorId, GenerationResult } from "./types";
 
@@ -202,7 +203,7 @@ export class GeneratorView extends ItemView {
     }
 
     this.resultHeader.setText(this.currentResult.label);
-    this.resultText.setText(this.currentResult.text);
+    this.resultText.setText(toPlainText(this.currentResult));
     this.resultText.removeClass("is-empty");
     this.resultText.setAttr("aria-label", `Resultado: ${this.currentResult.label}`);
   }
@@ -211,7 +212,7 @@ export class GeneratorView extends ItemView {
     if (!this.currentResult) return;
 
     try {
-      await navigator.clipboard.writeText(this.currentResult.text);
+      await navigator.clipboard.writeText(toPlainText(this.currentResult));
       new Notice("Texto copiado");
     } catch {
       new Notice("Não foi possível copiar o texto");
@@ -239,7 +240,7 @@ export class GeneratorView extends ItemView {
         suffix += 1;
       }
 
-      const file = await this.app.vault.create(path, this.currentResult.text);
+      const file = await this.app.vault.create(path, toMarkdown(this.currentResult, 1));
       await this.app.workspace.getLeaf("tab").openFile(file);
       this.noteCreatedForKey = this.resultKey;
       this.updateControls();

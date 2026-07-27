@@ -4,20 +4,25 @@ import { Random } from "../src/random";
 import { GENERATOR_IDS } from "../src/types";
 
 describe("geradores de RPG", () => {
-  it.each(GENERATOR_IDS)("gera um resultado completo para %s", (id) => {
+  it.each(GENERATOR_IDS)("retorna o contrato completo para %s", (id) => {
     const generated = generate(id, new Random(() => 0.37));
 
     expect(generated.id).toBe(id);
     expect(generated.label.length).toBeGreaterThan(0);
     expect(generated.title.length).toBeGreaterThan(0);
-    expect(generated.text.length).toBeGreaterThan(40);
-    expect(generated.text).not.toContain("undefined");
-    expect(generated.text).not.toContain("NaN");
+    expect(generated.content.plainText.length).toBeGreaterThan(40);
+    expect(generated.content.markdown.length).toBeGreaterThan(40);
+    expect(generated.content.plainText).not.toContain("undefined");
+    expect(generated.content.plainText).not.toContain("NaN");
+    expect(generated).not.toHaveProperty("text");
+    expect(generated.content.markdown).toBe(generated.content.plainText);
+    expect(generated.content.plainText).not.toContain(`${generated.title}\n\n`);
+    expect(generated.content.plainText).not.toMatch(/^#+\s/m);
   });
 
   it("mantém a estrutura de cinco salas", () => {
     const generated = generate("dungeon", new Random(() => 0.2));
-    const roomLines = generated.text.split("\n").filter((line) => /^\d+\. /.test(line));
+    const roomLines = generated.content.plainText.split("\n").filter((line) => /^\d+\. /.test(line));
 
     expect(roomLines).toHaveLength(5);
     expect(roomLines[0]).toMatch(/^1\. /);
@@ -26,15 +31,16 @@ describe("geradores de RPG", () => {
 
   it("inclui a informação reservada ao mestre nos rumores", () => {
     const generated = generate("rumor", new Random(() => 0.4));
-    expect(generated.text).toContain("Para o mestre:");
+    expect(generated.content.plainText).toContain("Para o mestre:");
   });
 
-  it("menciona o nome do NPC apenas na abertura", () => {
+  it("menciona o nome do NPC apenas na abertura do conteúdo", () => {
     const generated = generate("npc", new Random(() => 0.37));
     const name = generated.title.replace(/^NPC - /, "");
-    const occurrences = generated.text.split(name).length - 1;
+    const body = generated.content.plainText;
+    const occurrences = body.split(name).length - 1;
 
     expect(occurrences).toBe(1);
-    expect(generated.text).not.toContain(`${name}. ${name}`);
+    expect(body).not.toContain(`${name}. ${name}`);
   });
 });
