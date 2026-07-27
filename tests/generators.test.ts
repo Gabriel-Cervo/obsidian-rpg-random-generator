@@ -17,6 +17,15 @@ describe("geradores de RPG", () => {
     expect(generated.content.plainText).not.toContain("NaN");
     expect(generated).not.toHaveProperty("text");
     expect(generated.content.markdown).toBe(generated.content.plainText);
+    expect(generated.options.selected).toEqual({
+      tone: "random",
+      environment: "random",
+      complexity: "random",
+      ancestry: id === "npc" ? "random" : null,
+    });
+    expect(generated).not.toHaveProperty("metadata");
+    expect(generated).not.toHaveProperty("selectedOptions");
+    expect(generated).not.toHaveProperty("resolvedOptions");
     expect(generated.content.plainText).not.toContain(`${generated.title}\n\n`);
     expect(generated.content.plainText).not.toMatch(/^#+\s/m);
   });

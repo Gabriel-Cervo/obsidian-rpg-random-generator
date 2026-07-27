@@ -26,7 +26,17 @@ import {
   RUMOR_PREMISES,
   RUMOR_TRUTHS,
 } from "./tables";
-import type { GeneratorDefinition, GeneratorId, GenerationResult } from "./types";
+import {
+  DEFAULT_GENERATION_OPTIONS,
+  normalizeGenerationOptions,
+  resolveGenerationOptions,
+} from "./options";
+import type {
+  GeneratorDefinition,
+  GeneratorId,
+  GenerationOptionsInput,
+  GenerationResult,
+} from "./types";
 
 const LABELS: Record<GeneratorId, string> = {
   npc: "NPCs",
@@ -37,20 +47,35 @@ const LABELS: Record<GeneratorId, string> = {
   dungeon: "Masmorra",
 };
 
-function result(id: GeneratorId, title: string, body: string): GenerationResult {
+function result(
+  id: GeneratorId,
+  title: string,
+  body: string,
+  random: Random,
+  options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS,
+): GenerationResult {
   const content = {
     plainText: body,
     markdown: body,
   };
+  const selected = normalizeGenerationOptions(options, id);
+  const resolved = resolveGenerationOptions(selected, random, id);
 
-  return { id, label: LABELS[id], title, content };
+  const metadata = { selected, resolved };
+  return {
+    id,
+    label: LABELS[id],
+    title,
+    content,
+    options: metadata,
+  };
 }
 
 function sentenceCase(value: string): string {
   return value.length === 0 ? value : value[0].toLocaleUpperCase("pt-BR") + value.slice(1);
 }
 
-function generateNpc(random: Random): GenerationResult {
+function generateNpc(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const people = randomPeople(random);
   const name = generateName(people.id, random);
   const role = random.pick(NPC_ROLES);
@@ -62,10 +87,10 @@ function generateNpc(random: Random): GenerationResult {
   const companion = random.chance(0.3) ? ` Viaja com ${random.pick(ANIMAL_COMPANIONS)}.` : "";
 
   const text = `${name} é ${people.article} ${people.noun} que trabalha como ${role} e ${morality}. ${sentenceCase(appearance)}. Costuma ${personality}. Procura ${motivation}. ${sentenceCase(complication)}.${companion}`;
-  return result("npc", `NPC - ${name}`, text);
+  return result("npc", `NPC - ${name}`, text, random, options);
 }
 
-function generateLocation(random: Random): GenerationResult {
+function generateLocation(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const name = random.pick(LOCATION_NAMES);
   const type = random.pick(LOCATION_TYPES);
   const atmosphere = random.pick(LOCATION_ATMOSPHERES);
@@ -74,10 +99,10 @@ function generateLocation(random: Random): GenerationResult {
 
   // The location tables contain complete sentences, so do not append another period.
   const text = `${name} é ${type}. ${atmosphere} ${feature} ${hook}`;
-  return result("location", `Local - ${name}`, text);
+  return result("location", `Local - ${name}`, text, random, options);
 }
 
-function generateQuest(random: Random): GenerationResult {
+function generateQuest(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const giverPeople = randomPeople(random);
   const giverName = generateName(giverPeople.id, random);
   const objective = random.pick(QUEST_OBJECTIVES);
@@ -87,32 +112,32 @@ function generateQuest(random: Random): GenerationResult {
   const giverDetail = random.pick(QUEST_GIVERS);
 
   const text = `${giverName}, ${giverDetail}, procura aventureiros para ${objective} em ${location}. ${complication} Se tiverem sucesso, receberão ${reward}.`;
-  return result("quest", `Missão - ${sentenceCase(objective)}`, text);
+  return result("quest", `Missão - ${sentenceCase(objective)}`, text, random, options);
 }
 
-function generateEncounter(random: Random): GenerationResult {
+function generateEncounter(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const environment = random.pick(ENCOUNTER_ENVIRONMENTS);
   const situation = random.pick(ENCOUNTER_SITUATIONS);
   const twist = random.pick(ENCOUNTER_TWISTS);
   const choice = random.pick(ENCOUNTER_CHOICES);
 
   const text = `Em ${environment}, ${situation}. ${twist} ${choice}`;
-  return result("encounter", `Encontro - ${sentenceCase(environment)}`, text);
+  return result("encounter", `Encontro - ${sentenceCase(environment)}`, text, random, options);
 }
 
-function generateRumor(random: Random): GenerationResult {
+function generateRumor(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const premise = random.pick(RUMOR_PREMISES);
   const truth = random.pick(RUMOR_TRUTHS);
 
   const text = `Corre o boato de que ${premise.subject} ${premise.claim}. Para o mestre: ${truth}.`;
-  return result("rumor", `Rumor - ${sentenceCase(premise.subject)}`, text);
+  return result("rumor", `Rumor - ${sentenceCase(premise.subject)}`, text, random, options);
 }
 
-function generateDungeon(random: Random): GenerationResult {
+function generateDungeon(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const theme = random.pick(DUNGEON_THEMES);
   const rooms = DUNGEON_ENTRIES.map((entry, index) => `${index + 1}. ${entry}`).join("\n");
   const text = `Tema: ${theme}.\n\n${rooms}`;
-  return result("dungeon", `Masmorra - ${sentenceCase(theme)}`, text);
+  return result("dungeon", `Masmorra - ${sentenceCase(theme)}`, text, random, options);
 }
 
 export const GENERATORS: readonly GeneratorDefinition[] = [
@@ -132,6 +157,10 @@ export function getGenerator(id: GeneratorId): GeneratorDefinition {
   return definition;
 }
 
-export function generate(id: GeneratorId, random: Random = new Random()): GenerationResult {
-  return getGenerator(id).generate(random);
+export function generate(
+  id: GeneratorId,
+  random: Random = new Random(),
+  options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS,
+): GenerationResult {
+  return getGenerator(id).generate(random, options);
 }

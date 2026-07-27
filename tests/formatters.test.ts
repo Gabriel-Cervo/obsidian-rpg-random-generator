@@ -11,21 +11,31 @@ const result: GenerationResult = {
     plainText: "Texto puro do resultado.",
     markdown: "**Texto Markdown do resultado.**",
   },
+  options: {
+    selected: { tone: "grim", environment: "forest", complexity: "quick", ancestry: null },
+    resolved: { tone: "grim", environment: "forest", complexity: "quick", ancestry: null },
+  },
 };
 
 describe("formatadores de resultados", () => {
   it("formata Markdown autônomo com H1", () => {
-    expect(toMarkdown(result, 1)).toBe(`# ${title}\n\n${result.content.markdown}`);
+    expect(toMarkdown(result, 1)).toBe(
+      `# ${title}\n\n> [!info] Parâmetros\n> Tom: Sombrio\n> Ambiente: Florestas\n> Complexidade: Rápido\n\n${result.content.markdown}`,
+    );
   });
 
   it("formata Markdown inserido com H2", () => {
-    expect(toMarkdown(result, 2)).toBe(`## ${title}\n\n${result.content.markdown}`);
+    expect(toMarkdown(result, 2)).toBe(
+      `## ${title}\n\n> [!info] Parâmetros\n> Tom: Sombrio\n> Ambiente: Florestas\n> Complexidade: Rápido\n\n${result.content.markdown}`,
+    );
   });
 
   it("formata texto puro sem heading Markdown", () => {
     const formatted = toPlainText(result);
 
-    expect(formatted).toBe(`${title}\n\n${result.content.plainText}`);
+    expect(formatted).toBe(
+      `${title}\n\nParâmetros\nTom: Sombrio\nAmbiente: Florestas\nComplexidade: Rápido\n\n${result.content.plainText}`,
+    );
     expect(formatted).not.toMatch(/^#+\s/m);
   });
 
@@ -46,7 +56,7 @@ describe("formatadores de resultados", () => {
     };
 
     expect(toMarkdown(borderedResult, 1)).toBe(
-      `# ${title}\n\nTema: uma torre.\n\n1. Entrada preservada.\n2. Desafio preservado.`,
+      `# ${title}\n\n> [!info] Parâmetros\n> Tom: Sombrio\n> Ambiente: Florestas\n> Complexidade: Rápido\n\nTema: uma torre.\n\n1. Entrada preservada.\n2. Desafio preservado.`,
     );
   });
 });
