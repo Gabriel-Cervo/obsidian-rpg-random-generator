@@ -23,8 +23,7 @@ import {
   QUEST_GIVERS,
   QUEST_OBJECTIVES,
   QUEST_REWARDS,
-  RUMOR_CLAIMS,
-  RUMOR_SUBJECTS,
+  RUMOR_PREMISES,
   RUMOR_TRUTHS,
 } from "./tables";
 import type { GeneratorDefinition, GeneratorId, GenerationResult } from "./types";
@@ -62,7 +61,7 @@ function generateNpc(random: Random): GenerationResult {
   const complication = random.pick(NPC_COMPLICATIONS);
   const companion = random.chance(0.3) ? ` Viaja com ${random.pick(ANIMAL_COMPANIONS)}.` : "";
 
-  const text = `${name} é ${people.article} ${people.noun} que trabalha como ${role} e ${morality}. ${sentenceCase(appearance)}. Costuma ${personality}. Procura ${motivation}. Em segredo, ${complication}.${companion}`;
+  const text = `${name} é ${people.article} ${people.noun} que trabalha como ${role} e ${morality}. ${sentenceCase(appearance)}. Costuma ${personality}. Procura ${motivation}. ${sentenceCase(complication)}.${companion}`;
   return result("npc", `NPC - ${name}`, text);
 }
 
@@ -73,7 +72,8 @@ function generateLocation(random: Random): GenerationResult {
   const feature = random.pick(LOCATION_FEATURES);
   const hook = random.pick(LOCATION_HOOKS);
 
-  const text = `${name} é ${type}. ${atmosphere} ${feature} ${hook}.`;
+  // The location tables contain complete sentences, so do not append another period.
+  const text = `${name} é ${type}. ${atmosphere} ${feature} ${hook}`;
   return result("location", `Local - ${name}`, text);
 }
 
@@ -86,7 +86,7 @@ function generateQuest(random: Random): GenerationResult {
   const location = random.pick(LOCATION_NAMES);
   const giverDetail = random.pick(QUEST_GIVERS);
 
-  const text = `${giverName}, ${giverDetail}, procura aventureiros para ${objective} na região de ${location}. ${complication} Se tiverem sucesso, receberão ${reward}.`;
+  const text = `${giverName}, ${giverDetail}, procura aventureiros para ${objective} em ${location}. ${complication} Se tiverem sucesso, receberão ${reward}.`;
   return result("quest", `Missão - ${sentenceCase(objective)}`, text);
 }
 
@@ -101,12 +101,11 @@ function generateEncounter(random: Random): GenerationResult {
 }
 
 function generateRumor(random: Random): GenerationResult {
-  const subject = random.pick(RUMOR_SUBJECTS);
-  const claim = random.pick(RUMOR_CLAIMS);
+  const premise = random.pick(RUMOR_PREMISES);
   const truth = random.pick(RUMOR_TRUTHS);
 
-  const text = `Corre o boato de que ${subject} ${claim}. Para o mestre: ${truth}.`;
-  return result("rumor", `Rumor - ${sentenceCase(subject)}`, text);
+  const text = `Corre o boato de que ${premise.subject} ${premise.claim}. Para o mestre: ${truth}.`;
+  return result("rumor", `Rumor - ${sentenceCase(premise.subject)}`, text);
 }
 
 function generateDungeon(random: Random): GenerationResult {

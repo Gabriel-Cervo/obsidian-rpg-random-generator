@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generate } from "../src/generators";
+import { RUMOR_PREMISES } from "../src/tables";
 import { Random } from "../src/random";
 import { GENERATOR_IDS } from "../src/types";
 
@@ -32,6 +33,37 @@ describe("geradores de RPG", () => {
   it("inclui a informação reservada ao mestre nos rumores", () => {
     const generated = generate("rumor", new Random(() => 0.4));
     expect(generated.content.plainText).toContain("Para o mestre:");
+  });
+
+  it("não duplica a pontuação final dos locais", () => {
+    const generated = generate("location", new Random(() => 0));
+    const body = generated.content.plainText;
+
+    expect(body).not.toContain("..");
+    expect(body).toMatch(/\.$/);
+  });
+
+  it("usa uma preposição natural para a localização da missão", () => {
+    const generated = generate("quest", new Random(() => 0));
+    const body = generated.content.plainText;
+
+    expect(body).toContain(" em Ponte dos Sinos.");
+    expect(body).not.toContain("na região de");
+  });
+
+  it("mantém sujeito e afirmação coerentes nos rumores", () => {
+    for (const [index, premise] of RUMOR_PREMISES.entries()) {
+      const generated = generate("rumor", new Random(() => (index + 0.1) / RUMOR_PREMISES.length));
+
+      expect(generated.content.plainText).toContain(`${premise.subject} ${premise.claim}`);
+    }
+  });
+
+  it("não duplica o prefixo reservado do NPC", () => {
+    const generated = generate("npc", new Random(() => 0));
+
+    expect(generated.content.plainText).toContain("Em segredo, mantém");
+    expect(generated.content.plainText).not.toContain("Em segredo, em segredo");
   });
 
   it("menciona o nome do NPC apenas na abertura do conteúdo", () => {

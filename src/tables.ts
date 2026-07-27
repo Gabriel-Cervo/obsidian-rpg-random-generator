@@ -32,7 +32,7 @@ export const NPC_MORALITIES = [
 
 export const NPC_APPEARANCES = [
   "tem uma cicatriz fina atravessando o queixo e olhos atentos demais",
-  "tem baixa estatura, mãos manchadas de tinta e fuligem",
+  "tem baixa estatura e mãos manchadas de tinta e fuligem",
   "prende os cabelos com fios coloridos e usa uma capa cheia de remendos",
   "trabalha como se não dormisse há dias, mas nunca deixa de observar as portas",
   "usa roupas práticas cobertas por pequenos amuletos de proteção",
@@ -115,7 +115,7 @@ export const LOCATION_TYPES = [
 ];
 
 export const LOCATION_ATMOSPHERES = [
-  "Cheira a chuva, ferro e flores esmagadas.",
+  "O local cheira a chuva, ferro e flores esmagadas.",
   "De vez em quando, algo bate do outro lado das paredes.",
   "Os moradores falam baixo e deixam uma cadeira vazia em cada mesa.",
   "Luzes quentes aparecem nas janelas mesmo quando o local deveria estar vazio.",
@@ -217,34 +217,33 @@ export const ENCOUNTER_CHOICES = [
   "O grupo precisa descobrir qual dos sinais é uma armadilha antes que todos desapareçam.",
 ];
 
-export const RUMOR_SUBJECTS = [
-  "o sino enterrado sob a praça",
-  "a rainha da cidade",
-  "a estrada velha do norte",
-  "um poço no centro da aldeia",
-  "o ferreiro da rua baixa",
-  "as luzes vistas no topo da montanha",
-  "um navio sem tripulação",
-  "a criatura do moinho",
+export interface RumorPremise {
+  subject: string;
+  claim: string;
+}
+
+export const RUMOR_PREMISES: readonly RumorPremise[] = [
+  { subject: "o sino enterrado sob a praça", claim: "toca sozinho à meia-noite" },
+  { subject: "a rainha da cidade", claim: "nunca aparece em público porque deixou seu corpo em outra cidade" },
+  { subject: "a estrada velha do norte", claim: "muda de lugar durante a lua nova" },
+  { subject: "um poço no centro da aldeia", claim: "devolve objetos perdidos, mas cobra uma memória em troca" },
+  { subject: "o ferreiro da rua baixa", claim: "não envelhece desde que encontrou um martelo enterrado" },
+  { subject: "as luzes vistas no topo da montanha", claim: "são sinais de que uma antiga porta está prestes a se abrir" },
+  { subject: "um navio sem tripulação", claim: "leva passageiros para portos que desapareceram dos mapas" },
+  { subject: "a criatura do moinho", claim: "protege uma passagem usada por algo que ainda está acordado" },
 ];
 
-export const RUMOR_CLAIMS = [
-  "toca sozinho à meia-noite",
-  "nunca aparece em público porque deixou seu corpo em outra cidade",
-  "muda de lugar durante a lua nova",
-  "devolve objetos perdidos, mas cobra uma memória em troca",
-  "não envelhece desde que encontrou um martelo enterrado",
-  "são sinais de que uma antiga porta está prestes a se abrir",
-  "leva passageiros para portos que desapareceram dos mapas",
-  "protege uma passagem usada por algo que ainda está acordado",
-];
+/** @deprecated Use RUMOR_PREMISES to keep subjects and claims paired. */
+export const RUMOR_SUBJECTS = RUMOR_PREMISES.map(({ subject }) => subject);
+/** @deprecated Use RUMOR_PREMISES to keep subjects and claims paired. */
+export const RUMOR_CLAIMS = RUMOR_PREMISES.map(({ claim }) => claim);
 
 export const RUMOR_TRUTHS = [
   "é verdade, mas a consequência foi exagerada",
   "é uma mentira espalhada para esconder uma pista mais importante",
   "há algo de verdade nisso, mas a causa é outra",
   "só acontece quando uma condição específica é cumprida",
-  "começou como mentira e se tornou verdade depois de um acontecimento recente",
+  "começou como uma mentira e se tornou verdade depois de um acontecimento recente",
 ];
 
 export const DUNGEON_ENTRIES = [
