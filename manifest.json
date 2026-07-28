@@ -3,8 +3,7 @@
   "name": "Gerador de RPG",
   "version": "0.1.0",
   "minAppVersion": "1.5.0",
-  "description": "Gera NPCs, locais, missões, encontros, rumores e masmorras de cinco salas para fantasia medieval.",
+  "description": "Gera NPCs, locais, missões, encontros, rumores e masmorras narrativas ou mapeadas para fantasia medieval.",
   "author": "Gabriel Cervo",
   "isDesktopOnly": true
 }
-
