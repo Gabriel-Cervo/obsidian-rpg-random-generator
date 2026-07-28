@@ -9,11 +9,12 @@ import {
   ViewStateResult,
   WorkspaceLeaf,
 } from "obsidian";
-import { generate, GENERATORS } from "./generators";
+import { GenerationSessionController } from "./application/generation-session";
+import type { StoreListener } from "./application/readable-store";
+import { GENERATORS } from "./generators";
 import {
   COMPLEXITIES,
   COMPLEXITY_LABELS,
-  DEFAULT_GENERATION_OPTIONS,
   ENVIRONMENTS,
   ENVIRONMENT_LABELS,
   RANDOM_ANCESTRY_LABEL,
@@ -27,7 +28,7 @@ import { OutputService, type OutputVault } from "./output";
 import { Random } from "./random";
 import { insertionText } from "./insertion-boundary";
 import type { RpgSettings } from "./settings";
-import type { GeneratorId, GenerationOptions, GenerationResult } from "./types";
+import type { GeneratorId, GenerationOptions } from "./types";
 
 export const VIEW_TYPE_RPG_GENERATOR = "rpg-random-generator-view";
 
@@ -40,13 +41,11 @@ export interface EditableMarkdownTarget {
 export interface GeneratorViewDependencies {
   settings: RpgSettings;
   getEditableTarget: () => EditableMarkdownTarget | null;
+  subscribeEditableTarget: (listener: StoreListener) => () => void;
 }
 
 export class GeneratorView extends ItemView {
-  private selectedId: GeneratorId = "npc";
-  private generationOptions: GenerationOptions = { ...DEFAULT_GENERATION_OPTIONS };
-  private currentResult: GenerationResult | null = null;
-  private resultKey = 0;
+  private readonly session = new GenerationSessionController();
   private renderVersion = 0;
   private primaryButton: HTMLButtonElement | null = null;
   private resultHeader: HTMLElement | null = null;
@@ -67,18 +66,13 @@ export class GeneratorView extends ItemView {
     ancestryField: HTMLElement;
   } | null = null;
   private renderComponent: Component | null = null;
-  private creatingNote = false;
-
   constructor(
     leaf: WorkspaceLeaf,
     private readonly dependencies: GeneratorViewDependencies,
   ) {
     super(leaf);
-    this.registerEvent(
-      this.app.workspace.on("active-leaf-change", () => this.updateInsertionTarget()),
-    );
-    this.registerEvent(
-      this.app.workspace.on("layout-change", () => this.updateInsertionTarget()),
+    this.register(
+      this.dependencies.subscribeEditableTarget(() => this.updateInsertionTarget()),
     );
   }
 
@@ -117,10 +111,7 @@ export class GeneratorView extends ItemView {
   }
 
   private resetEphemeralState(): void {
-    this.selectedId = "npc";
-    this.generationOptions = { ...DEFAULT_GENERATION_OPTIONS };
-    this.currentResult = null;
-    this.resultKey += 1;
+    this.session.reset();
     this.renderVersion += 1;
   }
 
@@ -141,7 +132,7 @@ export class GeneratorView extends ItemView {
     categories.setAttr("aria-labelledby", "rpg-generator-question");
 
     for (const definition of GENERATORS) {
-      const selected = definition.id === this.selectedId;
+      const selected = definition.id === this.session.snapshot.selectedId;
       const button = categories.createEl("button", {
         cls: ["rpg-generator-category", ...(selected ? ["is-selected"] : [])],
         attr: {
@@ -173,7 +164,7 @@ export class GeneratorView extends ItemView {
       "rpg-generator-tone",
       "Tom",
       [{ value: "random", label: RANDOM_LABEL }, ...TONES.map((id) => ({ value: id, label: TONE_LABELS[id] }))],
-      this.generationOptions.tone,
+      this.session.snapshot.options.tone,
       (value) => this.updateGenerationOption("tone", value as GenerationOptions["tone"]),
     );
     const environment = this.createOptionSelect(
@@ -181,7 +172,7 @@ export class GeneratorView extends ItemView {
       "rpg-generator-environment",
       "Ambiente",
       [{ value: "random", label: RANDOM_LABEL }, ...ENVIRONMENTS.map((id) => ({ value: id, label: ENVIRONMENT_LABELS[id] }))],
-      this.generationOptions.environment,
+      this.session.snapshot.options.environment,
       (value) => this.updateGenerationOption("environment", value as GenerationOptions["environment"]),
     );
     const complexity = this.createOptionSelect(
@@ -189,7 +180,7 @@ export class GeneratorView extends ItemView {
       "rpg-generator-complexity",
       "Complexidade",
       [{ value: "random", label: RANDOM_LABEL }, ...COMPLEXITIES.map((id) => ({ value: id, label: COMPLEXITY_LABELS[id] }))],
-      this.generationOptions.complexity,
+      this.session.snapshot.options.complexity,
       (value) => this.updateGenerationOption("complexity", value as GenerationOptions["complexity"]),
     );
     const ancestryField = this.createOptionField(optionGrid, "rpg-generator-ancestry", "Ancestralidade");
@@ -203,8 +194,8 @@ export class GeneratorView extends ItemView {
     this.addSelectOptions(ancestry, [
       { value: "random", label: RANDOM_ANCESTRY_LABEL },
       ...PEOPLE.map((person) => ({ value: person.id, label: person.label })),
-    ], this.generationOptions.ancestry ?? "random");
-    ancestryField.hidden = this.selectedId !== "npc";
+    ], this.session.snapshot.options.ancestry ?? "random");
+    ancestryField.hidden = this.session.snapshot.selectedId !== "npc";
     this.optionSelects = { tone, environment, complexity, ancestry, ancestryField };
 
     this.primaryButton = this.contentEl.createEl("button", {
@@ -300,13 +291,12 @@ export class GeneratorView extends ItemView {
     key: K,
     value: GenerationOptions[K],
   ): void {
-    this.generationOptions = { ...this.generationOptions, [key]: value };
+    this.session.updateOption(key, value);
     this.clearCurrentResult("Resultado limpo ao alterar opções");
   }
 
   private clearCurrentResult(status: string): void {
-    this.currentResult = null;
-    this.resultKey += 1;
+    this.session.clearResult();
     this.renderVersion += 1;
     this.updateControls();
     this.updateResultText();
@@ -314,9 +304,7 @@ export class GeneratorView extends ItemView {
   }
 
   private selectCategory(id: GeneratorId): void {
-    if (id === this.selectedId) return;
-
-    this.selectedId = id;
+    if (!this.session.selectGenerator(id)) return;
 
     for (const [categoryId, button] of this.categoryButtons.entries()) {
       const selected = categoryId === id;
@@ -361,9 +349,9 @@ export class GeneratorView extends ItemView {
 
   private generateResult(): void {
     try {
-      const result = generate(this.selectedId, new Random(), this.generationOptions);
-      this.currentResult = result;
-      this.resultKey += 1;
+      const attempt = this.session.generate(new Random());
+      if (!attempt.ok) throw attempt.error;
+      const result = attempt.result;
       this.updateControls();
       this.updateResultText();
       this.liveStatus?.setText(`Novo resultado de ${result.label} gerado`);
@@ -374,15 +362,16 @@ export class GeneratorView extends ItemView {
 
   private updateControls(): void {
     if (this.primaryButton) {
-      const label = this.currentResult?.id === this.selectedId ? "Rerrolar" : "Gerar";
+      const currentResult = this.session.snapshot.currentResult;
+      const label = currentResult?.id === this.session.snapshot.selectedId ? "Rerrolar" : "Gerar";
       this.primaryButton.setText(label);
     }
 
-    const hasResult = this.currentResult !== null;
+    const hasResult = this.session.snapshot.currentResult !== null;
     const target = this.dependencies.getEditableTarget();
     if (this.copyTextButton) this.copyTextButton.disabled = !hasResult;
     if (this.copyMarkdownButton) this.copyMarkdownButton.disabled = !hasResult;
-    if (this.createButton) this.createButton.disabled = !hasResult || this.creatingNote;
+    if (this.createButton) this.createButton.disabled = !hasResult || this.session.snapshot.creatingNote;
     if (this.insertButton) this.insertButton.disabled = !hasResult || target === null;
     this.setInsertionTarget(target);
   }
@@ -391,7 +380,7 @@ export class GeneratorView extends ItemView {
     const target = this.dependencies.getEditableTarget();
     this.setInsertionTarget(target);
     if (this.insertButton) {
-      this.insertButton.disabled = this.currentResult === null || target === null;
+      this.insertButton.disabled = this.session.snapshot.currentResult === null || target === null;
     }
   }
 
@@ -406,7 +395,7 @@ export class GeneratorView extends ItemView {
     if (!this.resultText || !this.resultHeader) return;
 
     this.removeRenderComponent();
-    const result = this.currentResult;
+    const result = this.session.snapshot.currentResult;
     const renderVersion = ++this.renderVersion;
     this.resultText.empty();
 
@@ -463,7 +452,7 @@ export class GeneratorView extends ItemView {
   }
 
   private async copyResult(format: "text" | "markdown"): Promise<void> {
-    const result = this.currentResult;
+    const result = this.session.snapshot.currentResult;
     if (!result) return;
 
     const content = format === "text" ? toPlainText(result) : toMarkdown(result, 1);
@@ -476,7 +465,7 @@ export class GeneratorView extends ItemView {
   }
 
   private insertResult(): void {
-    const result = this.currentResult;
+    const result = this.session.snapshot.currentResult;
     if (!result) return;
 
     const target = this.dependencies.getEditableTarget();
@@ -510,10 +499,10 @@ export class GeneratorView extends ItemView {
   }
 
   private async createNote(): Promise<void> {
-    const result = this.currentResult;
-    if (!result || this.creatingNote) return;
+    const result = this.session.snapshot.currentResult;
+    if (!result || this.session.snapshot.creatingNote) return;
 
-    this.creatingNote = true;
+    this.session.setCreatingNote(true);
     this.updateControls();
     try {
       const vaultAdapter: OutputVault = {
@@ -551,7 +540,7 @@ export class GeneratorView extends ItemView {
       const detail = error instanceof Error && error.message ? `: ${error.message}` : "";
       new Notice(`Não foi possível criar a nota${detail}`);
     } finally {
-      this.creatingNote = false;
+      this.session.setCreatingNote(false);
       this.updateControls();
     }
   }

@@ -1,11 +1,10 @@
 import {
-  Editor,
-  MarkdownFileInfo,
   MarkdownView,
   Plugin,
   TFile,
   WorkspaceLeaf,
 } from "obsidian";
+import { MutableStore } from "./application/readable-store";
 import { RpgRandomGeneratorSettingTab } from "./settings-tab";
 import { normalizeSettings, type RpgSettings } from "./settings";
 import {
@@ -17,6 +16,7 @@ import {
 export default class RpgRandomGeneratorPlugin extends Plugin {
   private rpgSettings!: RpgSettings;
   private lastEditableTarget: EditableMarkdownTarget | null = null;
+  private readonly editableTargetChanges = new MutableStore(0);
   private settingsSaveQueue: Promise<void> = Promise.resolve();
 
   async onload(): Promise<void> {
@@ -26,15 +26,16 @@ export default class RpgRandomGeneratorPlugin extends Plugin {
       this.app.workspace.on("active-leaf-change", (leaf) => this.captureFromLeaf(leaf)),
     );
     this.registerEvent(
-      this.app.workspace.on("layout-change", () => this.captureFromActiveLeaf()),
+      this.app.workspace.on("layout-change", () => {
+        const version = this.editableTargetChanges.get();
+        this.captureFromActiveLeaf();
+        if (this.editableTargetChanges.get() === version) {
+          this.editableTargetChanges.notify();
+        }
+      }),
     );
     this.registerEvent(
       this.app.workspace.on("file-open", () => this.captureFromActiveLeaf()),
-    );
-    this.registerEvent(
-      this.app.workspace.on("editor-change", (editor, info) =>
-        this.captureFromEditorChange(editor, info),
-      ),
     );
     this.captureFromActiveLeaf();
 
@@ -44,6 +45,8 @@ export default class RpgRandomGeneratorPlugin extends Plugin {
         new GeneratorView(leaf, {
           settings: this.rpgSettings,
           getEditableTarget: () => this.getEditableTarget(),
+          subscribeEditableTarget: (listener) =>
+            this.editableTargetChanges.subscribe(listener),
         }),
     );
     this.addSettingTab(
@@ -83,29 +86,10 @@ export default class RpgRandomGeneratorPlugin extends Plugin {
     this.captureFromMarkdownView(leaf, leaf.view.editor);
   }
 
-  private captureFromEditorChange(editor: Editor, info: MarkdownView | MarkdownFileInfo): void {
-    if (info instanceof MarkdownView) {
-      let matchingLeaf: WorkspaceLeaf | null = null;
-      this.app.workspace.iterateAllLeaves((leaf) => {
-        if (!matchingLeaf && leaf.view === info) matchingLeaf = leaf;
-      });
-      if (matchingLeaf) this.captureFromMarkdownView(matchingLeaf, editor);
-      return;
-    }
-
-    // MarkdownFileInfo has no leaf reference. Only capture the active leaf when
-    // the event's editor and file still match it, avoiding stale replacements.
-    const activeLeaf = this.app.workspace.activeLeaf;
-    if (
-      !activeLeaf ||
-      !(activeLeaf.view instanceof MarkdownView) ||
-      activeLeaf.view.editor !== editor ||
-      activeLeaf.view.file?.path !== info.file?.path
-    ) return;
-    this.captureFromMarkdownView(activeLeaf, editor);
-  }
-
-  private captureFromMarkdownView(leaf: WorkspaceLeaf, viewEditor: Editor): void {
+  private captureFromMarkdownView(
+    leaf: WorkspaceLeaf,
+    viewEditor: MarkdownView["editor"],
+  ): void {
     const view = leaf.view;
     if (!(view instanceof MarkdownView) || view.getMode() !== "source") return;
     if (!view.file || !viewEditor || view.editor !== viewEditor) return;
@@ -115,6 +99,7 @@ export default class RpgRandomGeneratorPlugin extends Plugin {
       file: view.file,
       leaf,
     };
+    this.editableTargetChanges.set(this.editableTargetChanges.get() + 1);
   }
 
   private getEditableTarget(): EditableMarkdownTarget | null {
