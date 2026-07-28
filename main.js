@@ -143,6 +143,18 @@ var RpgRandomGeneratorSettingTab = class extends import_obsidian.PluginSettingTa
 var import_obsidian2 = require("obsidian");
 
 // src/names.ts
+var SUSPICIOUS_NAME_BLACKLIST = [
+  "boleto",
+  "sapo",
+  "fungo",
+  "morta",
+  "parafuso",
+  "elo-7",
+  "linha-03"
+];
+var MAX_NAME_LENGTH = 40;
+var MAX_NAME_PART_LENGTH = 28;
+var NAME_PATTERN = /^\p{Script=Latin}+(?:[ '\u2019-]\p{Script=Latin}+)*$/u;
 var PEOPLE = [
   {
     id: "humanos",
@@ -151,7 +163,9 @@ var PEOPLE = [
     noun: "humano",
     givenNames: ["Adel", "Brena", "Caio", "Dalia", "Eron", "L\xEDvia", "Mara", "Nilo", "Oren", "T\xE1lia", "Vera", "Yago"],
     familyNames: ["Valen\xE7a", "Moura", "Alvar", "Ribeiro", "Serrat", "Vilar", "Candeia", "Brum"],
-    compoundFamilyName: false
+    compoundFamilyName: false,
+    whimsicalGivenNames: ["Pim", "Nino", "Tuca"],
+    whimsicalFamilyNames: ["da Feira Lunar", "Passo Torto"]
   },
   {
     id: "elfos",
@@ -159,8 +173,10 @@ var PEOPLE = [
     article: "um",
     noun: "elfo",
     givenNames: ["Aelion", "Elaris", "Ilyra", "Lethan", "Maelis", "Naeviel", "Orian", "Saelith", "Thalion", "Vaelis", "Ylwen", "Zoreth"],
-    familyNames: ["da Lua Velada", "Folha Serena", "Vento de \xC2mbar", "do Crep\xFAsculo", "Canto de Prata", "Raiz Antiga"],
-    compoundFamilyName: true
+    familyNames: ["da Lua Velada", "Folha Serena", "Vento de \xC2mbar", "do Crep\xFAsculo", "Lira de Prata", "Raiz Antiga"],
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Lunito", "Fa\xEDsca", "Zunzum"],
+    whimsicalFamilyNames: ["Chap\xE9u de Lua", "Canto Saltitante"]
   },
   {
     id: "anoes",
@@ -168,8 +184,10 @@ var PEOPLE = [
     article: "um",
     noun: "an\xE3o",
     givenNames: ["Bori", "Dagna", "Dorrik", "Greda", "Keld", "Marn", "Runa", "Tovin", "Varka", "Brom", "Hedra", "Orsi"],
-    familyNames: ["Barbaferro", "Pedrafundida", "Martelo-Seco", "Punho de Carvalho", "Filho da Bigorna", "Escudo Rachado"],
-    compoundFamilyName: true
+    familyNames: ["Barbaferro", "Pedrafundida", "Machado-Seco", "Punho de Carvalho", "Filho da Bigorna", "Escudo Rachado"],
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Bigodim", "Tremo\xE7o", "Pavio"],
+    whimsicalFamilyNames: ["Caneca Saltitante", "Martelo Mi\xFAdo"]
   },
   {
     id: "halflings",
@@ -177,8 +195,10 @@ var PEOPLE = [
     article: "um",
     noun: "halfling",
     givenNames: ["Bela", "Ciro", "Dori", "Fina", "Joca", "Luma", "Milo", "Nena", "Pipo", "Rina", "T\xE9o", "Vivi"],
-    familyNames: ["P\xE9-Leve", "da Colina", "Fub\xE1", "Boa-Tigela", "Folha-Mansa", "Tr\xEAs Panelas"],
-    compoundFamilyName: true
+    familyNames: ["P\xE9-Leve", "da Colina", "Folha-Mansa", "Vale Dourado", "Colina Serena", "Campo Verde"],
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Migalha", "Pudim", "Tico"],
+    whimsicalFamilyNames: ["Boa-Tigela", "Tr\xEAs Panelas"]
   },
   {
     id: "orcs",
@@ -187,7 +207,9 @@ var PEOPLE = [
     noun: "orc",
     givenNames: ["Brakka", "Drog", "Ghorra", "Krag", "Morga", "Ruk", "Sharga", "Thokk", "Ugra", "Vorga", "Zakka"],
     familyNames: ["Quebra-Lan\xE7a", "Olho Cinzento", "da Cinza", "Presas de Ferro", "Corta-Correntes", "Trov\xE3o Baixo"],
-    compoundFamilyName: true
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Grunho", "Patusco", "Trombeta"],
+    whimsicalFamilyNames: ["Chute na Lua", "Roncador de Pedras"]
   },
   {
     id: "goblins",
@@ -195,8 +217,10 @@ var PEOPLE = [
     article: "um",
     noun: "goblin",
     givenNames: ["Bik", "Grix", "Keka", "Mik", "Nix", "Poka", "Rikk", "Snik", "Teka", "Vix", "Zik"],
-    familyNames: ["Catado", "Dente-Torto", "da Lata", "P\xE9-de-Lama", "Ouve-Tudo", "Sobra de Fogo"],
-    compoundFamilyName: true
+    familyNames: ["Dente-Torto", "Ferrugem", "Ouve-Tudo", "Sobra de Fogo", "Passo Oculto", "Olho de Breu"],
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Pilha", "Zigue", "Toco"],
+    whimsicalFamilyNames: ["da Lata", "P\xE9-de-Lama"]
   },
   {
     id: "infernis",
@@ -205,7 +229,9 @@ var PEOPLE = [
     noun: "infernis",
     givenNames: ["Azael", "Cireth", "Draziel", "Ivera", "Kael", "Lazra", "Mavren", "Nerez", "Ravael", "Sazra", "Veyra"],
     familyNames: ["Brasa-Viva", "da \xDAltima Vela", "Cinza Rubra", "Voz de Vidro", "do Pacto Partido", "Chifre Negro"],
-    compoundFamilyName: true
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Fagulha", "Pirueta", "Chispa"],
+    whimsicalFamilyNames: ["Pavio de Festa", "Brasa Saltitante"]
   },
   {
     id: "gigantes",
@@ -214,16 +240,20 @@ var PEOPLE = [
     noun: "gigante",
     givenNames: ["Arvok", "Brunda", "Drom", "Eygra", "Gorun", "Haldra", "Jorv", "Keldun", "Mavra", "Orvak", "Thyra"],
     familyNames: ["Que Caminha nas Nuvens", "P\xE9-de-Montanha", "Voz do Trov\xE3o", "Quebra-Picos", "do Vale Profundo", "M\xE3o de Granito"],
-    compoundFamilyName: true
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Tromba", "Picol\xE9", "Grand\xE3o"],
+    whimsicalFamilyNames: ["Cabe\xE7a nas Nuvens", "Passo de Pudim"]
   },
   {
     id: "quachos",
     label: "Quacho",
     article: "um",
     noun: "quacho",
-    givenNames: ["Bap", "Goga", "Kru", "Lopo", "Mumu", "Nok", "Paku", "Ribi", "Sapo", "Togo", "Wek"],
-    familyNames: ["Olho-de-Lagoa", "Pulo-Largo", "da Chuva", "L\xEDngua-R\xE1pida", "Barriga-Verde", "Canto-da-Margem"],
-    compoundFamilyName: true
+    givenNames: ["Bap", "Goga", "Kru", "Lopo", "Mumu", "Nok", "Paku", "Ribi", "Nalu", "Togo", "Wek"],
+    familyNames: ["Olho-de-Lagoa", "Salto-Largo", "da Chuva", "L\xEDngua-R\xE1pida", "Barriga-Verde", "Voz-da-Margem"],
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Pipoca", "Tutu", "Mola"],
+    whimsicalFamilyNames: ["Barriga de Mel", "Pulo Redondo"]
   },
   {
     id: "simios",
@@ -231,17 +261,21 @@ var PEOPLE = [
     article: "um",
     noun: "s\xEDmio",
     givenNames: ["Baku", "Duma", "Goro", "Jaka", "Kibo", "Luma", "Mako", "Nara", "Paku", "Roko", "Tamu", "Zuri"],
-    familyNames: ["M\xE3o-de-Copa", "do Galho Alto", "Olho de Fruta", "Pulo-Selvagem", "da Mata Vermelha", "Riso-Largo"],
-    compoundFamilyName: true
+    familyNames: ["M\xE3o-de-Copa", "do Galho Alto", "Olho de Fruta", "Salto-Selvagem", "da Mata Vermelha", "Voz do Dossel"],
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Caju", "Pulo", "Tutu"],
+    whimsicalFamilyNames: ["Rabo de Festa", "Banana Dourada"]
   },
   {
     id: "clanks",
     label: "Clank",
     article: "um",
     noun: "clank",
-    givenNames: ["Axiom", "Biela", "Cifra", "Elo-7", "Ferro", "\xCDon", "Lacre", "M\xF3dulo", "Nexo", "Parafuso", "Rivet", "V\xE1lvula"],
-    familyNames: ["da Oficina Norte", "Unidade de Cobre", "Linha-03", "da C\xE2mara Azul", "Protocolo Antigo", "Modelo Errante"],
-    compoundFamilyName: true
+    givenNames: ["Axiom", "Biela", "Cifra", "Ferro", "\xCDon", "Lacre", "M\xF3dulo", "Nexo", "Rivet", "V\xE1lvula", "Calibre", "T\xE1lio"],
+    familyNames: ["da Oficina Norte", "Unidade de Cobre", "da C\xE2mara Azul", "Protocolo Antigo", "Modelo Errante", "da Forja Leste"],
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Catraca", "Tinido", "Mola"],
+    whimsicalFamilyNames: ["Porca Dourada", "Ru\xEDdo de Lata"]
   },
   {
     id: "faunos",
@@ -249,8 +283,10 @@ var PEOPLE = [
     article: "um",
     noun: "fauno",
     givenNames: ["Aster", "Brisa", "D\xE1lia", "Faron", "Lira", "Mirt", "Neris", "P\xE3rio", "Silen", "T\xE1lia", "Vime"],
-    familyNames: ["P\xE9-de-Videira", "do Bosque Claro", "Chifre Dourado", "Riso de Musgo", "da Colina Verde", "Folha de Outono"],
-    compoundFamilyName: true
+    familyNames: ["P\xE9-de-Videira", "do Bosque Claro", "Chifre Dourado", "V\xE9u de Musgo", "da Colina Verde", "Folha de Outono"],
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Fub\xE1", "Pula-Folha", "Cascudo"],
+    whimsicalFamilyNames: ["P\xE9 de Marmelada", "Chifre Enfeitado"]
   },
   {
     id: "fadas",
@@ -258,17 +294,21 @@ var PEOPLE = [
     article: "uma",
     noun: "fada",
     givenNames: ["Avel\xE3", "Bril", "Cintila", "Eira", "Fira", "Lunel", "M\xE9li", "Nin", "Orvalha", "P\xE9rola", "Sori"],
-    familyNames: ["Luz-de-Orvalho", "Asa de Primavera", "do Anel de Cogumelos", "Sopro de Lua", "Riso de P\xF3len", "da Folha Azul"],
-    compoundFamilyName: true
+    familyNames: ["Luz-de-Orvalho", "Asa de Primavera", "do Anel de Flores", "Sopro de Lua", "V\xE9u de P\xF3len", "da Folha Azul"],
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Pirilampo", "Pompom", "Lantejoula"],
+    whimsicalFamilyNames: ["Asa de Confete", "Brilho de Bolha"]
   },
   {
     id: "fungrils",
     label: "Fungril",
     article: "um",
     noun: "fungril",
-    givenNames: ["Agar", "Boleto", "Cepa", "Fungo", "Hifa", "Morta", "N\xFAcleo", "Ostra", "P\xEDleo", "Spor", "Trufa"],
+    givenNames: ["Agar", "Cepa", "Hifa", "Mic\xE9lio", "N\xFAcleo", "Ostra", "P\xEDleo", "Spor", "Trufa", "Espora", "Riz\xF3"],
     familyNames: ["da Cova \xDAmida", "Esporo Vermelho", "Raiz de Musgo", "Chap\xE9u P\xE1lido", "Col\xF4nia Baixa", "do Subsolo"],
-    compoundFamilyName: true
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Bolota", "Cogumelo", "Pipoca"],
+    whimsicalFamilyNames: ["Chap\xE9u Saltitante", "Raiz de Festa"]
   },
   {
     id: "firbolgs",
@@ -277,7 +317,9 @@ var PEOPLE = [
     noun: "firbolg",
     givenNames: ["Aldo", "Bruma", "Dara", "Eogan", "Fenna", "Garan", "Iona", "Muir", "Nuala", "Oran", "Tara"],
     familyNames: ["Casco de Carvalho", "do Prado Silencioso", "Passo Pesado", "Guardi\xE3o do Vale", "Chifre de Cedro", "da N\xE9voa Alta"],
-    compoundFamilyName: true
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Musguinho", "Pinh\xE3o", "Toco"],
+    whimsicalFamilyNames: ["Abra\xE7o de Carvalho", "Passo de Bolota"]
   },
   {
     id: "galapas",
@@ -286,7 +328,9 @@ var PEOPLE = [
     noun: "galapa",
     givenNames: ["Aru", "Bato", "Cora", "Daku", "Guma", "Iru", "Kora", "Matu", "Nabu", "Teka", "Uru"],
     familyNames: ["Casco-de-Rio", "Passo Lento", "da Mar\xE9 Antiga", "Pedra nas Costas", "do Mangue Azul", "Escudo Vivo"],
-    compoundFamilyName: true
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Tartaruga", "Gota", "Pingo"],
+    whimsicalFamilyNames: ["Casco de Festa", "Mar\xE9 Saltitante"]
   },
   {
     id: "kataris",
@@ -294,22 +338,48 @@ var PEOPLE = [
     article: "um",
     noun: "katari",
     givenNames: ["Asha", "Barek", "Cira", "Daro", "Jassa", "Kesh", "Lira", "Marek", "Nissa", "Rava", "Tarek", "Vesha"],
-    familyNames: ["Passo de Cinza", "Olho de Lua", "Garra Serena", "Cauda Longa", "do Salto Alto", "Ronronar Sombrio"],
-    compoundFamilyName: true
+    familyNames: ["Passo de Cinza", "Olho de Lua", "Garra Serena", "Cauda Longa", "do Salto Alto", "Sombra Riscada"],
+    compoundFamilyName: true,
+    whimsicalGivenNames: ["Bigode", "Pirueta", "Pata"],
+    whimsicalFamilyNames: ["Cauda de Pena", "Salto de Pipoca"]
   }
 ];
 var profileMap = new Map(PEOPLE.map((profile) => [profile.id, profile]));
-function cleanName(value) {
-  return value.replace(/[^a-zA-ZÀ-ÿ-]/g, "").replace(/-{2,}/g, "-").replace(/^-|-$/g, "");
+var whimsicalNames = new Set(
+  PEOPLE.flatMap((profile) => [...profile.whimsicalGivenNames, ...profile.whimsicalFamilyNames]).map(normalizeForComparison)
+);
+function normalizeForComparison(value) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+}
+function containsSuspiciousName(value) {
+  const blacklist = new Set(SUSPICIOUS_NAME_BLACKLIST);
+  return value.split(/[ '\u2019-]+/u).some((part) => blacklist.has(normalizeForComparison(part)) || blacklist.has(normalizeForComparison(value)));
+}
+function isValidName(value) {
+  if (typeof value !== "string") return false;
+  const length = Array.from(value).length;
+  return length >= 2 && length <= MAX_NAME_LENGTH && NAME_PATTERN.test(value) && !containsSuspiciousName(value);
+}
+function isValidNamePart(value) {
+  if (typeof value !== "string") return false;
+  const length = Array.from(value).length;
+  return length >= 2 && length <= MAX_NAME_PART_LENGTH && NAME_PATTERN.test(value) && !containsSuspiciousName(value);
 }
 function titleCase(value) {
-  return value.length === 0 ? value : value[0].toLocaleUpperCase("pt-BR") + value.slice(1);
+  const characters = Array.from(value);
+  if (characters.length === 0) return value;
+  return characters[0].toLocaleUpperCase("pt-BR") + characters.slice(1).join("");
 }
-function markovName(samples, random) {
+function randomPick(values, random) {
+  const value = random.pick(values);
+  return value === void 0 ? void 0 : value;
+}
+function markovName(samples, random, tone) {
   var _a;
   const transitions = /* @__PURE__ */ new Map();
   for (const sample of samples) {
-    const normalized = cleanName(sample).toLocaleLowerCase("pt-BR");
+    if (!isValidNamePart(sample)) continue;
+    const normalized = sample.normalize("NFC").toLocaleLowerCase("pt-BR");
     const padded = `^^${normalized}$`;
     for (let index = 0; index < padded.length - 2; index += 1) {
       const key = padded.slice(index, index + 2);
@@ -323,34 +393,51 @@ function markovName(samples, random) {
   let value = "";
   for (let index = 0; index < 16; index += 1) {
     const options = transitions.get(state);
-    if (!options) break;
-    const next = random.pick(options);
+    if (!options) return null;
+    const next = randomPick(options, random);
+    if (typeof next !== "string") return null;
     if (next === "$") break;
     value += next;
     state = `${state[1]}${next}`;
   }
-  const candidate = titleCase(cleanName(value));
-  if (candidate.length < 2 || candidate.length > 14) {
-    return titleCase(cleanName(random.pick(samples)));
-  }
+  const candidate = titleCase(value);
+  if (!isValidNamePart(candidate)) return null;
+  if (tone !== "whimsical" && whimsicalNames.has(normalizeForComparison(candidate))) return null;
   return candidate;
+}
+function firstValid(pool) {
+  const fallback = pool.find((name) => isValidNamePart(name));
+  if (fallback === void 0) throw new Error("No valid curated name available");
+  return fallback;
+}
+function familyForTone(profile, tone) {
+  return tone === "whimsical" ? profile.whimsicalFamilyNames : profile.familyNames;
+}
+function givenForTone(profile, tone) {
+  return tone === "whimsical" ? profile.whimsicalGivenNames : profile.givenNames;
 }
 function getPeopleProfile(id) {
   const profile = profileMap.get(id);
   if (!profile) throw new Error(`Unknown people profile: ${id}`);
   return profile;
 }
-function randomPeople(random) {
-  return random.pick(PEOPLE);
-}
-function generateName(id, random) {
+function generateName(id, random, tone = "heroic") {
+  var _a;
   const profile = getPeopleProfile(id);
-  const firstName = markovName(profile.givenNames, random);
-  const familyName = random.pick(profile.familyNames);
-  if (profile.compoundFamilyName || random.chance(0.35)) {
-    return `${firstName} ${familyName}`;
+  const givenPool = givenForTone(profile, tone);
+  const familyPool = familyForTone(profile, tone);
+  const firstName = (_a = markovName(givenPool, random, tone)) != null ? _a : firstValid(givenPool);
+  const selectedFamily = randomPick(familyPool, random);
+  const familyName = selectedFamily !== void 0 && isValidNamePart(selectedFamily) ? selectedFamily : firstValid(familyPool);
+  const includeFamily = profile.compoundFamilyName || random.chance(0.35);
+  const fullName = includeFamily ? `${firstName} ${familyName}` : firstName;
+  if (isValidName(fullName) && (tone === "whimsical" || !whimsicalNames.has(normalizeForComparison(firstName)))) {
+    return fullName;
   }
-  return firstName;
+  const fallbackFirst = firstValid(givenPool);
+  const fallbackFamily = firstValid(familyPool);
+  const fallback = profile.compoundFamilyName || includeFamily ? `${fallbackFirst} ${fallbackFamily}` : fallbackFirst;
+  return isValidName(fallback) ? fallback : fallbackFirst;
 }
 
 // src/random.ts
@@ -378,240 +465,454 @@ var Random = class {
   }
 };
 
-// src/tables.ts
-var NPC_ROLES = [
-  "ferreiro de estrada",
-  "guarda de port\xE3o",
-  "mercadora de rel\xEDquias",
-  "curandeiro de aldeia",
-  "batedora de fronteira",
-  "cozinheiro de taverna",
-  "ca\xE7adora de monstros",
-  "escriba de um nobre",
-  "contrabandista de po\xE7\xF5es",
-  "peregrino sem templo",
-  "artista itinerante",
-  "cobradora de d\xEDvidas",
-  "carpinteiro naval",
-  "guia de p\xE2ntanos",
-  "aprendiz de alquimista",
-  "mensageira de uma guilda"
+// src/types.ts
+var GENERATOR_IDS = [
+  "npc",
+  "location",
+  "quest",
+  "encounter",
+  "rumor",
+  "dungeon"
 ];
-var NPC_MORALITIES = [
-  "\xE9 de cora\xE7\xE3o leal",
-  "est\xE1 sempre em busca de uma vantagem",
-  "tem moral duvidosa",
-  "carrega uma culpa antiga",
-  "dedica-se a uma causa justa",
-  "reage com crueldade quando \xE9 amea\xE7ado",
-  "busca reconhecimento a qualquer custo",
-  "quebra promessas quando isso lhe conv\xE9m",
-  "\xE9 mais gentil do que aparenta",
-  "acredita que os fins justificam os meios"
+var TONE_IDS = ["grim", "whimsical", "heroic", "mysterious"];
+var ENVIRONMENT_IDS = [
+  "wilderness",
+  "forest",
+  "city",
+  "coast",
+  "ruins",
+  "underground"
 ];
-var NPC_APPEARANCES = [
-  "tem uma cicatriz fina atravessando o queixo e olhos atentos demais",
-  "tem baixa estatura e m\xE3os manchadas de tinta e fuligem",
-  "prende os cabelos com fios coloridos e usa uma capa cheia de remendos",
-  "trabalha como se n\xE3o dormisse h\xE1 dias, mas nunca deixa de observar as portas",
-  "usa roupas pr\xE1ticas cobertas por pequenos amuletos de prote\xE7\xE3o",
-  "fala com uma voz suave, apesar da express\xE3o severa",
-  "carrega uma bolsa pesada de ingredientes, cartas e ferramentas",
-  "sorri com facilidade, mas esconde uma queimadura no pulso esquerdo",
-  "veste-se com eleg\xE2ncia demais para o lugar onde foi encontrado",
-  "fala com as m\xE3os e muda de assunto quando o passado \xE9 mencionado"
+var COMPLEXITY_IDS = ["quick", "detailed"];
+
+// src/content-selection.ts
+var ContentSelectionError = class extends Error {
+  constructor(message = "Nenhuma entrada de conte\xFAdo compat\xEDvel foi encontrada.") {
+    super(message);
+    this.name = "ContentSelectionError";
+  }
+};
+function asArray(value) {
+  if (value === void 0) return void 0;
+  if (Array.isArray(value)) return value;
+  return [value];
+}
+function tagMatches(tag, value) {
+  const values = asArray(tag);
+  return values === void 0 || values.includes(value);
+}
+function isFallback(entry) {
+  return entry.fallback === true || entry.isFallback === true;
+}
+function entryTag(entry, key) {
+  var _a, _b, _c, _d;
+  return (_d = (_b = entry[key]) != null ? _b : (_a = entry.tags) == null ? void 0 : _a[key]) != null ? _d : (_c = entry.compatibility) == null ? void 0 : _c[key];
+}
+function matches(entry, cell, fallback) {
+  const tone = entryTag(entry, "tone");
+  const environment = entryTag(entry, "environment");
+  const complexity = entryTag(entry, "complexity");
+  if (!fallback && (tone === void 0 || environment === void 0 || complexity === void 0)) {
+    return false;
+  }
+  return tagMatches(tone, cell.tone) && tagMatches(environment, cell.environment) && tagMatches(complexity, cell.complexity);
+}
+function cellKey(cell) {
+  return `${cell.tone}/${cell.environment}/${cell.complexity}`;
+}
+function allCells() {
+  return TONE_IDS.flatMap(
+    (tone) => ENVIRONMENT_IDS.flatMap(
+      (environment) => COMPLEXITY_IDS.map((complexity) => ({ tone, environment, complexity }))
+    )
+  );
+}
+function toCompatibility(value) {
+  return { tone: value.tone, environment: value.environment, complexity: value.complexity };
+}
+function selectCompatibleContent(entries, compatibility, random = new Random()) {
+  const cell = toCompatibility(compatibility);
+  const normal = entries.filter((entry) => !isFallback(entry) && matches(entry, cell, false));
+  if (normal.length > 0) return random.pick(normal);
+  const fallback = entries.filter((entry) => isFallback(entry) && matches(entry, cell, true));
+  if (fallback.length > 0) return random.pick(fallback);
+  throw new ContentSelectionError(
+    `Nenhuma entrada compat\xEDvel para ${cellKey(cell)} (normal ou fallback).`
+  );
+}
+function validateCatalogCoverage(entries) {
+  const seen = /* @__PURE__ */ new Set();
+  const duplicateIds = [];
+  const invalidEntryIds = [];
+  for (const entry of entries) {
+    if (typeof entry.id !== "string" || entry.id.trim().length === 0) {
+      invalidEntryIds.push(entry.id);
+    } else if (seen.has(entry.id)) {
+      duplicateIds.push(entry.id);
+    } else {
+      seen.add(entry.id);
+    }
+  }
+  const missing = allCells().filter(
+    (cell) => !entries.some(
+      (entry) => !isFallback(entry) && matches(entry, cell, false) || isFallback(entry) && matches(entry, cell, true)
+    )
+  );
+  return { valid: duplicateIds.length === 0 && invalidEntryIds.length === 0 && missing.length === 0, missing, duplicateIds, invalidEntryIds };
+}
+function assertCatalogCoverage(entries) {
+  const coverage = validateCatalogCoverage(entries);
+  if (!coverage.valid) {
+    const missing = coverage.missing.map(cellKey).join(", ");
+    const duplicates = coverage.duplicateIds.join(", ");
+    const invalid2 = coverage.invalidEntryIds.join(", ");
+    const details = [
+      missing.length > 0 ? `combina\xE7\xF5es ausentes: ${missing}` : "",
+      duplicates.length > 0 ? `IDs duplicados: ${duplicates}` : "",
+      invalid2.length > 0 ? `IDs inv\xE1lidos: ${invalid2}` : ""
+    ].filter(Boolean).join("; ");
+    throw new ContentSelectionError(`Cat\xE1logo incompleto: ${details}`);
+  }
+}
+
+// src/options.ts
+var TONE_LABELS = {
+  grim: "Sombrio",
+  whimsical: "Extravagante",
+  heroic: "Heroico",
+  mysterious: "Misterioso"
+};
+var ENVIRONMENT_LABELS = {
+  wilderness: "Terras selvagens",
+  forest: "Florestas",
+  city: "Cidade",
+  coast: "Litoral",
+  ruins: "Ru\xEDnas",
+  underground: "Subterr\xE2neo"
+};
+var COMPLEXITY_LABELS = {
+  quick: "R\xE1pido",
+  detailed: "Detalhado"
+};
+var RANDOM_LABEL = "Aleat\xF3rio";
+var RANDOM_ANCESTRY_LABEL = "Aleat\xF3ria";
+var TONES = TONE_IDS;
+var ENVIRONMENTS = ENVIRONMENT_IDS;
+var COMPLEXITIES = COMPLEXITY_IDS;
+var DEFAULT_GENERATION_OPTIONS = Object.freeze({
+  tone: "random",
+  environment: "random",
+  complexity: "random",
+  ancestry: "random"
+});
+var toneSet = new Set(TONE_IDS);
+var environmentSet = new Set(ENVIRONMENT_IDS);
+var complexitySet = new Set(COMPLEXITY_IDS);
+var peopleSet = new Set(PEOPLE.map((person) => person.id));
+var generatorSet = new Set(GENERATOR_IDS);
+function validSelection(value, values, fallback) {
+  return value === "random" || typeof value === "string" && values.has(value) ? value : fallback;
+}
+function isNpc(generatorId) {
+  return generatorId === "npc";
+}
+function normalizeGenerationOptions(input = {}, generatorId) {
+  const value = typeof input === "object" && input !== null ? input : {};
+  const ancestry = isNpc(generatorId) ? validSelection(value.ancestry, peopleSet, "random") : generatorId === void 0 ? validSelection(value.ancestry, peopleSet, "random") : null;
+  return {
+    tone: validSelection(value.tone, toneSet, "random"),
+    environment: validSelection(value.environment, environmentSet, "random"),
+    complexity: validSelection(value.complexity, complexitySet, "random"),
+    ancestry
+  };
+}
+function pick(selection, values, random) {
+  return selection === "random" ? random.pick(values) : selection;
+}
+function resolveGenerationOptions(options = DEFAULT_GENERATION_OPTIONS, random = new Random(), generatorId) {
+  const selected2 = normalizeGenerationOptions(options, generatorId);
+  return {
+    tone: pick(selected2.tone, TONE_IDS, random),
+    environment: pick(selected2.environment, ENVIRONMENT_IDS, random),
+    complexity: pick(selected2.complexity, COMPLEXITY_IDS, random),
+    ancestry: selected2.ancestry === null ? null : pick(selected2.ancestry, PEOPLE.map((person) => person.id), random)
+  };
+}
+function getToneLabel(value) {
+  return value === "random" ? RANDOM_LABEL : TONE_LABELS[value];
+}
+function getEnvironmentLabel(value) {
+  return value === "random" ? RANDOM_LABEL : ENVIRONMENT_LABELS[value];
+}
+function getComplexityLabel(value) {
+  return value === "random" ? RANDOM_LABEL : COMPLEXITY_LABELS[value];
+}
+function getPeopleLabel(value) {
+  const person = PEOPLE.find((candidate) => candidate.id === value);
+  if (!person) throw new Error(`Unknown people profile: ${value}`);
+  return person.label;
+}
+
+// src/catalogs/pt-BR/generated-content.ts
+var VARIATION_BEATS = [
+  { id: "testemunha", text: "Uma testemunha confi\xE1vel pode confirmar o pr\xF3ximo passo.", companion: false },
+  { id: "vestigio", text: "Um vest\xEDgio recente contradiz a vers\xE3o mais conhecida.", companion: true },
+  { id: "acordo", text: "Um acordo antigo ainda oferece uma sa\xEDda leg\xEDtima.", companion: false },
+  { id: "prazo", text: "O prazo termina antes do pr\xF3ximo amanhecer.", companion: true },
+  { id: "aliado", text: "Um aliado hesitante pede uma chance de reparar o dano.", companion: false },
+  { id: "objeto", text: "Um objeto comum guarda a prova que faltava.", companion: true },
+  { id: "rota", text: "Uma rota segura aparece quando algu\xE9m abandona o caminho habitual.", companion: false },
+  { id: "promessa", text: "Uma promessa feita em p\xFAblico impede uma solu\xE7\xE3o f\xE1cil.", companion: true },
+  { id: "sinal", text: "Um sinal repetido indica que a amea\xE7a mudou de lugar.", companion: false },
+  { id: "preco", text: "Toda solu\xE7\xE3o cobra um pre\xE7o que deve ser aceito em voz alta.", companion: true },
+  { id: "mensagem", text: "Uma mensagem incompleta revela quem ser\xE1 afetado primeiro.", companion: false },
+  { id: "silencio", text: "O sil\xEAncio de uma pessoa importante vale mais que qualquer boato.", companion: true },
+  { id: "marca", text: "Uma marca antiga cont\xE9m um sinal que n\xE3o existia ontem.", companion: false },
+  { id: "disputa", text: "Duas vers\xF5es sinceras entram em conflito diante do grupo.", companion: true },
+  { id: "refugio", text: "Um ref\xFAgio tempor\xE1rio permite observar o perigo sem enfrent\xE1-lo.", companion: false },
+  { id: "heranca", text: "Uma heran\xE7a esquecida transforma o problema em uma responsabilidade pessoal.", companion: true },
+  { id: "ritual", text: "Um ritual simples pode conter o problema, mas s\xF3 uma vez.", companion: false },
+  { id: "devedor", text: "Uma pessoa devedora oferece ajuda em troca de uma decis\xE3o dif\xEDcil.", companion: true },
+  { id: "memoria", text: "Uma mem\xF3ria compartilhada esclarece por que o conflito come\xE7ou.", companion: false },
+  { id: "escolha", text: "A primeira escolha do grupo definir\xE1 quem poder\xE1 pedir ajuda depois.", companion: true }
 ];
-var NPC_PERSONALITIES = [
-  "fazer perguntas antes de responder",
-  "tentar transformar qualquer conversa em uma negocia\xE7\xE3o",
-  "rir nos momentos mais inconvenientes",
-  "memorizar o nome de todos que encontra",
-  "procurar qualquer desculpa para continuar falando",
-  "oferecer conselhos que nunca foram solicitados",
-  "esperar uma trai\xE7\xE3o a cada conversa",
-  "tratar desconhecidos como velhos amigos",
-  "fingir n\xE3o entender quando uma pergunta \xE9 perigosa",
-  "falar de forma direta e raramente se desculpar"
-];
-var NPC_MOTIVATIONS = [
-  "encontrar uma pessoa desaparecida antes que a trilha esfrie",
-  "juntar dinheiro para comprar a liberdade de algu\xE9m querido",
-  "recuperar um objeto que roubou da pessoa errada",
-  "provar seu valor \xE0 pr\xF3pria comunidade",
-  "encontrar um lugar seguro para come\xE7ar de novo",
-  "investigar sinais de uma amea\xE7a que ningu\xE9m mais acredita existir",
-  "quitar uma d\xEDvida feita com uma criatura sobrenatural",
-  "descobrir quem est\xE1 sabotando seu trabalho"
-];
-var NPC_COMPLICATIONS = [
-  "em segredo, mant\xE9m uma d\xEDvida com a guilda dos ladr\xF5es",
-  "algu\xE9m conhece sua verdadeira identidade e n\xE3o para de seguir seus passos",
-  "carrega uma carta que pode iniciar uma guerra local",
-  "prometeu entregar uma informa\xE7\xE3o falsa antes do amanhecer",
-  "esconde que foi respons\xE1vel pelo problema que agora tenta resolver",
-  "tem um aliado poderoso, mas n\xE3o sabe se ainda pode confiar nele",
-  "carrega uma maldi\xE7\xE3o que piora sempre que mente",
-  "deve escolher entre salvar sua reputa\xE7\xE3o e salvar uma vida"
-];
-var ANIMAL_COMPANIONS = [
-  "um corvo albino chamado Nimbo",
-  "uma raposa manca chamada Fa\xEDsca",
-  "um urso marrom chamado Bude",
-  "uma cabra de chifres dourados chamada Tremo\xE7o",
-  "um c\xE3o de guerra chamado Risco",
-  "uma coruja que responde pelo nome de Vela",
-  "um lagarto azul chamado Pingo",
-  "um gato de olhos diferentes chamado Sombra"
-];
-var LOCATION_NAMES = [
-  "Ponte dos Sinos",
-  "Torre da N\xE9voa",
-  "Mercado das Sete Portas",
-  "Bosque do Veado Branco",
-  "Santu\xE1rio da \xDAltima Brasa",
-  "Caverna do Eco Fundo",
-  "Estrada dos Ossos Brancos",
-  "Moinho do Corvo",
-  "Aldeia de Pedra Baixa",
-  "Farol do Mar Interior",
-  "Jardim das Est\xE1tuas Dormindo",
-  "Fortaleza de Sal"
-];
-var LOCATION_TYPES = [
-  "um posto de com\xE9rcio constru\xEDdo sobre as ru\xEDnas de uma estrada imperial",
-  "um lugar de passagem onde viajantes deixam uma moeda antes de seguir",
-  "uma comunidade isolada que parece pr\xF3spera demais para a regi\xE3o",
-  "um ref\xFAgio escondido entre ra\xEDzes grossas e pedras cobertas de musgo",
-  "uma fortaleza abandonada que ainda recebe ordens durante a madrugada",
-  "uma constru\xE7\xE3o torta, ampliada por gera\xE7\xF5es sem um \xFAnico plano",
-  "uma antiga torre de vigia tomada por vinhas e ninhos"
-];
-var LOCATION_ATMOSPHERES = [
-  "O local cheira a chuva, ferro e flores esmagadas.",
-  "De vez em quando, algo bate do outro lado das paredes.",
-  "Os moradores falam baixo e deixam uma cadeira vazia em cada mesa.",
-  "Luzes quentes aparecem nas janelas mesmo quando o local deveria estar vazio.",
-  "A temperatura cai quando algu\xE9m pronuncia o nome do antigo dono.",
-  "Marcas recentes cobrem s\xEDmbolos gastos pelo tempo."
-];
-var LOCATION_FEATURES = [
-  "A porta dos fundos s\xF3 abre quando algu\xE9m conta uma lembran\xE7a verdadeira.",
-  "Um mapa incompleto mostra caminhos que desaparecem ao amanhecer.",
-  "A \xE1gua do po\xE7o reflete lugares que ficam a quil\xF4metros dali.",
-  "Uma anfitri\xE3 oferece abrigo, mas exige que ningu\xE9m acenda fogo depois da meia-noite.",
-  "A est\xE1tua da pra\xE7a muda de posi\xE7\xE3o quando ningu\xE9m est\xE1 olhando.",
-  "Todos conhecem uma sala da casa, mas ningu\xE9m admite ter entrado nela."
-];
-var LOCATION_HOOKS = [
-  "Algu\xE9m paga bem por qualquer informa\xE7\xE3o sobre o que existe sob o lugar.",
-  "Um visitante sumiu depois de seguir uma m\xFAsica vinda de dentro das paredes.",
-  "Um ritual silencioso destruir\xE1 o lugar em poucos dias.",
-  "A comunidade precisa escolher entre partir ou aceitar a prote\xE7\xE3o de uma criatura perigosa.",
-  "Um objeto valioso est\xE1 \xE0 vista de todos, mas ningu\xE9m reconhece o que ele \xE9."
-];
-var QUEST_GIVERS = [
-  "uma autoridade local",
-  "uma testemunha ferida",
-  "a lideran\xE7a de uma pequena comunidade",
-  "uma pessoa da nobreza que tenta n\xE3o parecer desesperada",
-  "uma crian\xE7a que repete palavras de um sonho",
-  "a pessoa respons\xE1vel por um comboio perdido",
-  "algu\xE9m que recebeu um press\xE1gio imposs\xEDvel",
-  "uma pessoa presa que oferece informa\xE7\xF5es em troca de prote\xE7\xE3o"
-];
-var QUEST_OBJECTIVES = [
-  "recuperar um objeto roubado antes que ele seja vendido",
-  "encontrar uma pessoa desaparecida sem alertar quem a levou",
-  "escoltar uma testemunha at\xE9 um lugar seguro",
-  "descobrir por que uma estrada deixou de aparecer nos mapas",
-  "convencer duas comunidades a adiar um conflito",
-  "investigar uma ru\xEDna que come\xE7ou a emitir sinais durante a noite",
-  "interromper uma troca que acontecer\xE1 em um local secreto",
-  "levar uma mensagem que n\xE3o pode ser escrita"
-];
-var QUEST_COMPLICATIONS = [
-  "O contratante esconde uma parte da hist\xF3ria.",
-  "O alvo da miss\xE3o tamb\xE9m acredita estar fazendo a coisa certa.",
-  "A recompensa pertence a algu\xE9m que n\xE3o pretende entreg\xE1-la voluntariamente.",
-  "Cada tentativa de resolver o problema fortalece a amea\xE7a escondida.",
-  "O prazo \xE9 curto, mas agir depressa pode colocar inocentes em perigo.",
-  "Um aliado confi\xE1vel trabalha secretamente para os dois lados."
-];
-var QUEST_REWARDS = [
-  "uma rel\xEDquia que aponta para um segredo maior",
-  "a prote\xE7\xE3o de uma comunidade influente",
-  "um mapa para um lugar que n\xE3o aparece em nenhum atlas",
-  "uma d\xEDvida de favor que poder\xE1 ser cobrada uma \xFAnica vez",
-  "uma pequena fortuna e uma reputa\xE7\xE3o dif\xEDcil de apagar",
-  "acesso a uma biblioteca que guarda hist\xF3rias proibidas"
-];
-var ENCOUNTER_ENVIRONMENTS = [
-  "uma estrada estreita entre colinas",
-  "um mercado lotado no fim da tarde",
-  "uma clareira coberta por n\xE9voa",
-  "uma ponte onde o rio corre para cima",
-  "um corredor escuro sob uma antiga fortaleza",
-  "um acampamento abandonado ainda quente",
-  "uma trilha de montanha durante uma tempestade"
-];
-var ENCOUNTER_SITUATIONS = [
-  "uma carro\xE7a quebrada bloqueia a passagem, e seus ocupantes pedem ajuda para conter algo preso sob a lona",
-  "uma criatura ferida protege uma caixa de madeira que ainda se move",
-  "guardas discutem sobre um prisioneiro que afirma conhecer o futuro de cada pessoa presente",
-  "um inc\xEAndio come\xE7a sob o ch\xE3o enquanto uma caravana tenta atravessar",
-  "uma prociss\xE3o carrega uma est\xE1tua que parece acompanhar o grupo com os olhos",
-  "um duelo est\xE1 prestes a come\xE7ar, mas os dois combatentes pedem que os aventureiros escolham o vencedor",
-  "uma crian\xE7a oferece um mapa em troca de prote\xE7\xE3o contra algo invis\xEDvel"
-];
-var ENCOUNTER_TWISTS = [
-  "O perigo vis\xEDvel serve apenas para manter os olhos longe do acampamento.",
-  "A suposta v\xEDtima armou a cena para descobrir quem viria ajud\xE1-la.",
-  "Vencer pela for\xE7a abre uma passagem que estava selada.",
-  "Os envolvidos s\xF3 querem ganhar tempo at\xE9 a mar\xE9 subir.",
-  "A criatura tem um motivo leg\xEDtimo e oferece uma troca.",
-  "Uma das pessoas presentes usa o rosto de algu\xE9m conhecido pelo grupo."
-];
-var ENCOUNTER_CHOICES = [
-  "H\xE1 tempo para negociar, investigar ou passar \xE0 for\xE7a, mas n\xE3o para fazer os tr\xEAs.",
-  "Para resolver o problema, ser\xE1 preciso escolher quem ficar\xE1 para tr\xE1s.",
-  "Se ningu\xE9m agir, o problema alcan\xE7ar\xE1 a pr\xF3xima comunidade antes do amanhecer.",
-  "Uma decis\xE3o r\xE1pida evita a luta, mas cria uma d\xEDvida.",
-  "O grupo precisa descobrir qual dos sinais \xE9 uma armadilha antes que todos desapare\xE7am."
-];
-var RUMOR_PREMISES = [
-  { subject: "o sino enterrado sob a pra\xE7a", claim: "toca sozinho \xE0 meia-noite" },
-  { subject: "a rainha da cidade", claim: "nunca aparece em p\xFAblico porque deixou seu corpo em outra cidade" },
-  { subject: "a estrada velha do norte", claim: "muda de lugar durante a lua nova" },
-  { subject: "um po\xE7o no centro da aldeia", claim: "devolve objetos perdidos, mas cobra uma mem\xF3ria em troca" },
-  { subject: "o ferreiro da rua baixa", claim: "n\xE3o envelhece desde que encontrou um martelo enterrado" },
-  { subject: "as luzes vistas no topo da montanha", claim: "s\xE3o sinais de que uma antiga porta est\xE1 prestes a se abrir" },
-  { subject: "um navio sem tripula\xE7\xE3o", claim: "leva passageiros para portos que desapareceram dos mapas" },
-  { subject: "a criatura do moinho", claim: "protege uma passagem usada por algo que ainda est\xE1 acordado" }
-];
-var RUMOR_SUBJECTS = RUMOR_PREMISES.map(({ subject }) => subject);
-var RUMOR_CLAIMS = RUMOR_PREMISES.map(({ claim }) => claim);
-var RUMOR_TRUTHS = [
-  "\xE9 verdade, mas a consequ\xEAncia foi exagerada",
-  "\xE9 uma mentira espalhada para esconder uma pista mais importante",
-  "h\xE1 algo de verdade nisso, mas a causa \xE9 outra",
-  "s\xF3 acontece quando uma condi\xE7\xE3o espec\xEDfica \xE9 cumprida",
-  "come\xE7ou como uma mentira e se tornou verdade depois de um acontecimento recente"
-];
-var DUNGEON_ENTRIES = [
-  "Entrada: o acesso fica atr\xE1s de uma porta comum, mas um guardi\xE3o pede que cada visitante deixe algo para tr\xE1s antes de passar.",
-  "Desafio: um mecanismo antigo abre o caminho depois de uma escolha dif\xEDcil ou da interpreta\xE7\xE3o de uma pista incompleta.",
-  "Contratempo: o ch\xE3o cede, separa o grupo e revela que algu\xE9m chegou antes, levando parte do tesouro.",
-  "Confronto: a amea\xE7a principal conhece os nomes dos invasores e oferece uma barganha antes de atacar.",
-  "Recompensa: o pr\xEAmio resolve um problema imediato, mas traz o nome de quem construiu o lugar e o pr\xF3ximo alvo da disputa."
-];
-var DUNGEON_THEMES = [
-  "uma ordem de curandeiros que desapareceu sem deixar corpos",
-  "um tesouro que pertence a tr\xEAs herdeiros inimigos",
-  "uma criatura adormecida sob as funda\xE7\xF5es",
-  "um pacto feito entre uma cidade e o rio que a alimenta",
-  "um arquivo capaz de alterar a mem\xF3ria de quem o l\xEA",
-  "uma guerra antiga que continua sendo travada por mortos"
-];
+var TONE = {
+  grim: {
+    frame: "uma amea\xE7a recente",
+    theme: "Cicatrizes de uma perda recente",
+    event: "uma amea\xE7a deixou perdas recentes",
+    pressure: "A esperan\xE7a est\xE1 sendo cobrada em sil\xEAncio.",
+    threat: "uma consequ\xEAncia dif\xEDcil de desfazer",
+    motive: "evitar que outra pessoa pague o pre\xE7o",
+    color: "s\xF3brio e marcado por luto"
+  },
+  whimsical: {
+    frame: "um problema absurdo",
+    theme: "O problema que se recusa a fazer sentido",
+    event: "um problema absurdo confundiu a regi\xE3o",
+    pressure: "A confus\xE3o cresce sempre que algu\xE9m tenta simplificar tudo.",
+    threat: "uma surpresa inconveniente e barulhenta",
+    motive: "transformar a trapalhada em um relato memor\xE1vel",
+    color: "leve e cheio de pequenas manias"
+  },
+  heroic: {
+    frame: "uma chance clara de prote\xE7\xE3o",
+    theme: "Uma chance de proteger a regi\xE3o",
+    event: "uma chance clara protegeu quem precisava",
+    pressure: "A decis\xE3o do grupo pode inspirar a regi\xE3o inteira.",
+    threat: "um obst\xE1culo que exige coragem e coopera\xE7\xE3o",
+    motive: "dar a outras pessoas uma oportunidade de seguir em frente",
+    color: "firme e orientado por coragem"
+  },
+  mysterious: {
+    frame: "um enigma antigo",
+    theme: "O padr\xE3o escondido por tr\xE1s dos sinais",
+    event: "um enigma revelou apenas parte de sua inten\xE7\xE3o",
+    pressure: "Cada resposta abre uma pergunta ainda mais antiga.",
+    threat: "uma presen\xE7a que prefere sinais a explica\xE7\xF5es",
+    motive: "entender o padr\xE3o antes que ele se complete",
+    color: "silencioso e dif\xEDcil de interpretar"
+  }
+};
+var ENVIRONMENT = {
+  wilderness: {
+    name: "Marco do Horizonte Aberto",
+    setting: "nas plan\xEDcies abertas, entre montanhas, p\xE2ntanos e terras \xE1ridas",
+    texture: "O vento forte cruza um horizonte sem abrigo e espalha marcas pelo ch\xE3o.",
+    inhabitants: "Viajantes, pastores e comunidades conhecem os caminhos sazonais.",
+    regionNoun: "as terras abertas",
+    threat: "O clima severo dificulta o avan\xE7o, enquanto algo acompanha o grupo \xE0 dist\xE2ncia."
+  },
+  forest: {
+    name: "Clareira das Folhas Baixas",
+    setting: "na mata fechada, onde copas antigas escondem o c\xE9u",
+    texture: "Ra\xEDzes \xFAmidas, folhas sobre folhas e trilhas m\xF3veis cercam a passagem.",
+    inhabitants: "Guardi\xF5es da mata, coletores e animais atentos ocupam a regi\xE3o.",
+    regionNoun: "a floresta",
+    threat: "A floresta fecha a passagem, e uma presen\xE7a se move entre as \xE1rvores."
+  },
+  city: {
+    name: "Beco das Sete Janelas",
+    setting: "em ruas cheias, p\xE1tios de com\xE9rcio e becos sob muitas janelas",
+    texture: "Sinos, preg\xF5es, portas trancadas e mensagens trocadas depressa dominam o lugar.",
+    inhabitants: "Comerciantes, autoridades, trabalhadores e vizinhos disputam os acessos.",
+    regionNoun: "a cidade",
+    threat: "Um rumor mobiliza a multid\xE3o, enquanto algu\xE9m controla as entradas e sa\xEDdas."
+  },
+  coast: {
+    name: "Cais da Mar\xE9 Tardia",
+    setting: "no litoral, entre fal\xE9sias, areia salgada e \xE1gua que muda com a mar\xE9",
+    texture: "Maresia, cordas molhadas, gaivotas e ondas imprevis\xEDveis cercam o cais.",
+    inhabitants: "Pescadores, navegantes e comunidades de enseada acompanham a mar\xE9.",
+    regionNoun: "o litoral",
+    threat: "A mar\xE9 sobe depressa, e algo chega pelo caminho da \xE1gua."
+  },
+  ruins: {
+    name: "P\xE1tio da Pedra Rachada",
+    setting: "em ru\xEDnas de pedra, com sal\xF5es quebrados e s\xEDmbolos cobertos de poeira",
+    texture: "Arcos rachados, fuligem antiga, pedras deslocadas e ecos sem origem marcam o local.",
+    inhabitants: "Saqueadores, estudiosos, fam\xEDlias e vigias ocupam os restos da constru\xE7\xE3o.",
+    regionNoun: "as ru\xEDnas",
+    threat: "A estrutura cede aos poucos, enquanto uma promessa esquecida desperta sob os escombros."
+  },
+  underground: {
+    name: "C\xE2mara do Eco Baixo",
+    setting: "no subterr\xE2neo, entre t\xFAneis estreitos, cisternas e c\xE2maras sem sol",
+    texture: "Umidade, fungos luminosos, correntes de ar e vozes nas paredes tornam o caminho incerto.",
+    inhabitants: "Mineiros e comunidades profundas vivem longe da luz do c\xE9u.",
+    regionNoun: "os t\xFAneis subterr\xE2neos",
+    threat: "A falta de sa\xEDda aperta o grupo, e algo conhece cada passagem melhor que ele."
+  }
+};
+function matrix(prefix2, make) {
+  const entries = [];
+  for (const tone of TONE_IDS) {
+    for (const environment of ENVIRONMENT_IDS) {
+      for (const complexity of COMPLEXITY_IDS) {
+        const cell = { tone, environment, complexity };
+        const content = make(cell);
+        entries.push({ id: `${prefix2}-${tone}-${environment}-${complexity}-normal`, tone, environment, complexity, content });
+        entries.push({
+          id: `${prefix2}-${tone}-${environment}-${complexity}-fallback`,
+          tone,
+          environment,
+          complexity,
+          fallback: true,
+          content
+        });
+      }
+    }
+  }
+  return entries;
+}
+function context(cell) {
+  return { tone: TONE[cell.tone], environment: ENVIRONMENT[cell.environment] };
+}
+var NPC_CONTENT = matrix("npc", (cell) => {
+  const { tone, environment } = context(cell);
+  return {
+    role: `guia que conhece ${environment.regionNoun}`,
+    trait: `tem um jeito ${tone.color}. Observa quem precisa de ajuda`,
+    appearance: `Carrega sinais de viagem. ${environment.texture}`,
+    personality: `ouve antes de falar e trata cada encontro como parte de ${tone.frame}`,
+    motivation: `${tone.motive}, mesmo quando isso exige voltar \xE0 regi\xE3o`,
+    complication: `${tone.pressure} Seu trabalho depende de uma escolha que n\xE3o pode adiar.`,
+    secret: `Sabe que ${tone.threat} j\xE1 deixou marcas ${environment.setting}.`,
+    relationship: `Mant\xE9m um acordo fr\xE1gil com quem vive na regi\xE3o. ${environment.inhabitants}`,
+    immediateHook: `Oferece uma pista sobre o perigo local em troca de ajuda imediata e pede uma decis\xE3o antes de seguir.`,
+    companion: `um companheiro acostumado a viajar ${environment.setting}`
+  };
+});
+var LOCATION_CONTENT = matrix("location", (cell) => {
+  const { tone, environment } = context(cell);
+  return {
+    name: environment.name,
+    type: `um ponto de passagem com aspecto ${tone.color}`,
+    atmosphere: `${tone.event[0].toLocaleUpperCase("pt-BR")}${tone.event.slice(1)}. ${environment.texture}`,
+    feature: `Um marco local registra mudan\xE7as na regi\xE3o e guarda sinais de que ${tone.threat} se aproxima.`,
+    hook: `Algu\xE9m procura ajuda para entender o perigo antes que ele alcance os moradores.`,
+    inhabitants: environment.inhabitants,
+    history: `O lugar foi criado porque ${tone.event}.`,
+    tension: `${tone.pressure} Os habitantes discordam sobre partir ou permanecer.`,
+    danger: environment.threat,
+    secret: `O marco esconde uma mensagem ligada a ${tone.motive}.`,
+    opportunities: `H\xE1 uma rota segura, uma testemunha e um recurso \xFAtil para quem observar o local.`
+  };
+});
+var QUEST_CONTENT = matrix("quest", (cell) => {
+  const { tone, environment } = context(cell);
+  return {
+    giver: `uma lideran\xE7a da comunidade que vive na regi\xE3o`,
+    objective: `levar uma prova at\xE9 ${environment.name} antes que o perigo alcance outras pessoas`,
+    location: environment.name,
+    complication: `A situa\xE7\xE3o ligada a ${tone.frame} interfere no acordo antes que a entrega aconte\xE7a.`,
+    reward: `a confian\xE7a da comunidade e acesso a uma rota escondida`,
+    context: `A miss\xE3o nasceu porque ${tone.pressure.toLocaleLowerCase("pt-BR")} O pedido parece simples, mas toca o futuro de quem vive ${environment.setting}.`,
+    stages: `Primeiro, encontrar a pista. Depois, atravessar o lugar com cuidado. Por fim, decidir o que revelar \xE0 comunidade.`,
+    opposition: `${environment.threat} Uma pessoa interessada oferece uma solu\xE7\xE3o conveniente.`,
+    escalation: `Cada atraso aproxima ${tone.threat} e fecha uma passagem importante.`,
+    failure: `A comunidade perde uma prote\xE7\xE3o, e o mesmo perigo alcan\xE7a novos viajantes.`,
+    alternative: `Negociar com a oposi\xE7\xE3o e agir para ${tone.motive}, sem concluir o percurso habitual.`
+  };
+});
+var ENCOUNTER_CONTENT = matrix("encounter", (cell) => {
+  const { tone, environment } = context(cell);
+  return {
+    title: environment.name,
+    situation: `Um grupo interrompe a passagem ${environment.setting}. Seus integrantes fazem um pedido urgente.`,
+    immediateThreat: `${environment.threat} O espa\xE7o seguro diminui a cada momento.`,
+    twist: `A cena nasceu depois que ${tone.event}. A pessoa que parece precisar de ajuda conhece uma sa\xEDda.`,
+    choice: `Negociar, investigar ou agir agora significa aceitar uma perda diferente.`,
+    setup: `O encontro come\xE7a quando o ambiente muda de repente. ${environment.texture}`,
+    actors: `${environment.inhabitants} Tamb\xE9m participa algu\xE9m ligado a ${tone.threat}.`,
+    escalation: `Se ningu\xE9m decidir, ${tone.pressure.toLocaleLowerCase("pt-BR")} A amea\xE7a muda de dire\xE7\xE3o.`,
+    interaction: `O grupo pode usar o ambiente de modo criativo para abrir uma rota, ganhar tempo ou expor uma mentira.`,
+    outcomes: `Uma solu\xE7\xE3o cuidadosa preserva a passagem. Uma decis\xE3o r\xE1pida resolve o impasse, mas deixa uma d\xEDvida.`,
+    aftermath: `Depois, os sinais do conflito local permanecem ${environment.setting}. Eles apontam para uma consequ\xEAncia futura ligada a ${tone.frame}.`
+  };
+});
+var RUMOR_CONTENT = matrix("rumor", (cell) => {
+  const { tone, environment } = context(cell);
+  return {
+    subject: `A passagem conhecida como ${environment.name}`,
+    claim: `esconde um sinal de que ${tone.threat} est\xE1 se aproximando`,
+    truth: `O sinal existe, mas a causa est\xE1 ligada ao fato de que ${tone.event}; a regi\xE3o ainda pode escolher como reagir.`,
+    source: `Uma pessoa que vive na regi\xE3o ouviu a hist\xF3ria antes da \xFAltima mudan\xE7a.`,
+    variations: `Algumas vers\xF5es citam o ambiente, enquanto outras culpam uma testemunha.`,
+    clues: `Marcas no local e uma frase repetida por quem conhece ${environment.name}.`,
+    interestedParties: `A comunidade quer confirmar a hist\xF3ria, mas algu\xE9m que quer ${tone.motive} tenta abaf\xE1-la.`,
+    investigationConsequence: `Investigar revela a verdade, mas torna vis\xEDvel ${tone.threat} para toda a regi\xE3o.`,
+    context: `A hist\xF3ria cresceu porque ${tone.frame} chamou aten\xE7\xE3o para este lugar, e ningu\xE9m sabe quem come\xE7ou a repeti-la.`
+  };
+});
+var DUNGEON_CONTENT = matrix("dungeon", (cell) => {
+  const { tone, environment } = context(cell);
+  const theme = `${tone.theme} ${environment.setting}`;
+  const overview = `Cinco espa\xE7os mostram o que ser\xE1 preciso para ${tone.motive}. ${environment.texture}`;
+  const rooms = [
+    `O acesso fica ${environment.setting}; a passagem pede uma decis\xE3o ligada a ${tone.frame}. Sinais no ch\xE3o mostram que algu\xE9m esperava visitantes.`,
+    `Um vest\xEDgio da comunidade local exige interpretar sinais antes de avan\xE7ar. A resposta revela o custo de subestimar a situa\xE7\xE3o. A pressa pode fechar a \xFAnica sa\xEDda.`,
+    `O perigo local separa o grupo e muda o caminho de volta. Observar o ambiente permite encontrar uma passagem estreita. Cada pessoa precisa escolher onde pisar.`,
+    `Algo ligado a ${tone.threat} oferece uma troca antes de impedir a passagem. Sua proposta revela um risco imediato. O grupo ainda pode negociar antes de lutar.`,
+    `Um recurso \xFAtil oferece meios para ${tone.motive} e deixa uma escolha para depois. O pr\xEAmio tamb\xE9m chama aten\xE7\xE3o. A descoberta muda o sentido da jornada.`
+  ];
+  const detailedRooms = [
+    `O acesso fica ${environment.setting}. A passagem pede uma decis\xE3o ligada a ${tone.frame}; escolher com cuidado abre uma marca antiga e deixa claro que algu\xE9m esperava visitantes. A porta se fecha devagar, separando a rota conhecida daquilo que vem depois. A sa\xEDda continua incerta para todos. Marcas junto ao batente registram escolhas anteriores. Compar\xE1-las revela qual caminho foi usado por \xFAltimo.`,
+    `Um vest\xEDgio da comunidade local exige interpretar sinais antes de avan\xE7ar. As pistas misturam mem\xF3ria e necessidade, e a press\xE3o criada por ${tone.frame} alcan\xE7ou este lugar. Um detalhe esquecido oferece uma sa\xEDda, mas cobra tempo e aten\xE7\xE3o. Ningu\xE9m pode seguir sem assumir essa consequ\xEAncia. Uma resposta incompleta abre uma rota mais perigosa. A solu\xE7\xE3o correta preserva um recurso para o retorno.`,
+    `O perigo local separa o grupo e muda o caminho de volta. O desvio passa por uma \xE1rea inst\xE1vel, onde observar o ambiente permite recuperar um objeto e evitar uma perda maior. Cada pessoa precisa decidir que pista levar\xE1 consigo. O sil\xEAncio tamb\xE9m pode ser uma escolha. Um ru\xEDdo distante permite reencontrar o grupo. Segui-lo depressa demais, por\xE9m, exp\xF5e a posi\xE7\xE3o de todos.`,
+    `Algo ligado a ${tone.threat} oferece uma troca antes de impedir a passagem. Essa presen\xE7a conhece a regi\xE3o e apresenta uma verdade incompleta. Aceitar, recusar ou propor outra sa\xEDda muda o pr\xF3ximo passo. A escolha tamb\xE9m define quem poder\xE1 atravessar em seguran\xE7a. Nenhuma promessa ficar\xE1 intacta depois disso. Uma testemunha escondida conhece o ponto fraco da proposta. Convenc\xEA-la a falar exige oferecer prote\xE7\xE3o real.`,
+    `Um recurso \xFAtil oferece meios para ${tone.motive} e deixa uma escolha para depois. O pr\xEAmio ajuda agora, mas sua origem liga o grupo \xE0 comunidade local e a uma disputa que continua fora destas salas. Levar tudo exige abandonar uma vantagem imediata. O caminho de volta passa a ter outro significado. Uma inscri\xE7\xE3o identifica quem reivindicar\xE1 o objeto. Deix\xE1-la intacta preserva uma poss\xEDvel negocia\xE7\xE3o futura.`
+  ];
+  return { theme, overview, rooms, detailedRooms };
+});
+for (const entries of [NPC_CONTENT, LOCATION_CONTENT, QUEST_CONTENT, ENCOUNTER_CONTENT, RUMOR_CONTENT, DUNGEON_CONTENT]) {
+  assertCatalogCoverage(entries);
+}
+var CONTENT_CATALOGS = {
+  npc: NPC_CONTENT,
+  location: LOCATION_CONTENT,
+  quest: QUEST_CONTENT,
+  encounter: ENCOUNTER_CONTENT,
+  rumor: RUMOR_CONTENT,
+  dungeon: DUNGEON_CONTENT
+};
+
+// src/structured-output.ts
+function prefix(field) {
+  return field.number === void 0 ? "" : `${field.number}. `;
+}
+function renderPlainFields(fields) {
+  return fields.map((field) => `${prefix(field)}${field.label}: ${field.value}`).join("\n");
+}
+function renderMarkdownFields(fields) {
+  return fields.map((field) => `${prefix(field)}**${field.label}:** ${field.value}`).join("\n");
+}
+function renderFields(fields) {
+  return {
+    plainText: renderPlainFields(fields),
+    markdown: renderMarkdownFields(fields)
+  };
+}
 
 // src/generators.ts
 var LABELS = {
@@ -622,70 +923,164 @@ var LABELS = {
   rumor: "Rumores",
   dungeon: "Masmorra"
 };
-function result(id, title, body) {
-  const content = {
-    plainText: body,
-    markdown: body
-  };
-  return { id, label: LABELS[id], title, content };
+function finish(id, title, fields, metadata) {
+  const content = renderFields(fields);
+  return { id, label: LABELS[id], title, content, options: metadata };
+}
+function begin(id, random, options) {
+  const selected2 = normalizeGenerationOptions(options, id);
+  const resolved = resolveGenerationOptions(selected2, random, id);
+  return { selected: selected2, resolved };
+}
+function selected(entries, resolved, random) {
+  return selectCompatibleContent(entries, resolved, random).content;
+}
+function variation(random) {
+  return random.pick(VARIATION_BEATS);
+}
+function generateNpc(random, options = DEFAULT_GENERATION_OPTIONS) {
+  const metadata = begin("npc", random, options);
+  const profile = selected(CONTENT_CATALOGS.npc, metadata.resolved, random);
+  const beat = variation(random);
+  const ancestry = metadata.resolved.ancestry;
+  if (ancestry === null) throw new Error("NPC exige uma ancestralidade resolvida");
+  const people = getPeopleProfile(ancestry);
+  const name = generateName(people.id, random, metadata.resolved.tone);
+  const fields = [
+    { label: "Nome", value: name },
+    { label: "Ancestralidade", value: people.label },
+    { label: "Papel", value: profile.role },
+    { label: "Tra\xE7o definidor", value: profile.trait }
+  ];
+  if (metadata.resolved.complexity === "detailed") {
+    fields.push(
+      { label: "Apar\xEAncia", value: profile.appearance },
+      { label: "Personalidade", value: profile.personality },
+      { label: "Motiva\xE7\xE3o", value: profile.motivation },
+      { label: "Complica\xE7\xE3o", value: profile.complication },
+      { label: "Segredo", value: profile.secret },
+      { label: "Rela\xE7\xE3o", value: profile.relationship }
+    );
+    if (beat.companion) fields.push({ label: "Companheiro compat\xEDvel", value: profile.companion });
+  }
+  fields.push({ label: "Gancho imediato", value: `${profile.immediateHook} ${beat.text}` });
+  return finish("npc", `NPC - ${name}`, fields, metadata);
+}
+function locationFields(profile, beat, detailed) {
+  const fields = [
+    { label: "Nome", value: profile.name },
+    { label: "Tipo", value: profile.type },
+    { label: "Atmosfera", value: profile.atmosphere },
+    { label: "Caracter\xEDstica", value: profile.feature },
+    { label: "Gancho", value: `${profile.hook} ${beat.text}` }
+  ];
+  if (detailed) fields.push(
+    { label: "Habitantes", value: profile.inhabitants },
+    { label: "Hist\xF3ria", value: profile.history },
+    { label: "Tens\xE3o atual", value: profile.tension },
+    { label: "Perigo", value: profile.danger },
+    { label: "Segredo", value: profile.secret },
+    { label: "Oportunidades", value: profile.opportunities }
+  );
+  return fields;
+}
+function generateLocation(random, options = DEFAULT_GENERATION_OPTIONS) {
+  const metadata = begin("location", random, options);
+  const profile = selected(CONTENT_CATALOGS.location, metadata.resolved, random);
+  const beat = variation(random);
+  return finish("location", `Local - ${profile.name}`, locationFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
+}
+function questFields(profile, beat, detailed) {
+  const fields = [
+    { label: "Contratante", value: profile.giver },
+    { label: "Objetivo", value: profile.objective },
+    { label: "Local", value: profile.location },
+    { label: "Complica\xE7\xE3o", value: `${profile.complication} ${beat.text}` },
+    { label: "Recompensa", value: profile.reward }
+  ];
+  if (detailed) fields.push(
+    { label: "Contexto", value: profile.context },
+    { label: "Etapas", value: profile.stages },
+    { label: "Oposi\xE7\xE3o", value: profile.opposition },
+    { label: "Escalada", value: profile.escalation },
+    { label: "Consequ\xEAncia do fracasso", value: profile.failure },
+    { label: "Resolu\xE7\xE3o alternativa", value: profile.alternative }
+  );
+  return fields;
+}
+function generateQuest(random, options = DEFAULT_GENERATION_OPTIONS) {
+  const metadata = begin("quest", random, options);
+  const profile = selected(CONTENT_CATALOGS.quest, metadata.resolved, random);
+  const beat = variation(random);
+  return finish("quest", `Miss\xE3o - ${sentenceCase(profile.objective)}`, questFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
+}
+function encounterFields(profile, beat, detailed) {
+  const fields = [
+    { label: "Situa\xE7\xE3o", value: profile.situation },
+    { label: "Amea\xE7a imediata", value: profile.immediateThreat },
+    { label: "Reviravolta", value: `${profile.twist} ${beat.text}` },
+    { label: "Escolha significativa", value: profile.choice }
+  ];
+  if (detailed) fields.push(
+    { label: "Prepara\xE7\xE3o", value: profile.setup },
+    { label: "Atores", value: profile.actors },
+    { label: "Escalada", value: profile.escalation },
+    { label: "Intera\xE7\xE3o com o ambiente", value: profile.interaction },
+    { label: "Desfechos prov\xE1veis", value: profile.outcomes },
+    { label: "Depois", value: profile.aftermath }
+  );
+  return fields;
+}
+function generateEncounter(random, options = DEFAULT_GENERATION_OPTIONS) {
+  const metadata = begin("encounter", random, options);
+  const profile = selected(CONTENT_CATALOGS.encounter, metadata.resolved, random);
+  const beat = variation(random);
+  return finish("encounter", `Encontro - ${profile.title}`, encounterFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
+}
+function rumorFields(profile, beat, detailed) {
+  const fields = [
+    { label: "Boato", value: `${profile.subject} ${profile.claim}.` },
+    { label: "Verdade para o mestre", value: profile.truth },
+    { label: "Desdobramento", value: beat.text }
+  ];
+  if (detailed) fields.push(
+    { label: "Fonte", value: profile.source },
+    { label: "Varia\xE7\xF5es", value: profile.variations },
+    { label: "Pistas", value: profile.clues },
+    { label: "Interessados", value: profile.interestedParties },
+    { label: "Consequ\xEAncia da investiga\xE7\xE3o", value: profile.investigationConsequence },
+    { label: "Contexto", value: profile.context }
+  );
+  return fields;
+}
+function generateRumor(random, options = DEFAULT_GENERATION_OPTIONS) {
+  const metadata = begin("rumor", random, options);
+  const profile = selected(CONTENT_CATALOGS.rumor, metadata.resolved, random);
+  const beat = variation(random);
+  return finish("rumor", `Rumor - ${profile.subject}`, rumorFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
 }
 function sentenceCase(value) {
   return value.length === 0 ? value : value[0].toLocaleUpperCase("pt-BR") + value.slice(1);
 }
-function generateNpc(random) {
-  const people = randomPeople(random);
-  const name = generateName(people.id, random);
-  const role = random.pick(NPC_ROLES);
-  const morality = random.pick(NPC_MORALITIES);
-  const appearance = random.pick(NPC_APPEARANCES);
-  const personality = random.pick(NPC_PERSONALITIES);
-  const motivation = random.pick(NPC_MOTIVATIONS);
-  const complication = random.pick(NPC_COMPLICATIONS);
-  const companion = random.chance(0.3) ? ` Viaja com ${random.pick(ANIMAL_COMPANIONS)}.` : "";
-  const text = `${name} \xE9 ${people.article} ${people.noun} que trabalha como ${role} e ${morality}. ${sentenceCase(appearance)}. Costuma ${personality}. Procura ${motivation}. ${sentenceCase(complication)}.${companion}`;
-  return result("npc", `NPC - ${name}`, text);
+function dungeonFields(profile, beat, detailed) {
+  const rooms = detailed ? profile.detailedRooms : profile.rooms;
+  const fields = [
+    { label: "Tema", value: profile.theme },
+    { label: "Vis\xE3o geral", value: `${profile.overview} ${beat.text}` }
+  ];
+  const roles = ["Entrada", "Desafio", "Contratempo", "Confronto", "Recompensa"];
+  rooms.forEach((room, index) => {
+    const role = roles[index];
+    if (!role) throw new Error("Masmorra exige cinco pap\xE9is de sala");
+    fields.push({ label: role, value: room, number: index + 1 });
+  });
+  return fields;
 }
-function generateLocation(random) {
-  const name = random.pick(LOCATION_NAMES);
-  const type = random.pick(LOCATION_TYPES);
-  const atmosphere = random.pick(LOCATION_ATMOSPHERES);
-  const feature = random.pick(LOCATION_FEATURES);
-  const hook = random.pick(LOCATION_HOOKS);
-  const text = `${name} \xE9 ${type}. ${atmosphere} ${feature} ${hook}`;
-  return result("location", `Local - ${name}`, text);
-}
-function generateQuest(random) {
-  const giverPeople = randomPeople(random);
-  const giverName = generateName(giverPeople.id, random);
-  const objective = random.pick(QUEST_OBJECTIVES);
-  const complication = random.pick(QUEST_COMPLICATIONS);
-  const reward = random.pick(QUEST_REWARDS);
-  const location = random.pick(LOCATION_NAMES);
-  const giverDetail = random.pick(QUEST_GIVERS);
-  const text = `${giverName}, ${giverDetail}, procura aventureiros para ${objective} em ${location}. ${complication} Se tiverem sucesso, receber\xE3o ${reward}.`;
-  return result("quest", `Miss\xE3o - ${sentenceCase(objective)}`, text);
-}
-function generateEncounter(random) {
-  const environment = random.pick(ENCOUNTER_ENVIRONMENTS);
-  const situation = random.pick(ENCOUNTER_SITUATIONS);
-  const twist = random.pick(ENCOUNTER_TWISTS);
-  const choice = random.pick(ENCOUNTER_CHOICES);
-  const text = `Em ${environment}, ${situation}. ${twist} ${choice}`;
-  return result("encounter", `Encontro - ${sentenceCase(environment)}`, text);
-}
-function generateRumor(random) {
-  const premise = random.pick(RUMOR_PREMISES);
-  const truth = random.pick(RUMOR_TRUTHS);
-  const text = `Corre o boato de que ${premise.subject} ${premise.claim}. Para o mestre: ${truth}.`;
-  return result("rumor", `Rumor - ${sentenceCase(premise.subject)}`, text);
-}
-function generateDungeon(random) {
-  const theme = random.pick(DUNGEON_THEMES);
-  const rooms = DUNGEON_ENTRIES.map((entry, index) => `${index + 1}. ${entry}`).join("\n");
-  const text = `Tema: ${theme}.
-
-${rooms}`;
-  return result("dungeon", `Masmorra - ${sentenceCase(theme)}`, text);
+function generateDungeon(random, options = DEFAULT_GENERATION_OPTIONS) {
+  const metadata = begin("dungeon", random, options);
+  const profile = selected(CONTENT_CATALOGS.dungeon, metadata.resolved, random);
+  const beat = variation(random);
+  return finish("dungeon", `Masmorra - ${profile.theme}`, dungeonFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
 }
 var GENERATORS = [
   { id: "npc", label: LABELS.npc, icon: "user-round", generate: generateNpc },
@@ -701,8 +1096,8 @@ function getGenerator(id) {
   if (!definition) throw new Error(`Unknown generator: ${id}`);
   return definition;
 }
-function generate(id, random = new Random()) {
-  return getGenerator(id).generate(random);
+function generate(id, random = new Random(), options = DEFAULT_GENERATION_OPTIONS) {
+  return getGenerator(id).generate(random, options);
 }
 
 // src/formatters.ts
@@ -713,26 +1108,51 @@ function normalizeBody(body) {
   const normalized = body.replace(/\r\n?/g, "\n");
   return normalized.replace(/^(?:[ \t]*\n)+/, "").replace(/(?:\n[ \t]*)+$/, "");
 }
-function formatWithHeading(level, title, body) {
+function safeMetadataValue(value) {
+  return value.replace(/[\r\n\u0000-\u001f\u007f]/g, " ").replace(/[\\|]/g, "\\$&");
+}
+function metadataLines(metadata) {
+  const selected2 = metadata.selected;
+  const resolved = metadata.resolved;
+  const suffix = (selection) => selection === "random" ? " (aleat\xF3rio)" : "";
+  const lines = [
+    ["Tom", `${getToneLabel(resolved.tone)}${suffix(selected2.tone)}`],
+    ["Ambiente", `${getEnvironmentLabel(resolved.environment)}${suffix(selected2.environment)}`],
+    ["Complexidade", `${getComplexityLabel(resolved.complexity)}${suffix(selected2.complexity)}`]
+  ];
+  if (resolved.ancestry !== null) {
+    lines.push([
+      "Ancestralidade",
+      `${getPeopleLabel(resolved.ancestry)}${selected2.ancestry === "random" ? " (aleat\xF3rio)" : ""}`
+    ]);
+  }
+  return lines.map(([label, value]) => [safeMetadataValue(label), safeMetadataValue(value)]);
+}
+function formatWithHeading(level, title, body, metadata) {
   const normalizedTitle = normalizeTitle(title);
   const normalizedBody = normalizeBody(body);
   const heading = `${"#".repeat(level)} ${normalizedTitle}`;
-  return normalizedBody.length > 0 ? `${heading}
-
-${normalizedBody}` : heading;
+  const parameters = metadata ? `> [!info] Par\xE2metros
+${metadataLines(metadata).map(([label, value]) => `> ${label}: ${value}`).join("\n")}` : "";
+  const parts = [heading, parameters, normalizedBody].filter((part) => part.length > 0);
+  return parts.join("\n\n");
 }
-function formatPlainText(title, body) {
-  const normalizedTitle = normalizeTitle(title);
-  const normalizedBody = normalizeBody(body);
-  return normalizedBody.length > 0 ? `${normalizedTitle}
-
-${normalizedBody}` : normalizedTitle;
+function toMarkdown(result, headingLevel) {
+  return formatWithHeading(
+    headingLevel,
+    result.title,
+    result.content.markdown,
+    result.options
+  );
 }
-function toMarkdown(result2, headingLevel) {
-  return formatWithHeading(headingLevel, result2.title, result2.content.markdown);
-}
-function toPlainText(result2) {
-  return formatPlainText(result2.title, result2.content.plainText);
+function toPlainText(result) {
+  const metadata = result.options;
+  const parameters = metadata ? ["Par\xE2metros", ...metadataLines(metadata).map(([label, value]) => `${label}: ${value}`)].join("\n") : "";
+  const normalizedBody = normalizeBody(result.content.plainText);
+  const sections = [normalizeTitle(result.title), parameters, normalizedBody].filter(
+    (section) => section.length > 0
+  );
+  return sections.join("\n\n");
 }
 
 // src/output.ts
@@ -828,8 +1248,8 @@ function calculateInsertionBoundaries(before, after) {
   };
 }
 function insertionText(before, after, markdown) {
-  const { prefix, suffix } = calculateInsertionBoundaries(before, after);
-  return `${prefix}${markdown}${suffix}`;
+  const { prefix: prefix2, suffix } = calculateInsertionBoundaries(before, after);
+  return `${prefix2}${markdown}${suffix}`;
 }
 function boundaryBefore(text) {
   if (text.length === 0 || text.endsWith("\n\n")) return "";
@@ -847,6 +1267,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     super(leaf);
     this.dependencies = dependencies;
     this.selectedId = "npc";
+    this.generationOptions = { ...DEFAULT_GENERATION_OPTIONS };
     this.currentResult = null;
     this.resultKey = 0;
     this.renderVersion = 0;
@@ -861,6 +1282,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     this.insertDestination = null;
     this.insertHelp = null;
     this.categoryButtons = /* @__PURE__ */ new Map();
+    this.optionSelects = null;
     this.renderComponent = null;
     this.creatingNote = false;
     this.registerEvent(
@@ -891,21 +1313,24 @@ var GeneratorView = class extends import_obsidian2.ItemView {
   getState() {
     return {};
   }
-  async setState(_state, result2) {
-    await super.setState(_state, result2);
+  async setState(_state, result) {
+    await super.setState(_state, result);
     this.resetEphemeralState();
     this.renderView();
   }
   resetEphemeralState() {
     this.selectedId = "npc";
+    this.generationOptions = { ...DEFAULT_GENERATION_OPTIONS };
     this.currentResult = null;
     this.resultKey += 1;
     this.renderVersion += 1;
   }
   renderView() {
+    var _a;
     this.contentEl.empty();
     this.contentEl.addClass("rpg-generator-view");
     this.categoryButtons.clear();
+    this.optionSelects = null;
     const question = this.contentEl.createEl("p", {
       cls: "rpg-generator-question",
       text: "O que voc\xEA quer gerar?"
@@ -915,14 +1340,14 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     categories.setAttr("role", "radiogroup");
     categories.setAttr("aria-labelledby", "rpg-generator-question");
     for (const definition of GENERATORS) {
-      const selected = definition.id === this.selectedId;
+      const selected2 = definition.id === this.selectedId;
       const button = categories.createEl("button", {
-        cls: ["rpg-generator-category", ...selected ? ["is-selected"] : []],
+        cls: ["rpg-generator-category", ...selected2 ? ["is-selected"] : []],
         attr: {
           type: "button",
           role: "radio",
-          "aria-checked": String(selected),
-          tabindex: selected ? "0" : "-1",
+          "aria-checked": String(selected2),
+          tabindex: selected2 ? "0" : "-1",
           "aria-label": definition.id === "dungeon" ? "Masmorra de cinco salas" : definition.label
         }
       });
@@ -934,6 +1359,53 @@ var GeneratorView = class extends import_obsidian2.ItemView {
       );
       this.categoryButtons.set(definition.id, button);
     }
+    const optionsPanel = this.contentEl.createEl("fieldset", {
+      cls: "rpg-generator-options"
+    });
+    optionsPanel.createEl("legend", {
+      cls: "rpg-generator-options-heading",
+      text: "Op\xE7\xF5es"
+    });
+    const optionGrid = optionsPanel.createDiv({ cls: "rpg-generator-options-grid" });
+    const tone = this.createOptionSelect(
+      optionGrid,
+      "rpg-generator-tone",
+      "Tom",
+      [{ value: "random", label: RANDOM_LABEL }, ...TONES.map((id) => ({ value: id, label: TONE_LABELS[id] }))],
+      this.generationOptions.tone,
+      (value) => this.updateGenerationOption("tone", value)
+    );
+    const environment = this.createOptionSelect(
+      optionGrid,
+      "rpg-generator-environment",
+      "Ambiente",
+      [{ value: "random", label: RANDOM_LABEL }, ...ENVIRONMENTS.map((id) => ({ value: id, label: ENVIRONMENT_LABELS[id] }))],
+      this.generationOptions.environment,
+      (value) => this.updateGenerationOption("environment", value)
+    );
+    const complexity = this.createOptionSelect(
+      optionGrid,
+      "rpg-generator-complexity",
+      "Complexidade",
+      [{ value: "random", label: RANDOM_LABEL }, ...COMPLEXITIES.map((id) => ({ value: id, label: COMPLEXITY_LABELS[id] }))],
+      this.generationOptions.complexity,
+      (value) => this.updateGenerationOption("complexity", value)
+    );
+    const ancestryField = this.createOptionField(optionGrid, "rpg-generator-ancestry", "Ancestralidade");
+    const ancestry = ancestryField.createEl("select", {
+      cls: "rpg-generator-option-select",
+      attr: { id: "rpg-generator-ancestry" }
+    });
+    ancestry.addEventListener(
+      "change",
+      () => this.updateGenerationOption("ancestry", ancestry.value)
+    );
+    this.addSelectOptions(ancestry, [
+      { value: "random", label: RANDOM_ANCESTRY_LABEL },
+      ...PEOPLE.map((person) => ({ value: person.id, label: person.label }))
+    ], (_a = this.generationOptions.ancestry) != null ? _a : "random");
+    ancestryField.hidden = this.selectedId !== "npc";
+    this.optionSelects = { tone, environment, complexity, ancestry, ancestryField };
     this.primaryButton = this.contentEl.createEl("button", {
       cls: ["mod-cta", "rpg-generator-primary"],
       attr: { type: "button" }
@@ -976,22 +1448,54 @@ var GeneratorView = class extends import_obsidian2.ItemView {
       text
     });
   }
-  selectCategory(id) {
+  createOptionField(parent, id, label) {
+    const field = parent.createDiv({ cls: "rpg-generator-option-field" });
+    field.createEl("label", { text: label, attr: { for: id } });
+    return field;
+  }
+  createOptionSelect(parent, id, label, options, selectedValue, onChange) {
+    const field = this.createOptionField(parent, id, label);
+    const select = field.createEl("select", {
+      cls: "rpg-generator-option-select",
+      attr: { id }
+    });
+    this.addSelectOptions(select, options, selectedValue);
+    select.addEventListener("change", () => onChange(select.value));
+    return select;
+  }
+  addSelectOptions(select, options, selectedValue) {
+    for (const option of options) {
+      const element = select.createEl("option", {
+        text: option.label,
+        attr: { value: option.value }
+      });
+      element.selected = option.value === selectedValue;
+    }
+  }
+  updateGenerationOption(key, value) {
+    this.generationOptions = { ...this.generationOptions, [key]: value };
+    this.clearCurrentResult("Resultado limpo ao alterar op\xE7\xF5es");
+  }
+  clearCurrentResult(status) {
     var _a;
-    if (id === this.selectedId) return;
-    this.selectedId = id;
     this.currentResult = null;
     this.resultKey += 1;
     this.renderVersion += 1;
-    for (const [categoryId, button] of this.categoryButtons.entries()) {
-      const selected = categoryId === id;
-      button.setAttr("aria-checked", String(selected));
-      button.setAttr("tabindex", selected ? "0" : "-1");
-      button.toggleClass("is-selected", selected);
-    }
     this.updateControls();
     this.updateResultText();
-    (_a = this.liveStatus) == null ? void 0 : _a.setText("Resultado limpo ao trocar de categoria");
+    (_a = this.liveStatus) == null ? void 0 : _a.setText(status);
+  }
+  selectCategory(id) {
+    if (id === this.selectedId) return;
+    this.selectedId = id;
+    for (const [categoryId, button] of this.categoryButtons.entries()) {
+      const selected2 = categoryId === id;
+      button.setAttr("aria-checked", String(selected2));
+      button.setAttr("tabindex", selected2 ? "0" : "-1");
+      button.toggleClass("is-selected", selected2);
+    }
+    if (this.optionSelects) this.optionSelects.ancestryField.hidden = id !== "npc";
+    this.clearCurrentResult("Resultado limpo ao trocar de categoria");
   }
   handleCategoryKeydown(event, id) {
     var _a;
@@ -1025,12 +1529,12 @@ var GeneratorView = class extends import_obsidian2.ItemView {
   generateResult() {
     var _a;
     try {
-      const result2 = generate(this.selectedId, new Random());
-      this.currentResult = result2;
+      const result = generate(this.selectedId, new Random(), this.generationOptions);
+      this.currentResult = result;
       this.resultKey += 1;
       this.updateControls();
       this.updateResultText();
-      (_a = this.liveStatus) == null ? void 0 : _a.setText(`Novo resultado de ${result2.label} gerado`);
+      (_a = this.liveStatus) == null ? void 0 : _a.setText(`Novo resultado de ${result.label} gerado`);
     } catch (e) {
       new import_obsidian2.Notice("N\xE3o foi poss\xEDvel gerar o resultado");
     }
@@ -1065,10 +1569,10 @@ var GeneratorView = class extends import_obsidian2.ItemView {
   updateResultText() {
     if (!this.resultText || !this.resultHeader) return;
     this.removeRenderComponent();
-    const result2 = this.currentResult;
+    const result = this.currentResult;
     const renderVersion = ++this.renderVersion;
     this.resultText.empty();
-    if (!result2) {
+    if (!result) {
       this.resultHeader.setText("Resultado");
       this.resultText.setText("Escolha um gerador e clique em \u201CGerar\u201D.");
       this.resultText.addClass("is-empty");
@@ -1077,12 +1581,12 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     }
     this.resultHeader.setText("Resultado");
     this.resultText.removeClass("is-empty");
-    this.resultText.setAttr("aria-label", `Resultado: ${result2.label}`);
+    this.resultText.setAttr("aria-label", `Resultado: ${result.label}`);
     const rendered = document.createElement("div");
     const renderComponent = this.addChild(new import_obsidian2.Component());
     this.renderComponent = renderComponent;
     try {
-      void import_obsidian2.MarkdownRenderer.render(this.app, toMarkdown(result2, 1), rendered, "", renderComponent).then(() => {
+      void import_obsidian2.MarkdownRenderer.render(this.app, toMarkdown(result, 3), rendered, "", renderComponent).then(() => {
         if (renderVersion !== this.renderVersion || this.renderComponent !== renderComponent || !this.resultText) return;
         this.resultText.empty();
         while (rendered.firstChild) this.resultText.appendChild(rendered.firstChild);
@@ -1105,9 +1609,9 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     this.renderComponent = null;
   }
   async copyResult(format) {
-    const result2 = this.currentResult;
-    if (!result2) return;
-    const content = format === "text" ? toPlainText(result2) : toMarkdown(result2, 1);
+    const result = this.currentResult;
+    if (!result) return;
+    const content = format === "text" ? toPlainText(result) : toMarkdown(result, 1);
     try {
       await navigator.clipboard.writeText(content);
       new import_obsidian2.Notice(format === "text" ? "Texto copiado" : "Markdown copiado");
@@ -1117,8 +1621,8 @@ var GeneratorView = class extends import_obsidian2.ItemView {
   }
   insertResult() {
     var _a;
-    const result2 = this.currentResult;
-    if (!result2) return;
+    const result = this.currentResult;
+    if (!result) return;
     const target = this.dependencies.getEditableTarget();
     this.setInsertionTarget(target);
     if (!target) {
@@ -1127,7 +1631,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
       return;
     }
     try {
-      const markdown = toMarkdown(result2, 2);
+      const markdown = toMarkdown(result, 2);
       const replacement = this.insertionText(target.editor, markdown);
       target.editor.replaceSelection(replacement);
       target.editor.focus();
@@ -1147,8 +1651,8 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     return insertionText(before, after, markdown);
   }
   async createNote() {
-    const result2 = this.currentResult;
-    if (!result2 || this.creatingNote) return;
+    const result = this.currentResult;
+    if (!result || this.creatingNote) return;
     this.creatingNote = true;
     this.updateControls();
     try {
@@ -1168,8 +1672,8 @@ var GeneratorView = class extends import_obsidian2.ItemView {
       };
       const created = await new OutputService(vaultAdapter).createMarkdown({
         outputFolder: this.dependencies.settings.outputFolder,
-        title: result2.title,
-        content: toMarkdown(result2, 1)
+        title: result.title,
+        content: toMarkdown(result, 1)
       });
       let file;
       try {
