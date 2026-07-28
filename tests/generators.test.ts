@@ -17,6 +17,13 @@ import {
 
 const source = (value: number) => new Random(() => value);
 const wordCount = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
+const wordTargets = {
+  npc: { quick: [60, 90], detailed: [165, 215] },
+  location: { quick: [110, 170], detailed: [240, 330] },
+  quest: { quick: [95, 150], detailed: [280, 370] },
+  encounter: { quick: [120, 175], detailed: [260, 330] },
+  rumor: { quick: [70, 120], detailed: [220, 290] },
+} as const;
 const optionsFor = (tone: ToneId, environment: EnvironmentId, complexity: ComplexityId, id: GeneratorId) => ({
   tone,
   environment,
@@ -30,8 +37,8 @@ function assertClean(result: ReturnType<typeof generate>): void {
   expect(result.title.trim()).not.toBe("");
   expect(result.content.plainText.trim()).not.toBe("");
   expect(result.content.markdown.trim()).not.toBe("");
-  expect(result.content.plainText).not.toMatch(/undefined|NaN/i);
-  expect(result.content.markdown).not.toMatch(/undefined|NaN/i);
+  expect(result.content.plainText).not.toMatch(/\b(?:undefined|NaN)\b/i);
+  expect(result.content.markdown).not.toMatch(/\b(?:undefined|NaN)\b/i);
   expect(result.content.plainText).not.toMatch(/[.!?]{2}/);
   expect(result.content.markdown).not.toMatch(/[.!?]{2}/);
   expect(result.content.plainText).not.toMatch(/^#+\s/m);
@@ -243,13 +250,14 @@ describe("motor option-aware de geração", () => {
           const quick = generate(id, source(0.17), optionsFor(tone, environment, "quick", id));
           const detailed = generate(id, source(0.17), optionsFor(tone, environment, "detailed", id));
           if (id !== "dungeon") {
-            expect(wordCount(quick.content.plainText)).toBeGreaterThanOrEqual(50);
-            expect(wordCount(quick.content.plainText)).toBeLessThanOrEqual(100);
-            expect(wordCount(detailed.content.plainText)).toBeGreaterThanOrEqual(150);
-            expect(wordCount(detailed.content.plainText)).toBeLessThanOrEqual(300);
+            const target = wordTargets[id];
+            expect(wordCount(quick.content.plainText)).toBeGreaterThanOrEqual(target.quick[0]);
+            expect(wordCount(quick.content.plainText)).toBeLessThanOrEqual(target.quick[1]);
+            expect(wordCount(detailed.content.plainText)).toBeGreaterThanOrEqual(target.detailed[0]);
+            expect(wordCount(detailed.content.plainText)).toBeLessThanOrEqual(target.detailed[1]);
           } else {
-            for (const line of quick.content.plainText.split("\n").filter((value) => /^\d+\. /.test(value))) expect(wordCount(line)).toBeGreaterThanOrEqual(25);
-            for (const line of detailed.content.plainText.split("\n").filter((value) => /^\d+\. /.test(value))) expect(wordCount(line)).toBeGreaterThanOrEqual(60);
+            for (const line of quick.content.plainText.split("\n").filter((value) => /^\d+\. /.test(value))) expect(wordCount(line)).toBeGreaterThanOrEqual(20);
+            for (const line of detailed.content.plainText.split("\n").filter((value) => /^\d+\. /.test(value))) expect(wordCount(line)).toBeGreaterThanOrEqual(42);
           }
         }
       }

@@ -64,9 +64,3 @@ export function selectProfile<T>(
 export function selectVariation(random: Random): VariationBeat {
   return random.pick(VARIATION_BEATS);
 }
-
-export function sentenceCase(value: string): string {
-  return value.length === 0
-    ? value
-    : value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
-}

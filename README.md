@@ -121,7 +121,7 @@ npm run check     # typecheck + testes + build de produção
 
 `main.js` é um artefato gerado e versionado neste repositório. Nunca o edite manualmente. Faça alterações nos arquivos-fonte e use o build para regenerá-lo. O comando `npm run check` inclui o build de produção e pode modificar o `main.js` rastreado.
 
-Os catálogos pt-BR autoritativos ficam em `src/catalogs/pt-BR/generated-content.ts`. Eles são compilados para índices de consulta no carregamento. `src/tables.ts` permanece apenas como fronteira de compatibilidade. `src/generators.ts` registra as estratégias separadas em `src/generators/`. O motor e as regras de topologia das masmorras ficam em `src/dungeon/engine.ts`. O modelo estrutural compartilhado fica em `src/structured-output.ts`.
+Os catálogos pt-BR são compostos em `src/catalogs/pt-BR/generated-content.ts`. Os fatos de cada ambiente ficam em `environments.ts`, as camadas de tom em `tones.ts` e as variações específicas por categoria em `variations.ts`. O [guia editorial](docs/editorial-guidelines-pt-BR.md) documenta os critérios de linguagem e de preparação de jogo. Os catálogos são compilados para índices de consulta no carregamento. `src/tables.ts` permanece apenas como fronteira de compatibilidade. `src/generators.ts` registra as estratégias separadas em `src/generators/`. O motor e as regras de topologia das masmorras ficam em `src/dungeon/engine.ts`. O modelo estrutural compartilhado fica em `src/structured-output.ts`.
 
 Os tipos e rótulos das opções ficam em `src/types.ts` e `src/options.ts`. A formatação dos parâmetros fica em `src/formatters.ts`. Os perfis de nomes são separados por povo em `src/names.ts`. O estado efêmero da geração é controlado por `src/application/generation-session.ts`.
 

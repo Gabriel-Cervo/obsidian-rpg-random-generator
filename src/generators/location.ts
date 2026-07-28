@@ -25,7 +25,7 @@ function locationFields(
     { label: "Tipo", value: profile.type },
     { label: "Atmosfera", value: profile.atmosphere },
     { label: "Característica", value: profile.feature },
-    { label: "Gancho", value: `${profile.hook} ${beat.text}` },
+    { label: "Gancho", value: `${profile.hook} ${beat.location}` },
   ];
   if (detailed) {
     fields.push(

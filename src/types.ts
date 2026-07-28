@@ -37,6 +37,22 @@ export type DungeonModeId = (typeof DUNGEON_MODE_IDS)[number];
 export const DUNGEON_SIZES = [5, 8, 12] as const;
 export type DungeonSize = (typeof DUNGEON_SIZES)[number];
 
+export const DUNGEON_ROOM_ROLES = [
+  "Entrada",
+  "Exploração",
+  "Desafio",
+  "Encruzilhada",
+  "Segredo",
+  "Armadilha",
+  "Refúgio",
+  "Contratempo",
+  "Encontro",
+  "Revelação",
+  "Confronto",
+  "Recompensa",
+] as const;
+export type DungeonRoomRole = (typeof DUNGEON_ROOM_ROLES)[number];
+
 export interface GenerationOptions {
   tone: ToneSelection;
   environment: EnvironmentSelection;
@@ -62,7 +78,7 @@ export type DungeonFeatureKind = "secret" | "trap" | "encounter" | "reward";
 export interface DungeonRoomArtifact {
   id: string;
   number: number;
-  role: string;
+  role: DungeonRoomRole;
   description: string;
   features: readonly DungeonFeatureKind[];
   gmNotes: readonly string[];

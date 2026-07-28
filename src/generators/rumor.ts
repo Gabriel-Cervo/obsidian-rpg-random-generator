@@ -21,9 +21,9 @@ function rumorFields(
   detailed: boolean,
 ): StructuredField[] {
   const fields: StructuredField[] = [
-    { label: "Boato", value: `${profile.subject} ${profile.claim}.` },
+    { label: "Boato", value: profile.claim },
     { label: "Verdade para o mestre", value: profile.truth },
-    { label: "Desdobramento", value: beat.text },
+    { label: "Desdobramento", value: beat.rumor },
   ];
   if (detailed) {
     fields.push(

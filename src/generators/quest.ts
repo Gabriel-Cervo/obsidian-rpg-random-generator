@@ -13,7 +13,6 @@ import {
   GENERATOR_LABELS,
   selectProfile,
   selectVariation,
-  sentenceCase,
 } from "./shared";
 
 function questFields(
@@ -25,7 +24,7 @@ function questFields(
     { label: "Contratante", value: profile.giver },
     { label: "Objetivo", value: profile.objective },
     { label: "Local", value: profile.location },
-    { label: "Complicação", value: `${profile.complication} ${beat.text}` },
+    { label: "Complicação", value: `${profile.complication} ${beat.quest}` },
     { label: "Recompensa", value: profile.reward },
   ];
   if (detailed) {
@@ -50,7 +49,7 @@ export function generateQuest(
   const beat = selectVariation(random);
   return finish(
     "quest",
-    `Missão - ${sentenceCase(profile.objective)}`,
+    `Missão - ${profile.title}`,
     questFields(profile, beat, metadata.resolved.complexity === "detailed"),
     metadata,
   );

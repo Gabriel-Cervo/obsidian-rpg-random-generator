@@ -34,7 +34,7 @@ function dungeonFields(
     : `Estrutura narrativa com ${artifact.size} salas.`;
   const fields: StructuredField[] = [
     { label: "Tema", value: profile.theme },
-    { label: "Visão geral", value: `${profile.overview} ${modeSummary} ${beat.text}` },
+    { label: "Visão geral", value: `${profile.overview} ${modeSummary} ${beat.dungeon}` },
   ];
   for (const room of artifact.rooms) {
     const gm = room.gmNotes.length > 0

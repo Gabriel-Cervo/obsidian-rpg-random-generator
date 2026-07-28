@@ -7,6 +7,7 @@ import type {
   DungeonMapArtifact,
   DungeonModeId,
   DungeonRoomArtifact,
+  DungeonRoomRole,
   DungeonSize,
   EnvironmentId,
 } from "../types";
@@ -36,7 +37,7 @@ export interface DungeonEngineOptions {
   complexity: ComplexityId;
 }
 
-const ROLE_SEQUENCE: Readonly<Record<DungeonSize, readonly string[]>> = {
+const ROLE_SEQUENCE: Readonly<Record<DungeonSize, readonly DungeonRoomRole[]>> = {
   5: ["Entrada", "Desafio", "Contratempo", "Confronto", "Recompensa"],
   8: [
     "Entrada",
@@ -64,22 +65,7 @@ const ROLE_SEQUENCE: Readonly<Record<DungeonSize, readonly string[]>> = {
   ],
 };
 
-const ROLE_DETAILS: Readonly<Record<string, string>> = {
-  Entrada: "A primeira escolha determina como o grupo poderá recuar.",
-  Exploração: "Vestígios mostram duas leituras possíveis para o caminho adiante.",
-  Desafio: "O obstáculo responde melhor à observação do que à força.",
-  Encruzilhada: "Rotas rivais oferecem vantagens que não podem ser reunidas.",
-  Segredo: "Uma passagem discreta guarda a origem de parte do conflito.",
-  Armadilha: "O mecanismo pode ser percebido por mudanças sutis no ambiente.",
-  Refúgio: "O abrigo permite recuperar o fôlego, mas não permanecer sem custo.",
-  Contratempo: "A rota de retorno muda e força uma decisão imediata.",
-  Encontro: "Uma presença local tem objetivos próprios e aceita conversar.",
-  Revelação: "As pistas anteriores formam uma verdade que altera o objetivo.",
-  Confronto: "A oposição final oferece uma última alternativa ao conflito direto.",
-  Recompensa: "O prêmio resolve uma necessidade e cria uma obrigação futura.",
-};
-
-const FEATURE_BY_ROLE: Readonly<Record<string, readonly DungeonFeatureKind[]>> = {
+const FEATURE_BY_ROLE: Readonly<Record<DungeonRoomRole, readonly DungeonFeatureKind[]>> = {
   Entrada: [],
   Exploração: ["secret"],
   Desafio: ["trap"],
@@ -94,11 +80,19 @@ const FEATURE_BY_ROLE: Readonly<Record<string, readonly DungeonFeatureKind[]>> =
   Recompensa: ["reward"],
 };
 
-const FEATURE_NOTES: Readonly<Record<DungeonFeatureKind, string>> = {
-  secret: "Uma pista oculta conecta esta sala ao motivo central da masmorra.",
-  trap: "A ameaça pode ser detectada e contornada; ela não exige uma estatística específica.",
-  encounter: "A oposição tem um objetivo negociável e reage ao ambiente.",
-  reward: "A recompensa é útil agora, mas deixa uma consequência para a campanha.",
+const GM_NOTE_BY_ROLE: Readonly<Record<DungeonRoomRole, string | null>> = {
+  Entrada: null,
+  Exploração: "Um objeto aparentemente comum foi movido recentemente e aponta para uma passagem usada pelos ocupantes.",
+  Desafio: "O perigo deixa sinais antes de agir. Contorná-lo preserva recursos; neutralizá-lo cria uma rota segura para o retorno.",
+  Encruzilhada: "Uma corrente de ar e rastros interrompidos denunciam uma ligação discreta entre duas das rotas.",
+  Segredo: "A descoberta explica quem alterou o complexo e concede uma vantagem concreta contra uma ameaça posterior.",
+  Armadilha: "O mecanismo protege um acesso específico. Acioná-lo de propósito pode bloquear perseguidores ou modificar outra sala.",
+  Refúgio: null,
+  Contratempo: "A mudança expõe um detalhe antes inacessível, permitindo recuperar informação mesmo quando a rota de retorno piora.",
+  Encontro: "Os presentes desejam sair com segurança e escondem uma informação que oferecem em troca de ajuda verificável.",
+  Revelação: "A evidência confirma uma conclusão importante e corrige uma interpretação provável das pistas anteriores.",
+  Confronto: "A oposição protege algo além da própria vida e aceita negociar se o grupo reconhecer esse interesse.",
+  Recompensa: "O prêmio resolve uma necessidade atual e carrega uma marca que permitirá a terceiros reconhecer sua origem.",
 };
 
 const FEATURE_MARKERS: Readonly<Record<DungeonFeatureKind, string>> = {
@@ -124,8 +118,8 @@ function roomPositions(size: DungeonSize): Array<{ x: number; y: number }> {
   });
 }
 
-function roomFeatures(role: string): readonly DungeonFeatureKind[] {
-  return FEATURE_BY_ROLE[role] ?? [];
+function roomFeatures(role: DungeonRoomRole): readonly DungeonFeatureKind[] {
+  return FEATURE_BY_ROLE[role];
 }
 
 function createRooms(
@@ -139,20 +133,20 @@ function createRooms(
     : profile.rooms;
 
   return roles.map((role, index) => {
-    const base = sourceRooms[index % sourceRooms.length];
+    const base = sourceRooms[role];
     const position = positions[index];
     if (!base || !position) {
       throw new DungeonMappingError("room-count", "Não foi possível montar todas as salas.");
     }
     const features = roomFeatures(role);
-    const detail = ROLE_DETAILS[role] ?? "O ambiente apresenta uma decisão relevante.";
+    const gmNote = GM_NOTE_BY_ROLE[role];
     return {
       id: roomId(index + 1),
       number: index + 1,
       role,
-      description: `${base} ${detail}`,
+      description: base,
       features,
-      gmNotes: features.map((feature) => FEATURE_NOTES[feature]),
+      gmNotes: gmNote ? [gmNote] : [],
       x: position.x,
       y: position.y,
     };

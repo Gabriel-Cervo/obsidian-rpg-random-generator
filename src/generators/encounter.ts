@@ -23,7 +23,7 @@ function encounterFields(
   const fields: StructuredField[] = [
     { label: "Situação", value: profile.situation },
     { label: "Ameaça imediata", value: profile.immediateThreat },
-    { label: "Reviravolta", value: `${profile.twist} ${beat.text}` },
+    { label: "Reviravolta", value: `${profile.twist} ${beat.encounter}` },
     { label: "Escolha significativa", value: profile.choice },
   ];
   if (detailed) {

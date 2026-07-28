@@ -44,7 +44,7 @@ export function generateNpc(
       fields.push({ label: "Companheiro compatível", value: profile.companion });
     }
   }
-  fields.push({ label: "Gancho imediato", value: `${profile.immediateHook} ${beat.text}` });
+  fields.push({ label: "Gancho imediato", value: `${profile.immediateHook} ${beat.npc}` });
   return finish("npc", `NPC - ${name}`, fields, metadata);
 }
 
