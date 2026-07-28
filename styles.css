@@ -3,6 +3,10 @@
   color: var(--text-normal);
 }
 
+.rpg-generator-view [hidden] {
+  display: none !important;
+}
+
 .rpg-generator-question {
   margin: 0 0 12px;
   font-size: var(--font-ui-medium);
@@ -83,8 +87,9 @@
 
 .rpg-generator-options-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 8px;
+  align-items: end;
 }
 
 .rpg-generator-option-field {
@@ -97,6 +102,7 @@
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
   font-weight: var(--font-semibold);
+  overflow-wrap: anywhere;
 }
 
 .rpg-generator-option-select {
@@ -275,7 +281,7 @@
 
 @media (min-width: 321px) and (max-width: 380px) {
   .rpg-generator-options-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 }
 
