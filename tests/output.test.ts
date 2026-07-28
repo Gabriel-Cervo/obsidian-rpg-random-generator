@@ -16,6 +16,7 @@ class FakeVault implements OutputVault {
   readonly fileCreations: Array<{ path: string; content: string }> = [];
   failCreateFolder: Error | undefined;
   failCreateFile: Error | undefined;
+  occupyFirstFileDuringCreate = false;
 
   getEntry(path: string): OutputEntry | null {
     return this.entries.get(path) ?? null;
@@ -28,6 +29,11 @@ class FakeVault implements OutputVault {
   }
 
   async createFile(path: string, content: string): Promise<void> {
+    if (this.occupyFirstFileDuringCreate) {
+      this.occupyFirstFileDuringCreate = false;
+      this.entries.set(path, { type: "file", path });
+      throw new Error("colisão concorrente");
+    }
     if (this.failCreateFile) throw this.failCreateFile;
     this.fileCreations.push({ path, content });
     this.entries.set(path, { type: "file", path });
@@ -67,6 +73,10 @@ describe("serviço puro de saída", () => {
     expect(sanitizeMarkdownTitle("..///")).toBe("Sem título");
     expect(sanitizeMarkdownTitle("\n\t")).toBe("Sem título");
     expect(sanitizeMarkdownTitle("  Título.  ")).toBe("Título");
+    expect(sanitizeMarkdownTitle("CON")).toBe("_CON");
+    expect(sanitizeMarkdownTitle("lpt9.txt")).toBe("_lpt9.txt");
+    expect(new TextEncoder().encode(sanitizeMarkdownTitle("á".repeat(300))).length)
+      .toBeLessThanOrEqual(220);
   });
 
   it("encontra a primeira colisão livre e trata pasta como ocupação", async () => {
@@ -112,6 +122,20 @@ describe("serviço puro de saída", () => {
         content: "conteúdo",
       }),
     ).rejects.toThrow("corrida");
+  });
+
+  it("repete com um novo sufixo quando outra criação ocupa o caminho", async () => {
+    const vault = new FakeVault();
+    vault.occupyFirstFileDuringCreate = true;
+
+    await expect(createMarkdownOutput(vault, {
+      outputFolder: "",
+      title: "Título",
+      content: "conteúdo",
+    })).resolves.toEqual({
+      path: "Título - 2.md",
+      filename: "Título - 2.md",
+    });
   });
 
   it("não faz fallback silencioso para uma pasta inválida", async () => {

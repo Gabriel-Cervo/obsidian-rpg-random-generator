@@ -57,8 +57,32 @@ export class OutputFolderConflictError extends Error {
   }
 }
 
+export class OutputCollisionLimitError extends Error {
+  constructor() {
+    super("Não foi possível encontrar um nome de nota disponível.");
+    this.name = "OutputCollisionLimitError";
+  }
+}
+
 const FALLBACK_MARKDOWN_TITLE = "Sem título";
 const INVALID_FILENAME_CHARACTERS = /[\\/:*?"<>|\u0000-\u001f\u007f]/g;
+const RESERVED_WINDOWS_NAME = /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$/i;
+const MAX_STEM_UTF8_BYTES = 220;
+const MAX_COLLISION_SUFFIX = 9_999;
+const MAX_CREATE_ATTEMPTS = 8;
+
+function truncateUtf8(value: string, maxBytes: number): string {
+  const encoder = new TextEncoder();
+  let bytes = 0;
+  let result = "";
+  for (const character of value) {
+    const size = encoder.encode(character).length;
+    if (bytes + size > maxBytes) break;
+    result += character;
+    bytes += size;
+  }
+  return result;
+}
 
 function entryKind(entry: OutputEntry): "file" | "folder" {
   if ("type" in entry) return entry.type;
@@ -80,12 +104,20 @@ function assertValidOutputFolder(outputFolder: string): string {
  * the Markdown extension; callers can use it for display or collision checks.
  */
 export function sanitizeMarkdownTitle(title: string): string {
-  const sanitized = title
+  let sanitized = title
+    .normalize("NFC")
     .replace(INVALID_FILENAME_CHARACTERS, "-")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/[. ]+$/g, "")
     .replace(/^-+|-+$/g, "")
+    .trim();
+
+  if (RESERVED_WINDOWS_NAME.test(sanitized)) {
+    sanitized = `_${sanitized}`;
+  }
+  sanitized = truncateUtf8(sanitized, MAX_STEM_UTF8_BYTES)
+    .replace(/[. ]+$/g, "")
     .trim();
 
   if (sanitized.length === 0 || sanitized === "." || sanitized === "..") {
@@ -137,11 +169,12 @@ export async function findAvailableMarkdownPath(
   const normalizedFolder = assertValidOutputFolder(outputFolder);
   const stem = sanitizeMarkdownTitle(title);
 
-  for (let suffix = 1; ; suffix += 1) {
+  for (let suffix = 1; suffix <= MAX_COLLISION_SUFFIX; suffix += 1) {
     const filename = suffix === 1 ? `${stem}.md` : `${stem} - ${suffix}.md`;
     const path = joinVaultPath(normalizedFolder, filename);
     if (vault.getEntry(path) == null) return { path, filename };
   }
+  throw new OutputCollisionLimitError();
 }
 
 /** Ensures folders, chooses a collision-safe path, then creates exactly once. */
@@ -150,11 +183,17 @@ export async function createMarkdownOutput(
   options: CreateMarkdownOptions,
 ): Promise<CreatedMarkdown> {
   const outputFolder = await ensureOutputFolder(vault, options.outputFolder);
-  const available = await findAvailableMarkdownPath(vault, outputFolder, options.title);
-
-  // A create failure (including a creation race) is intentionally propagated.
-  await vault.createFile(available.path, options.content);
-  return available;
+  for (let attempt = 0; attempt < MAX_CREATE_ATTEMPTS; attempt += 1) {
+    const available = await findAvailableMarkdownPath(vault, outputFolder, options.title);
+    try {
+      await vault.createFile(available.path, options.content);
+      return available;
+    } catch (error) {
+      // Retry only when another writer occupied this exact path after our check.
+      if (vault.getEntry(available.path) == null) throw error;
+    }
+  }
+  throw new OutputCollisionLimitError();
 }
 
 export class OutputService {
