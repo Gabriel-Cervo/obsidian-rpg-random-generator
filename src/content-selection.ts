@@ -50,6 +50,14 @@ export interface CatalogCoverage {
   invalidEntryIds: string[];
 }
 
+export interface CompiledContentCatalog<T> {
+  readonly entries: readonly TaggedContentEntry<T>[];
+  select(
+    compatibility: ContentCompatibility | ResolvedGenerationOptions,
+    random?: Random,
+  ): TaggedContentEntry<T>;
+}
+
 export class ContentSelectionError extends Error {
   constructor(message = "Nenhuma entrada de conteúdo compatível foi encontrada.") {
     super(message);
@@ -90,7 +98,7 @@ function matches<T>(entry: TaggedContentEntry<T>, cell: CatalogCell, fallback: b
   return tagMatches(tone, cell.tone) && tagMatches(environment, cell.environment) && tagMatches(complexity, cell.complexity);
 }
 
-function cellKey(cell: CatalogCell): string {
+export function catalogCellKey(cell: CatalogCell): string {
   return `${cell.tone}/${cell.environment}/${cell.complexity}`;
 }
 
@@ -120,7 +128,7 @@ export function selectCompatibleContent<T>(
   if (fallback.length > 0) return random.pick(fallback);
 
   throw new ContentSelectionError(
-    `Nenhuma entrada compatível para ${cellKey(cell)} (normal ou fallback).`,
+    `Nenhuma entrada compatível para ${catalogCellKey(cell)} (normal ou fallback).`,
   );
 }
 
@@ -159,7 +167,7 @@ export function validateCatalogCoverage<T>(
 export function assertCatalogCoverage<T>(entries: readonly TaggedContentEntry<T>[]): void {
   const coverage = validateCatalogCoverage(entries);
   if (!coverage.valid) {
-    const missing = coverage.missing.map(cellKey).join(", ");
+    const missing = coverage.missing.map(catalogCellKey).join(", ");
     const duplicates = coverage.duplicateIds.join(", ");
     const invalid = coverage.invalidEntryIds.join(", ");
     const details = [
@@ -169,6 +177,42 @@ export function assertCatalogCoverage<T>(entries: readonly TaggedContentEntry<T>
     ].filter(Boolean).join("; ");
     throw new ContentSelectionError(`Catálogo incompleto: ${details}`);
   }
+}
+
+/** Compiles compatibility rules once so generation performs a direct cell lookup. */
+export function compileContentCatalog<T>(
+  entries: readonly TaggedContentEntry<T>[],
+): CompiledContentCatalog<T> {
+  assertCatalogCoverage(entries);
+  const candidates = new Map<
+    string,
+    { normal: readonly TaggedContentEntry<T>[]; fallback: readonly TaggedContentEntry<T>[] }
+  >();
+
+  for (const cell of allCells()) {
+    candidates.set(catalogCellKey(cell), {
+      normal: entries.filter((entry) => !isFallback(entry) && matches(entry, cell, false)),
+      fallback: entries.filter((entry) => isFallback(entry) && matches(entry, cell, true)),
+    });
+  }
+
+  return {
+    entries,
+    select(compatibility, random = new Random()) {
+      const cell = toCompatibility(compatibility);
+      const cellCandidates = candidates.get(catalogCellKey(cell));
+      if (!cellCandidates) {
+        throw new ContentSelectionError(
+          `Nenhuma célula compilada para ${catalogCellKey(cell)}.`,
+        );
+      }
+      if (cellCandidates.normal.length > 0) return random.pick(cellCandidates.normal);
+      if (cellCandidates.fallback.length > 0) return random.pick(cellCandidates.fallback);
+      throw new ContentSelectionError(
+        `Nenhuma entrada compatível para ${catalogCellKey(cell)} (normal ou fallback).`,
+      );
+    },
+  };
 }
 
 export const validateCompatibilityMatrix = validateCatalogCoverage;

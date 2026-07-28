@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  compileContentCatalog,
   ContentSelectionError,
   selectCompatibleContent,
   validateCatalogCoverage,
@@ -23,6 +24,16 @@ describe("seleção de conteúdo compatível", () => {
     const fallback: TaggedContentEntry<string>[] = [{ id: "fallback", content: "fallback", fallback: true }];
     expect(selectCompatibleContent(fallback, cell).content).toBe("fallback");
     expect(() => selectCompatibleContent([], cell)).toThrow(ContentSelectionError);
+  });
+
+  it("compila as células mantendo a precedência de conteúdo normal", () => {
+    const compiled = compileContentCatalog([
+      { id: "fallback", content: "fallback", fallback: true },
+      { id: "normal", content: "normal", ...cell },
+    ]);
+
+    expect(compiled.select(cell, new Random(() => 0)).id).toBe("normal");
+    expect(compiled.entries).toHaveLength(2);
   });
 
   it("valida a matriz completa e diagnostica células ausentes e IDs", () => {

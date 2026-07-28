@@ -1,25 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { validateCatalogCoverage, type TaggedContentEntry } from "../src/content-selection";
 import { CONTENT_CATALOGS, VARIATION_BEATS } from "../src/catalogs/pt-BR/generated-content";
-import { COMPLEXITY_IDS, ENVIRONMENT_IDS, TONE_IDS } from "../src/types";
+import { ENVIRONMENT_IDS, TONE_IDS } from "../src/types";
 
 describe("catálogos pt-BR", () => {
-  it("têm uma entrada normal e um fallback exatamente marcado por célula", () => {
-    const cells = TONE_IDS.length * ENVIRONMENT_IDS.length * COMPLEXITY_IDS.length;
+  it("têm uma entrada normal por tom/ambiente e um fallback explícito", () => {
+    const profiles = TONE_IDS.length * ENVIRONMENT_IDS.length;
     for (const [id, entries] of Object.entries(CONTENT_CATALOGS)) {
       const typed = entries as readonly TaggedContentEntry<unknown>[];
       const coverage = validateCatalogCoverage(typed);
       expect(coverage.valid, id).toBe(true);
       expect(coverage.missing, id).toEqual([]);
       expect(coverage.duplicateIds, id).toEqual([]);
-      expect(entries).toHaveLength(cells * 2);
+      expect(entries).toHaveLength(profiles + 1);
       expect(new Set(entries.map((entry) => entry.id)).size).toBe(entries.length);
-      expect(entries.filter((entry) => entry.fallback === true)).toHaveLength(cells);
+      expect(entries.filter((entry) => entry.fallback === true)).toHaveLength(1);
       expect(entries.filter((entry) => !entry.fallback).every((entry) =>
         entry.tone !== undefined && entry.environment !== undefined && entry.complexity !== undefined,
       )).toBe(true);
       expect(entries.filter((entry) => entry.fallback).every((entry) =>
-        entry.tone !== undefined && entry.environment !== undefined && entry.complexity !== undefined,
+        entry.tone === undefined && entry.environment === undefined && entry.complexity === undefined,
       )).toBe(true);
     }
   });

@@ -1,4 +1,7 @@
-import { assertCatalogCoverage, type TaggedContentEntry } from "../../content-selection";
+import {
+  compileContentCatalog,
+  type TaggedContentEntry,
+} from "../../content-selection";
 import {
   COMPLEXITY_IDS,
   ENVIRONMENT_IDS,
@@ -205,21 +208,24 @@ function matrix<T>(prefix: string, make: ContentFactory<T>): TaggedContentEntry<
   const entries: TaggedContentEntry<T>[] = [];
   for (const tone of TONE_IDS) {
     for (const environment of ENVIRONMENT_IDS) {
-      for (const complexity of COMPLEXITY_IDS) {
-        const cell = { tone, environment, complexity };
-        const content = make(cell);
-        entries.push({ id: `${prefix}-${tone}-${environment}-${complexity}-normal`, tone, environment, complexity, content });
-        entries.push({
-          id: `${prefix}-${tone}-${environment}-${complexity}-fallback`,
-          tone,
-          environment,
-          complexity,
-          fallback: true,
-          content,
-        });
-      }
+      entries.push({
+        id: `${prefix}-${tone}-${environment}`,
+        tone,
+        environment,
+        complexity: COMPLEXITY_IDS,
+        content: make({ tone, environment, complexity: "quick" }),
+      });
     }
   }
+  entries.push({
+    id: `${prefix}-fallback`,
+    fallback: true,
+    content: make({
+      tone: "mysterious",
+      environment: "ruins",
+      complexity: "quick",
+    }),
+  });
   return entries;
 }
 
@@ -330,10 +336,6 @@ export const DUNGEON_CONTENT = matrix<DungeonContent>("dungeon", (cell) => {
   return { theme, overview, rooms, detailedRooms };
 });
 
-for (const entries of [NPC_CONTENT, LOCATION_CONTENT, QUEST_CONTENT, ENCOUNTER_CONTENT, RUMOR_CONTENT, DUNGEON_CONTENT] as readonly (readonly TaggedContentEntry<unknown>[])[]) {
-  assertCatalogCoverage(entries);
-}
-
 export const CONTENT_CATALOGS = {
   npc: NPC_CONTENT,
   location: LOCATION_CONTENT,
@@ -341,4 +343,13 @@ export const CONTENT_CATALOGS = {
   encounter: ENCOUNTER_CONTENT,
   rumor: RUMOR_CONTENT,
   dungeon: DUNGEON_CONTENT,
+} as const;
+
+export const COMPILED_CONTENT_CATALOGS = {
+  npc: compileContentCatalog(NPC_CONTENT),
+  location: compileContentCatalog(LOCATION_CONTENT),
+  quest: compileContentCatalog(QUEST_CONTENT),
+  encounter: compileContentCatalog(ENCOUNTER_CONTENT),
+  rumor: compileContentCatalog(RUMOR_CONTENT),
+  dungeon: compileContentCatalog(DUNGEON_CONTENT),
 } as const;

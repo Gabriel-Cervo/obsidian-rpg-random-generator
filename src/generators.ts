@@ -1,13 +1,13 @@
 import { generateName, getPeopleProfile } from "./names";
 import { Random } from "./random";
-import { selectCompatibleContent, type TaggedContentEntry } from "./content-selection";
+import type { CompiledContentCatalog } from "./content-selection";
 import {
   DEFAULT_GENERATION_OPTIONS,
   normalizeGenerationOptions,
   resolveGenerationOptions,
 } from "./options";
 import {
-  CONTENT_CATALOGS,
+  COMPILED_CONTENT_CATALOGS,
   VARIATION_BEATS,
   type DungeonContent,
   type EncounterContent,
@@ -54,11 +54,11 @@ function begin(id: GeneratorId, random: Random, options: GenerationOptionsInput)
 }
 
 function selected<T>(
-  entries: readonly TaggedContentEntry<T>[],
+  catalog: CompiledContentCatalog<T>,
   resolved: ResolvedGenerationOptions,
   random: Random,
 ): T {
-  return selectCompatibleContent(entries, resolved, random).content;
+  return catalog.select(resolved, random).content;
 }
 
 function variation(random: Random): VariationBeat {
@@ -67,7 +67,7 @@ function variation(random: Random): VariationBeat {
 
 function generateNpc(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const metadata = begin("npc", random, options);
-  const profile = selected(CONTENT_CATALOGS.npc, metadata.resolved, random);
+  const profile = selected(COMPILED_CONTENT_CATALOGS.npc, metadata.resolved, random);
   const beat = variation(random);
   const ancestry = metadata.resolved.ancestry;
   if (ancestry === null) throw new Error("NPC exige uma ancestralidade resolvida");
@@ -115,7 +115,7 @@ function locationFields(profile: LocationContent, beat: VariationBeat, detailed:
 
 function generateLocation(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const metadata = begin("location", random, options);
-  const profile = selected(CONTENT_CATALOGS.location, metadata.resolved, random);
+  const profile = selected(COMPILED_CONTENT_CATALOGS.location, metadata.resolved, random);
   const beat = variation(random);
   return finish("location", `Local - ${profile.name}`, locationFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
 }
@@ -141,7 +141,7 @@ function questFields(profile: QuestContent, beat: VariationBeat, detailed: boole
 
 function generateQuest(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const metadata = begin("quest", random, options);
-  const profile = selected(CONTENT_CATALOGS.quest, metadata.resolved, random);
+  const profile = selected(COMPILED_CONTENT_CATALOGS.quest, metadata.resolved, random);
   const beat = variation(random);
   return finish("quest", `Missão - ${sentenceCase(profile.objective)}`, questFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
 }
@@ -166,7 +166,7 @@ function encounterFields(profile: EncounterContent, beat: VariationBeat, detaile
 
 function generateEncounter(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const metadata = begin("encounter", random, options);
-  const profile = selected(CONTENT_CATALOGS.encounter, metadata.resolved, random);
+  const profile = selected(COMPILED_CONTENT_CATALOGS.encounter, metadata.resolved, random);
   const beat = variation(random);
   return finish("encounter", `Encontro - ${profile.title}`, encounterFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
 }
@@ -190,7 +190,7 @@ function rumorFields(profile: RumorContent, beat: VariationBeat, detailed: boole
 
 function generateRumor(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const metadata = begin("rumor", random, options);
-  const profile = selected(CONTENT_CATALOGS.rumor, metadata.resolved, random);
+  const profile = selected(COMPILED_CONTENT_CATALOGS.rumor, metadata.resolved, random);
   const beat = variation(random);
   return finish("rumor", `Rumor - ${profile.subject}`, rumorFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
 }
@@ -218,7 +218,7 @@ function dungeonFields(profile: DungeonContent, beat: VariationBeat, detailed: b
 
 function generateDungeon(random: Random, options: GenerationOptionsInput = DEFAULT_GENERATION_OPTIONS): GenerationResult {
   const metadata = begin("dungeon", random, options);
-  const profile = selected(CONTENT_CATALOGS.dungeon, metadata.resolved, random);
+  const profile = selected(COMPILED_CONTENT_CATALOGS.dungeon, metadata.resolved, random);
   const beat = variation(random);
   return finish("dungeon", `Masmorra - ${profile.theme}`, dungeonFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
 }
