@@ -12,8 +12,8 @@ const result: GenerationResult = {
     markdown: "**Texto Markdown do resultado.**",
   },
   options: {
-    selected: { tone: "grim", environment: "forest", complexity: "quick", ancestry: null },
-    resolved: { tone: "grim", environment: "forest", complexity: "quick", ancestry: null },
+    selected: { tone: "grim", environment: "forest", complexity: "quick", ancestry: null, dungeonMode: null, dungeonSize: null },
+    resolved: { tone: "grim", environment: "forest", complexity: "quick", ancestry: null, dungeonMode: null, dungeonSize: null },
   },
 };
 

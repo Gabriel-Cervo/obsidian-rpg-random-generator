@@ -31,11 +31,19 @@ export const COMPLEXITY_IDS = ["quick", "detailed"] as const;
 export type ComplexityId = (typeof COMPLEXITY_IDS)[number];
 export type ComplexitySelection = ComplexityId | "random";
 
+export const DUNGEON_MODE_IDS = ["story", "mapped"] as const;
+export type DungeonModeId = (typeof DUNGEON_MODE_IDS)[number];
+
+export const DUNGEON_SIZES = [5, 8, 12] as const;
+export type DungeonSize = (typeof DUNGEON_SIZES)[number];
+
 export interface GenerationOptions {
   tone: ToneSelection;
   environment: EnvironmentSelection;
   complexity: ComplexitySelection;
   ancestry: PeopleId | "random" | null;
+  dungeonMode: DungeonModeId | null;
+  dungeonSize: DungeonSize | null;
 }
 
 export type GenerationOptionsInput = Partial<GenerationOptions>;
@@ -45,6 +53,42 @@ export interface ResolvedGenerationOptions {
   environment: EnvironmentId;
   complexity: ComplexityId;
   ancestry: PeopleId | null;
+  dungeonMode: DungeonModeId | null;
+  dungeonSize: DungeonSize | null;
+}
+
+export type DungeonFeatureKind = "secret" | "trap" | "encounter" | "reward";
+
+export interface DungeonRoomArtifact {
+  id: string;
+  number: number;
+  role: string;
+  description: string;
+  features: readonly DungeonFeatureKind[];
+  gmNotes: readonly string[];
+  x: number;
+  y: number;
+}
+
+export interface DungeonEdgeArtifact {
+  from: string;
+  to: string;
+  kind: "path" | "shortcut";
+}
+
+export interface DungeonMapArtifact {
+  environment: EnvironmentId;
+  rooms: readonly DungeonRoomArtifact[];
+  edges: readonly DungeonEdgeArtifact[];
+  ascii: string;
+  accessibleLabel: string;
+}
+
+export interface DungeonArtifact {
+  mode: DungeonModeId;
+  size: DungeonSize;
+  rooms: readonly DungeonRoomArtifact[];
+  map: DungeonMapArtifact | null;
 }
 
 export interface GenerationOptionMetadata {
@@ -63,6 +107,7 @@ export interface GenerationResult {
   title: string;
   content: GenerationContent;
   options: GenerationOptionMetadata;
+  dungeon?: DungeonArtifact;
 }
 
 export interface GeneratorDefinition {

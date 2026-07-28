@@ -8,8 +8,8 @@ const result: GenerationResult = {
   title: "NPC de teste",
   content: { plainText: "Corpo.", markdown: "Corpo." },
   options: {
-    selected: { tone: "random", environment: "forest", complexity: "random", ancestry: "random" },
-    resolved: { tone: "grim", environment: "forest", complexity: "detailed", ancestry: "elfos" },
+    selected: { tone: "random", environment: "forest", complexity: "random", ancestry: "random", dungeonMode: null, dungeonSize: null },
+    resolved: { tone: "grim", environment: "forest", complexity: "detailed", ancestry: "elfos", dungeonMode: null, dungeonSize: null },
   },
 };
 
@@ -42,5 +42,30 @@ describe("metadados de geração", () => {
       },
     };
     expect(toMarkdown(location, 1)).not.toContain("Ancestralidade");
+  });
+
+  it("inclui modo e número de salas somente em masmorras", () => {
+    const dungeon: GenerationResult = {
+      ...result,
+      id: "dungeon",
+      options: {
+        selected: {
+          ...result.options.selected,
+          ancestry: null,
+          dungeonMode: "mapped",
+          dungeonSize: 12,
+        },
+        resolved: {
+          ...result.options.resolved,
+          ancestry: null,
+          dungeonMode: "mapped",
+          dungeonSize: 12,
+        },
+      },
+    };
+
+    expect(toMarkdown(dungeon, 1)).toContain("> Modo: Mapeada");
+    expect(toMarkdown(dungeon, 1)).toContain("> Salas: 12 salas");
+    expect(toMarkdown(result, 1)).not.toContain("> Modo:");
   });
 });

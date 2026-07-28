@@ -1,5 +1,7 @@
 import {
   getComplexityLabel,
+  getDungeonModeLabel,
+  getDungeonSizeLabel,
   getEnvironmentLabel,
   getPeopleLabel,
   getToneLabel,
@@ -37,6 +39,12 @@ function metadataLines(metadata: GenerationOptionMetadata): Array<[string, strin
       "Ancestralidade",
       `${getPeopleLabel(resolved.ancestry)}${selected.ancestry === "random" ? " (aleatório)" : ""}`,
     ]);
+  }
+  if (resolved.dungeonMode !== null && resolved.dungeonSize !== null) {
+    lines.push(
+      ["Modo", getDungeonModeLabel(resolved.dungeonMode)],
+      ["Salas", getDungeonSizeLabel(resolved.dungeonSize)],
+    );
   }
   return lines.map(([label, value]) => [safeMetadataValue(label), safeMetadataValue(value)]);
 }

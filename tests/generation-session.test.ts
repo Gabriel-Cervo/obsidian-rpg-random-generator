@@ -18,6 +18,8 @@ describe("controller da sessão de geração", () => {
       environment: "random",
       complexity: "random",
       ancestry: "random",
+      dungeonMode: null,
+      dungeonSize: null,
     });
     expect(controller.snapshot.currentResult).toBeNull();
   });

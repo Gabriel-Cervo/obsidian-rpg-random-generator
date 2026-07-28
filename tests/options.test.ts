@@ -4,6 +4,8 @@ import {
   DEFAULT_GENERATION_OPTIONS,
   RANDOM_ANCESTRY_LABEL,
   getComplexityLabel,
+  getDungeonModeLabel,
+  getDungeonSizeLabel,
   getEnvironmentLabel,
   getOptionLabel,
   getToneLabel,
@@ -27,7 +29,11 @@ describe("contrato de opções de geração", () => {
   });
 
   it("resolve escolhas explícitas sem consumir aleatoriedade", () => {
-    expect(resolveGenerationOptions(explicit, new Random(() => 0), "npc")).toEqual(explicit);
+    expect(resolveGenerationOptions(explicit, new Random(() => 0), "npc")).toEqual({
+      ...explicit,
+      dungeonMode: null,
+      dungeonSize: null,
+    });
   });
 
   it("resolve escolhas aleatórias de modo determinístico e inclui cada perfil possível", () => {
@@ -45,5 +51,24 @@ describe("contrato de opções de geração", () => {
     expect(getComplexityLabel("quick")).toBe("Rápido");
     expect(getOptionLabel("ancestry", "humanos")).toBe("Humano");
     expect(RANDOM_ANCESTRY_LABEL).toBe("Aleatória");
+    expect(getDungeonModeLabel("mapped")).toBe("Mapeada");
+    expect(getDungeonSizeLabel(12)).toBe("12 salas");
+  });
+
+  it("aplica opções de masmorra somente ao gerador correspondente", () => {
+    expect(normalizeGenerationOptions({
+      dungeonMode: "mapped",
+      dungeonSize: 12,
+    }, "dungeon")).toMatchObject({
+      dungeonMode: "mapped",
+      dungeonSize: 12,
+    });
+    expect(normalizeGenerationOptions({
+      dungeonMode: "mapped",
+      dungeonSize: 12,
+    }, "quest")).toMatchObject({
+      dungeonMode: null,
+      dungeonSize: null,
+    });
   });
 });

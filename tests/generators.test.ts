@@ -20,6 +20,8 @@ const optionsFor = (tone: ToneId, environment: EnvironmentId, complexity: Comple
   environment,
   complexity,
   ancestry: id === "npc" ? "humanos" as const : null,
+  dungeonMode: id === "dungeon" ? "story" as const : null,
+  dungeonSize: id === "dungeon" ? 5 as const : null,
 });
 
 function assertClean(result: ReturnType<typeof generate>): void {
@@ -60,7 +62,14 @@ describe("motor option-aware de geração", () => {
             assertClean(result);
             expect(result.id).toBe(id);
             expect(result.options.selected).toEqual(optionsFor(tone, environment, complexity, id));
-            expect(result.options.resolved).toEqual({ tone, environment, complexity, ancestry: id === "npc" ? "humanos" : null });
+            expect(result.options.resolved).toEqual({
+              tone,
+              environment,
+              complexity,
+              ancestry: id === "npc" ? "humanos" : null,
+              dungeonMode: id === "dungeon" ? "story" : null,
+              dungeonSize: id === "dungeon" ? 5 : null,
+            });
             expect(result.content.markdown).not.toBe(result.content.plainText);
             expect(semanticMarkdown(result)).toBe(result.content.plainText);
           }
@@ -149,11 +158,11 @@ describe("motor option-aware de geração", () => {
 
   it("preserva metadados selecionados, resolvidos e marcados como aleatórios", () => {
     const result = generate("npc", source(0.99), { tone: "heroic", environment: "forest", complexity: "detailed", ancestry: "fadas" });
-    expect(result.options.selected).toEqual({ tone: "heroic", environment: "forest", complexity: "detailed", ancestry: "fadas" });
-    expect(result.options.resolved).toEqual({ tone: "heroic", environment: "forest", complexity: "detailed", ancestry: "fadas" });
+    expect(result.options.selected).toEqual({ tone: "heroic", environment: "forest", complexity: "detailed", ancestry: "fadas", dungeonMode: null, dungeonSize: null });
+    expect(result.options.resolved).toEqual({ tone: "heroic", environment: "forest", complexity: "detailed", ancestry: "fadas", dungeonMode: null, dungeonSize: null });
     const randomResult = generate("location", source(0), { tone: "random", environment: "random", complexity: "random", ancestry: null });
-    expect(randomResult.options.selected).toEqual({ tone: "random", environment: "random", complexity: "random", ancestry: null });
-    expect(randomResult.options.resolved).toEqual({ tone: "grim", environment: "wilderness", complexity: "quick", ancestry: null });
+    expect(randomResult.options.selected).toEqual({ tone: "random", environment: "random", complexity: "random", ancestry: null, dungeonMode: null, dungeonSize: null });
+    expect(randomResult.options.resolved).toEqual({ tone: "grim", environment: "wilderness", complexity: "quick", ancestry: null, dungeonMode: null, dungeonSize: null });
   });
 
   it("não produz gramática conhecida como inválida", () => {
