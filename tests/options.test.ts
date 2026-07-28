@@ -35,7 +35,7 @@ describe("contrato de opções de geração", () => {
     expect(resolved.tone).toBe("mysterious");
     expect(resolved.environment).toBe("underground");
     expect(resolved.complexity).toBe("detailed");
-    expect(resolved.ancestry).toBe(PEOPLE[PEOPLE.length - 1].id);
+    expect(resolved.ancestry).toBe(PEOPLE[PEOPLE.length - 1]?.id);
   });
 
   it("expõe os rótulos pt-BR, inclusive aleatório", () => {

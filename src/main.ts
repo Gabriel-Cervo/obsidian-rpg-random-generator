@@ -124,8 +124,9 @@ export default class RpgRandomGeneratorPlugin extends Plugin {
 
   private async activateView(): Promise<void> {
     const existingLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_RPG_GENERATOR);
-    if (existingLeaves.length > 0) {
-      this.app.workspace.revealLeaf(existingLeaves[0]);
+    const existingLeaf = existingLeaves[0];
+    if (existingLeaf) {
+      this.app.workspace.revealLeaf(existingLeaf);
       return;
     }
 

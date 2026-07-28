@@ -198,7 +198,7 @@ function generateRumor(random: Random, options: GenerationOptionsInput = DEFAULT
 function sentenceCase(value: string): string {
   return value.length === 0
     ? value
-    : value[0].toLocaleUpperCase("pt-BR") + value.slice(1);
+    : value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
 }
 
 function dungeonFields(profile: DungeonContent, beat: VariationBeat, detailed: boolean): StructuredField[] {

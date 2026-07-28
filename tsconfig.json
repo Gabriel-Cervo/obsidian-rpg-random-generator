@@ -8,13 +8,13 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "allowJs": false,
-    "noImplicitAny": true,
-    "strictFunctionTypes": true,
-    "strictNullChecks": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "noImplicitReturns": true,
-    "noImplicitThis": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "importHelpers": true,
     "downlevelIteration": true,
@@ -27,4 +27,3 @@
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"]
 }
-

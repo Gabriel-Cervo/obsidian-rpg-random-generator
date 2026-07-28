@@ -343,6 +343,7 @@ export class GeneratorView extends ItemView {
 
     event.preventDefault();
     const nextId = ids[nextIndex];
+    if (!nextId) return;
     this.selectCategory(nextId);
     this.categoryButtons.get(nextId)?.focus();
   }

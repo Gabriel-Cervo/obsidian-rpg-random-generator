@@ -254,7 +254,7 @@ export const LOCATION_CONTENT = matrix<LocationContent>("location", (cell) => {
   return {
     name: environment.name,
     type: `um ponto de passagem com aspecto ${tone.color}`,
-    atmosphere: `${tone.event[0].toLocaleUpperCase("pt-BR")}${tone.event.slice(1)}. ${environment.texture}`,
+    atmosphere: `${tone.event.charAt(0).toLocaleUpperCase("pt-BR")}${tone.event.slice(1)}. ${environment.texture}`,
     feature: `Um marco local registra mudanças na região e guarda sinais de que ${tone.threat} se aproxima.`,
     hook: `Alguém procura ajuda para entender o perigo antes que ele alcance os moradores.`,
     inhabitants: environment.inhabitants,

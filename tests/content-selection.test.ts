@@ -46,9 +46,17 @@ describe("seleção de conteúdo compatível", () => {
       }
     }
     expect(validateCatalogCoverage(entries).valid).toBe(true);
-    const incomplete = validateCatalogCoverage([...entries.slice(1), { ...entries[1], id: entries[2].id }]);
+    const firstDuplicate = entries[1];
+    const duplicateId = entries[2]?.id;
+    expect(firstDuplicate).toBeDefined();
+    expect(duplicateId).toBeDefined();
+    if (!firstDuplicate || !duplicateId) throw new Error("catálogo de teste incompleto");
+    const incomplete = validateCatalogCoverage([
+      ...entries.slice(1),
+      { ...firstDuplicate, id: duplicateId },
+    ]);
     expect(incomplete.valid).toBe(false);
     expect(incomplete.missing).toHaveLength(1);
-    expect(incomplete.duplicateIds).toContain(entries[2].id);
+    expect(incomplete.duplicateIds).toContain(duplicateId);
   });
 });

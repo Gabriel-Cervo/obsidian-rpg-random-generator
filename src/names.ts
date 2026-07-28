@@ -312,6 +312,7 @@ function markovName(samples: readonly string[], random: Random, tone: ToneId): s
     for (let index = 0; index < padded.length - 2; index += 1) {
       const key = padded.slice(index, index + 2);
       const next = padded[index + 2];
+      if (next === undefined) continue;
       const values = transitions.get(key) ?? [];
       values.push(next);
       transitions.set(key, values);
