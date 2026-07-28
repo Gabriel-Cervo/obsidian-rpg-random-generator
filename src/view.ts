@@ -10,12 +10,24 @@ import {
   WorkspaceLeaf,
 } from "obsidian";
 import { generate, GENERATORS } from "./generators";
+import {
+  COMPLEXITIES,
+  COMPLEXITY_LABELS,
+  DEFAULT_GENERATION_OPTIONS,
+  ENVIRONMENTS,
+  ENVIRONMENT_LABELS,
+  RANDOM_ANCESTRY_LABEL,
+  RANDOM_LABEL,
+  TONES,
+  TONE_LABELS,
+} from "./options";
+import { PEOPLE } from "./names";
 import { toMarkdown, toPlainText } from "./formatters";
 import { OutputService, type OutputVault } from "./output";
 import { Random } from "./random";
 import { insertionText } from "./insertion-boundary";
 import type { RpgSettings } from "./settings";
-import type { GeneratorId, GenerationResult } from "./types";
+import type { GeneratorId, GenerationOptions, GenerationResult } from "./types";
 
 export const VIEW_TYPE_RPG_GENERATOR = "rpg-random-generator-view";
 
@@ -32,6 +44,7 @@ export interface GeneratorViewDependencies {
 
 export class GeneratorView extends ItemView {
   private selectedId: GeneratorId = "npc";
+  private generationOptions: GenerationOptions = { ...DEFAULT_GENERATION_OPTIONS };
   private currentResult: GenerationResult | null = null;
   private resultKey = 0;
   private renderVersion = 0;
@@ -46,6 +59,13 @@ export class GeneratorView extends ItemView {
   private insertDestination: HTMLElement | null = null;
   private insertHelp: HTMLElement | null = null;
   private categoryButtons = new Map<GeneratorId, HTMLButtonElement>();
+  private optionSelects: {
+    tone: HTMLSelectElement;
+    environment: HTMLSelectElement;
+    complexity: HTMLSelectElement;
+    ancestry: HTMLSelectElement;
+    ancestryField: HTMLElement;
+  } | null = null;
   private renderComponent: Component | null = null;
   private creatingNote = false;
 
@@ -98,6 +118,7 @@ export class GeneratorView extends ItemView {
 
   private resetEphemeralState(): void {
     this.selectedId = "npc";
+    this.generationOptions = { ...DEFAULT_GENERATION_OPTIONS };
     this.currentResult = null;
     this.resultKey += 1;
     this.renderVersion += 1;
@@ -107,6 +128,7 @@ export class GeneratorView extends ItemView {
     this.contentEl.empty();
     this.contentEl.addClass("rpg-generator-view");
     this.categoryButtons.clear();
+    this.optionSelects = null;
 
     const question = this.contentEl.createEl("p", {
       cls: "rpg-generator-question",
@@ -137,6 +159,53 @@ export class GeneratorView extends ItemView {
       );
       this.categoryButtons.set(definition.id, button);
     }
+
+    const optionsPanel = this.contentEl.createEl("fieldset", {
+      cls: "rpg-generator-options",
+    });
+    optionsPanel.createEl("legend", {
+      cls: "rpg-generator-options-heading",
+      text: "Opções",
+    });
+    const optionGrid = optionsPanel.createDiv({ cls: "rpg-generator-options-grid" });
+    const tone = this.createOptionSelect(
+      optionGrid,
+      "rpg-generator-tone",
+      "Tom",
+      [{ value: "random", label: RANDOM_LABEL }, ...TONES.map((id) => ({ value: id, label: TONE_LABELS[id] }))],
+      this.generationOptions.tone,
+      (value) => this.updateGenerationOption("tone", value as GenerationOptions["tone"]),
+    );
+    const environment = this.createOptionSelect(
+      optionGrid,
+      "rpg-generator-environment",
+      "Ambiente",
+      [{ value: "random", label: RANDOM_LABEL }, ...ENVIRONMENTS.map((id) => ({ value: id, label: ENVIRONMENT_LABELS[id] }))],
+      this.generationOptions.environment,
+      (value) => this.updateGenerationOption("environment", value as GenerationOptions["environment"]),
+    );
+    const complexity = this.createOptionSelect(
+      optionGrid,
+      "rpg-generator-complexity",
+      "Complexidade",
+      [{ value: "random", label: RANDOM_LABEL }, ...COMPLEXITIES.map((id) => ({ value: id, label: COMPLEXITY_LABELS[id] }))],
+      this.generationOptions.complexity,
+      (value) => this.updateGenerationOption("complexity", value as GenerationOptions["complexity"]),
+    );
+    const ancestryField = this.createOptionField(optionGrid, "rpg-generator-ancestry", "Ancestralidade");
+    const ancestry = ancestryField.createEl("select", {
+      cls: "rpg-generator-option-select",
+      attr: { id: "rpg-generator-ancestry" },
+    });
+    ancestry.addEventListener("change", () =>
+      this.updateGenerationOption("ancestry", ancestry.value as GenerationOptions["ancestry"]),
+    );
+    this.addSelectOptions(ancestry, [
+      { value: "random", label: RANDOM_ANCESTRY_LABEL },
+      ...PEOPLE.map((person) => ({ value: person.id, label: person.label })),
+    ], this.generationOptions.ancestry ?? "random");
+    ancestryField.hidden = this.selectedId !== "npc";
+    this.optionSelects = { tone, environment, complexity, ancestry, ancestryField };
 
     this.primaryButton = this.contentEl.createEl("button", {
       cls: ["mod-cta", "rpg-generator-primary"],
@@ -189,13 +258,65 @@ export class GeneratorView extends ItemView {
     });
   }
 
+  private createOptionField(parent: HTMLElement, id: string, label: string): HTMLElement {
+    const field = parent.createDiv({ cls: "rpg-generator-option-field" });
+    field.createEl("label", { text: label, attr: { for: id } });
+    return field;
+  }
+
+  private createOptionSelect(
+    parent: HTMLElement,
+    id: string,
+    label: string,
+    options: readonly { value: string; label: string }[],
+    selectedValue: string,
+    onChange: (value: string) => void,
+  ): HTMLSelectElement {
+    const field = this.createOptionField(parent, id, label);
+    const select = field.createEl("select", {
+      cls: "rpg-generator-option-select",
+      attr: { id },
+    });
+    this.addSelectOptions(select, options, selectedValue);
+    select.addEventListener("change", () => onChange(select.value));
+    return select;
+  }
+
+  private addSelectOptions(
+    select: HTMLSelectElement,
+    options: readonly { value: string; label: string }[],
+    selectedValue: string,
+  ): void {
+    for (const option of options) {
+      const element = select.createEl("option", {
+        text: option.label,
+        attr: { value: option.value },
+      });
+      element.selected = option.value === selectedValue;
+    }
+  }
+
+  private updateGenerationOption<K extends keyof GenerationOptions>(
+    key: K,
+    value: GenerationOptions[K],
+  ): void {
+    this.generationOptions = { ...this.generationOptions, [key]: value };
+    this.clearCurrentResult("Resultado limpo ao alterar opções");
+  }
+
+  private clearCurrentResult(status: string): void {
+    this.currentResult = null;
+    this.resultKey += 1;
+    this.renderVersion += 1;
+    this.updateControls();
+    this.updateResultText();
+    this.liveStatus?.setText(status);
+  }
+
   private selectCategory(id: GeneratorId): void {
     if (id === this.selectedId) return;
 
     this.selectedId = id;
-    this.currentResult = null;
-    this.resultKey += 1;
-    this.renderVersion += 1;
 
     for (const [categoryId, button] of this.categoryButtons.entries()) {
       const selected = categoryId === id;
@@ -203,9 +324,8 @@ export class GeneratorView extends ItemView {
       button.setAttr("tabindex", selected ? "0" : "-1");
       button.toggleClass("is-selected", selected);
     }
-    this.updateControls();
-    this.updateResultText();
-    this.liveStatus?.setText("Resultado limpo ao trocar de categoria");
+    if (this.optionSelects) this.optionSelects.ancestryField.hidden = id !== "npc";
+    this.clearCurrentResult("Resultado limpo ao trocar de categoria");
   }
 
   private handleCategoryKeydown(event: KeyboardEvent, id: GeneratorId): void {
@@ -241,7 +361,7 @@ export class GeneratorView extends ItemView {
 
   private generateResult(): void {
     try {
-      const result = generate(this.selectedId, new Random());
+      const result = generate(this.selectedId, new Random(), this.generationOptions);
       this.currentResult = result;
       this.resultKey += 1;
       this.updateControls();
@@ -306,7 +426,7 @@ export class GeneratorView extends ItemView {
     const renderComponent = this.addChild(new Component());
     this.renderComponent = renderComponent;
     try {
-      void MarkdownRenderer.render(this.app, toMarkdown(result, 1), rendered, "", renderComponent)
+      void MarkdownRenderer.render(this.app, toMarkdown(result, 3), rendered, "", renderComponent)
         .then(() => {
           if (
             renderVersion !== this.renderVersion ||

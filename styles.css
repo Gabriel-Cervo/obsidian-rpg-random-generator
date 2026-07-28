@@ -57,11 +57,53 @@
 }
 
 .rpg-generator-category:focus-visible,
+.rpg-generator-option-select:focus-visible,
 .rpg-generator-primary:focus-visible,
 .rpg-generator-secondary:focus-visible,
 .rpg-generator-result-text:focus-visible {
   outline: 2px solid var(--interactive-accent);
   outline-offset: 2px;
+}
+
+.rpg-generator-options {
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 0 0 10px;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+}
+
+.rpg-generator-options-heading {
+  padding: 0 4px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+}
+
+.rpg-generator-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rpg-generator-option-field {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.rpg-generator-option-field label {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+}
+
+.rpg-generator-option-select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 32px;
+  color: var(--text-normal);
 }
 
 .rpg-generator-primary {
@@ -157,8 +199,15 @@
 
 @media (max-width: 320px) {
   .rpg-generator-categories,
+  .rpg-generator-options-grid,
   .rpg-generator-actions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 321px) and (max-width: 380px) {
+  .rpg-generator-options-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

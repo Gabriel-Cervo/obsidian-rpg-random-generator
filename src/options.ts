@@ -38,6 +38,8 @@ export const COMPLEXITY_LABELS: Readonly<Record<ComplexityId, string>> = {
 };
 
 export const RANDOM_LABEL = "Aleatório";
+/** Label used only by the Ancestralidade select; other controls keep Aleatório. */
+export const RANDOM_ANCESTRY_LABEL = "Aleatória";
 
 export const TONES = TONE_IDS;
 export const ENVIRONMENTS = ENVIRONMENT_IDS;

@@ -42,7 +42,7 @@ function metadataLines(metadata: GenerationOptionMetadata): Array<[string, strin
 }
 
 function formatWithHeading(
-  level: 1 | 2,
+  level: 1 | 2 | 3,
   title: string,
   body: string,
   metadata?: GenerationOptionMetadata,
@@ -94,7 +94,7 @@ export function formatPlainText(
 }
 
 /** Formats a result with its title at the requested Markdown heading level. */
-export function toMarkdown(result: GenerationResult, headingLevel: 1 | 2): string {
+export function toMarkdown(result: GenerationResult, headingLevel: 1 | 2 | 3): string {
   return formatWithHeading(
     headingLevel,
     result.title,

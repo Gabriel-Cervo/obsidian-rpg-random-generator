@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Random } from "../src/random";
 import {
   DEFAULT_GENERATION_OPTIONS,
+  RANDOM_ANCESTRY_LABEL,
   getComplexityLabel,
   getEnvironmentLabel,
   getOptionLabel,
@@ -43,5 +44,6 @@ describe("contrato de opções de geração", () => {
     expect(getEnvironmentLabel("forest")).toBe("Florestas");
     expect(getComplexityLabel("quick")).toBe("Rápido");
     expect(getOptionLabel("ancestry", "humanos")).toBe("Humano");
+    expect(RANDOM_ANCESTRY_LABEL).toBe("Aleatória");
   });
 });

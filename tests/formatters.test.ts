@@ -30,6 +30,10 @@ describe("formatadores de resultados", () => {
     );
   });
 
+  it("formata a pré-visualização com H3", () => {
+    expect(toMarkdown(result, 3)).toMatch(`### ${title}`);
+  });
+
   it("formata texto puro sem heading Markdown", () => {
     const formatted = toPlainText(result);
 
