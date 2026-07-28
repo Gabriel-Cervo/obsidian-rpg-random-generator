@@ -5,6 +5,7 @@ import {
   WorkspaceLeaf,
 } from "obsidian";
 import { MutableStore } from "./application/readable-store";
+import { SettingsRepository } from "./application/settings-repository";
 import { RpgRandomGeneratorSettingTab } from "./settings-tab";
 import { normalizeSettings, type RpgSettings } from "./settings";
 import {
@@ -14,13 +15,15 @@ import {
 } from "./view";
 
 export default class RpgRandomGeneratorPlugin extends Plugin {
-  private rpgSettings!: RpgSettings;
+  private settingsRepository!: SettingsRepository;
   private lastEditableTarget: EditableMarkdownTarget | null = null;
   private readonly editableTargetChanges = new MutableStore(0);
-  private settingsSaveQueue: Promise<void> = Promise.resolve();
 
   async onload(): Promise<void> {
-    this.rpgSettings = normalizeSettings(await this.loadData());
+    const settings = normalizeSettings(await this.loadData());
+    this.settingsRepository = new SettingsRepository(settings, async (next) => {
+      await this.saveData({ outputFolder: next.outputFolder });
+    });
 
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", (leaf) => this.captureFromLeaf(leaf)),
@@ -43,7 +46,7 @@ export default class RpgRandomGeneratorPlugin extends Plugin {
       VIEW_TYPE_RPG_GENERATOR,
       (leaf) =>
         new GeneratorView(leaf, {
-          settings: this.rpgSettings,
+          settings: this.settingsRepository.current,
           getEditableTarget: () => this.getEditableTarget(),
           subscribeEditableTarget: (listener) =>
             this.editableTargetChanges.subscribe(listener),
@@ -51,7 +54,7 @@ export default class RpgRandomGeneratorPlugin extends Plugin {
     );
     this.addSettingTab(
       new RpgRandomGeneratorSettingTab(this.app, this, {
-        settings: this.rpgSettings,
+        settings: this.settingsRepository.current,
         saveSettings: (settings) => this.saveSettings(settings),
       }),
     );
@@ -68,13 +71,7 @@ export default class RpgRandomGeneratorPlugin extends Plugin {
   }
 
   private async saveSettings(settings: RpgSettings): Promise<void> {
-    const save = this.settingsSaveQueue.catch(() => undefined).then(async () => {
-      await this.saveData({ outputFolder: settings.outputFolder });
-      this.rpgSettings.outputFolder = settings.outputFolder;
-    });
-    // Keep the chain usable after a failed write so a later valid change can save.
-    this.settingsSaveQueue = save.catch(() => undefined);
-    await save;
+    await this.settingsRepository.save(settings);
   }
 
   private captureFromActiveLeaf(): void {

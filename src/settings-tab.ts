@@ -22,7 +22,8 @@ const DESCRIPTION =
 export class RpgRandomGeneratorSettingTab extends PluginSettingTab {
   private readonly settings: RpgSettings;
   private readonly saveSettings: SettingsTabDependencies["saveSettings"];
-  private saveQueue: Promise<void> = Promise.resolve();
+  private pendingSaveTimer: number | null = null;
+  private pendingSave: { setting: Setting; settings: RpgSettings } | null = null;
 
   constructor(
     app: App,
@@ -54,27 +55,42 @@ export class RpgRandomGeneratorSettingTab extends PluginSettingTab {
     });
   }
 
-  private async handleOutputFolderChange(
+  hide(): void {
+    this.flushPendingSave();
+  }
+
+  private handleOutputFolderChange(
     setting: Setting,
     input: string,
-  ): Promise<void> {
+  ): void {
     const validation = validateOutputFolder(input);
     if (!validation.valid) {
       this.showValidationError(setting, validation);
       return;
     }
 
-    const nextSettings: RpgSettings = { outputFolder: validation.value };
-    const save = this.saveQueue.catch(() => undefined).then(async () => {
-      await this.saveSettings(nextSettings);
-      // Keep the injected view of settings in sync only after persistence succeeds.
-      this.settings.outputFolder = nextSettings.outputFolder;
-    });
-    // A failed save must not reject the queue and block later valid changes.
-    this.saveQueue = save.catch(() => undefined);
+    this.pendingSave = {
+      setting,
+      settings: { outputFolder: validation.value },
+    };
+    if (this.pendingSaveTimer !== null) window.clearTimeout(this.pendingSaveTimer);
+    this.pendingSaveTimer = window.setTimeout(() => this.flushPendingSave(), 250);
+  }
 
+  private flushPendingSave(): void {
+    if (this.pendingSaveTimer !== null) {
+      window.clearTimeout(this.pendingSaveTimer);
+      this.pendingSaveTimer = null;
+    }
+    const pending = this.pendingSave;
+    this.pendingSave = null;
+    if (!pending) return;
+    void this.persistSettings(pending.setting, pending.settings);
+  }
+
+  private async persistSettings(setting: Setting, settings: RpgSettings): Promise<void> {
     try {
-      await save;
+      await this.saveSettings(settings);
       setting.setDesc(DESCRIPTION);
     } catch {
       setting.setDesc("A pasta de saída não pôde ser salva. Tente novamente.");
