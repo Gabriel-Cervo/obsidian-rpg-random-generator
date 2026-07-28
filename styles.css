@@ -146,6 +146,74 @@
   white-space: pre-wrap;
 }
 
+.rpg-dungeon-map {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.rpg-dungeon-map h4 {
+  margin: 0 0 8px;
+  font-size: var(--font-ui-small);
+}
+
+.rpg-dungeon-map-frame {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.rpg-dungeon-map svg {
+  display: block;
+  width: 100%;
+  min-width: 520px;
+  height: auto;
+  color: var(--text-normal);
+}
+
+.rpg-dungeon-map-edge {
+  stroke: var(--text-muted);
+  stroke-width: 3;
+}
+
+.rpg-dungeon-map-edge.is-shortcut {
+  stroke: var(--interactive-accent);
+  stroke-dasharray: 8 6;
+}
+
+.rpg-dungeon-map-room rect {
+  fill: var(--background-primary);
+  stroke: var(--interactive-accent);
+  stroke-width: 2;
+}
+
+.rpg-dungeon-map-number,
+.rpg-dungeon-map-role,
+.rpg-dungeon-map-marker {
+  fill: currentColor;
+  font-family: var(--font-interface);
+}
+
+.rpg-dungeon-map-number {
+  font-size: 14px;
+  font-weight: var(--font-bold);
+}
+
+.rpg-dungeon-map-role {
+  font-size: 11px;
+}
+
+.rpg-dungeon-map-marker {
+  fill: var(--text-warning);
+  font-size: 10px;
+  font-weight: var(--font-bold);
+}
+
+.rpg-dungeon-map-legend {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
 .rpg-generator-live-status {
   position: absolute;
   width: 1px;

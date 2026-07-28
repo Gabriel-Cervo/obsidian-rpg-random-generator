@@ -11,10 +11,15 @@ import {
 } from "obsidian";
 import { GenerationSessionController } from "./application/generation-session";
 import type { StoreListener } from "./application/readable-store";
+import { DungeonMappingError, dungeonFeatureLabel } from "./dungeon/engine";
 import { GENERATORS } from "./generators";
 import {
   COMPLEXITIES,
   COMPLEXITY_LABELS,
+  DUNGEON_MODE_LABELS,
+  DUNGEON_MODES,
+  DUNGEON_ROOM_COUNTS,
+  DUNGEON_SIZE_LABELS,
   ENVIRONMENTS,
   ENVIRONMENT_LABELS,
   RANDOM_ANCESTRY_LABEL,
@@ -28,7 +33,12 @@ import { OutputService, type OutputVault } from "./output";
 import { Random } from "./random";
 import { insertionText } from "./insertion-boundary";
 import type { RpgSettings } from "./settings";
-import type { GeneratorId, GenerationOptions } from "./types";
+import type {
+  DungeonSize,
+  GenerationResult,
+  GeneratorId,
+  GenerationOptions,
+} from "./types";
 
 export const VIEW_TYPE_RPG_GENERATOR = "rpg-random-generator-view";
 
@@ -64,6 +74,10 @@ export class GeneratorView extends ItemView {
     complexity: HTMLSelectElement;
     ancestry: HTMLSelectElement;
     ancestryField: HTMLElement;
+    dungeonMode: HTMLSelectElement;
+    dungeonModeField: HTMLElement;
+    dungeonSize: HTMLSelectElement;
+    dungeonSizeField: HTMLElement;
   } | null = null;
   private renderComponent: Component | null = null;
   constructor(
@@ -140,7 +154,7 @@ export class GeneratorView extends ItemView {
           role: "radio",
           "aria-checked": String(selected),
           tabindex: selected ? "0" : "-1",
-          "aria-label": definition.id === "dungeon" ? "Masmorra de cinco salas" : definition.label,
+          "aria-label": definition.label,
         },
       });
       button.createSpan({ cls: "rpg-generator-category-label", text: definition.label });
@@ -196,7 +210,65 @@ export class GeneratorView extends ItemView {
       ...PEOPLE.map((person) => ({ value: person.id, label: person.label })),
     ], this.session.snapshot.options.ancestry ?? "random");
     ancestryField.hidden = this.session.snapshot.selectedId !== "npc";
-    this.optionSelects = { tone, environment, complexity, ancestry, ancestryField };
+
+    const dungeonModeField = this.createOptionField(
+      optionGrid,
+      "rpg-generator-dungeon-mode",
+      "Modo",
+    );
+    const dungeonMode = dungeonModeField.createEl("select", {
+      cls: "rpg-generator-option-select",
+      attr: { id: "rpg-generator-dungeon-mode" },
+    });
+    this.addSelectOptions(
+      dungeonMode,
+      DUNGEON_MODES.map((id) => ({ value: id, label: DUNGEON_MODE_LABELS[id] })),
+      this.session.snapshot.options.dungeonMode ?? "story",
+    );
+    dungeonMode.addEventListener("change", () =>
+      this.updateGenerationOption(
+        "dungeonMode",
+        dungeonMode.value as GenerationOptions["dungeonMode"],
+      ),
+    );
+    dungeonModeField.hidden = this.session.snapshot.selectedId !== "dungeon";
+
+    const dungeonSizeField = this.createOptionField(
+      optionGrid,
+      "rpg-generator-dungeon-size",
+      "Tamanho",
+    );
+    const dungeonSize = dungeonSizeField.createEl("select", {
+      cls: "rpg-generator-option-select",
+      attr: { id: "rpg-generator-dungeon-size" },
+    });
+    this.addSelectOptions(
+      dungeonSize,
+      DUNGEON_ROOM_COUNTS.map((size) => ({
+        value: String(size),
+        label: DUNGEON_SIZE_LABELS[size],
+      })),
+      String(this.session.snapshot.options.dungeonSize ?? 5),
+    );
+    dungeonSize.addEventListener("change", () =>
+      this.updateGenerationOption(
+        "dungeonSize",
+        Number(dungeonSize.value) as DungeonSize,
+      ),
+    );
+    dungeonSizeField.hidden = this.session.snapshot.selectedId !== "dungeon";
+
+    this.optionSelects = {
+      tone,
+      environment,
+      complexity,
+      ancestry,
+      ancestryField,
+      dungeonMode,
+      dungeonModeField,
+      dungeonSize,
+      dungeonSizeField,
+    };
 
     this.primaryButton = this.contentEl.createEl("button", {
       cls: ["mod-cta", "rpg-generator-primary"],
@@ -312,7 +384,11 @@ export class GeneratorView extends ItemView {
       button.setAttr("tabindex", selected ? "0" : "-1");
       button.toggleClass("is-selected", selected);
     }
-    if (this.optionSelects) this.optionSelects.ancestryField.hidden = id !== "npc";
+    if (this.optionSelects) {
+      this.optionSelects.ancestryField.hidden = id !== "npc";
+      this.optionSelects.dungeonModeField.hidden = id !== "dungeon";
+      this.optionSelects.dungeonSizeField.hidden = id !== "dungeon";
+    }
     this.clearCurrentResult("Resultado limpo ao trocar de categoria");
   }
 
@@ -349,16 +425,38 @@ export class GeneratorView extends ItemView {
   }
 
   private generateResult(): void {
-    try {
-      const attempt = this.session.generate(new Random());
-      if (!attempt.ok) throw attempt.error;
-      const result = attempt.result;
-      this.updateControls();
-      this.updateResultText();
-      this.liveStatus?.setText(`Novo resultado de ${result.label} gerado`);
-    } catch {
-      new Notice("Não foi possível gerar o resultado");
+    const attempt = this.session.generate(new Random());
+    if (!attempt.ok) {
+      this.handleGenerationError(attempt.error);
+      return;
     }
+
+    const result = attempt.result;
+    this.updateControls();
+    this.updateResultText();
+    this.liveStatus?.setText(`Novo resultado de ${result.label} gerado`);
+  }
+
+  private handleGenerationError(error: unknown): void {
+    if (error instanceof DungeonMappingError) {
+      console.error("[Gerador de RPG] Falha de mapeamento de masmorra", {
+        code: error.code,
+        message: error.message,
+      });
+      this.liveStatus?.setText(
+        "Falha ao mapear a masmorra; o resultado anterior foi preservado",
+      );
+      new Notice(
+        "Não foi possível mapear a masmorra. O resultado anterior foi preservado.",
+      );
+      return;
+    }
+
+    console.error("[Gerador de RPG] Falha de geração", error);
+    this.liveStatus?.setText(
+      "Falha ao gerar; o resultado anterior foi preservado",
+    );
+    new Notice("Não foi possível gerar o resultado. O resultado anterior foi preservado.");
   }
 
   private updateControls(): void {
@@ -425,6 +523,7 @@ export class GeneratorView extends ItemView {
           ) return;
           this.resultText.empty();
           while (rendered.firstChild) this.resultText.appendChild(rendered.firstChild);
+          this.appendDungeonMap(result);
         })
         .catch(() => {
           if (
@@ -444,6 +543,110 @@ export class GeneratorView extends ItemView {
         this.resultText.setText("Não foi possível renderizar o resultado.");
       }
     }
+  }
+
+  private appendDungeonMap(result: GenerationResult): void {
+    const map = result.dungeon?.map;
+    if (!map || !this.resultText) return;
+
+    const namespace = "http://www.w3.org/2000/svg";
+    const roomById = new Map(map.rooms.map((room) => [room.id, room]));
+    const maxX = Math.max(...map.rooms.map((room) => room.x));
+    const maxY = Math.max(...map.rooms.map((room) => room.y));
+    const container = this.resultText.createDiv({ cls: "rpg-dungeon-map" });
+    container.createEl("h4", { text: "Mapa abstrato" });
+    const frame = container.createDiv({ cls: "rpg-dungeon-map-frame" });
+    const svg = document.createElementNS(namespace, "svg");
+    const titleId = `rpg-dungeon-map-title-${this.renderVersion}`;
+    const descriptionId = `rpg-dungeon-map-description-${this.renderVersion}`;
+    svg.setAttribute("viewBox", `0 0 ${maxX + 70} ${maxY + 65}`);
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-labelledby", `${titleId} ${descriptionId}`);
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+    const title = document.createElementNS(namespace, "title");
+    title.setAttribute("id", titleId);
+    title.textContent = "Mapa abstrato da masmorra";
+    svg.appendChild(title);
+    const description = document.createElementNS(namespace, "desc");
+    description.setAttribute("id", descriptionId);
+    description.textContent = map.accessibleLabel;
+    svg.appendChild(description);
+
+    for (const connection of map.edges) {
+      const from = roomById.get(connection.from);
+      const to = roomById.get(connection.to);
+      if (!from || !to) continue;
+      const line = document.createElementNS(namespace, "line");
+      line.setAttribute("x1", String(from.x));
+      line.setAttribute("y1", String(from.y));
+      line.setAttribute("x2", String(to.x));
+      line.setAttribute("y2", String(to.y));
+      line.setAttribute(
+        "class",
+        connection.kind === "shortcut"
+          ? "rpg-dungeon-map-edge is-shortcut"
+          : "rpg-dungeon-map-edge",
+      );
+      svg.appendChild(line);
+    }
+
+    for (const room of map.rooms) {
+      const group = document.createElementNS(namespace, "g");
+      group.setAttribute("class", "rpg-dungeon-map-room");
+      const roomTitle = document.createElementNS(namespace, "title");
+      const featureSummary = room.features
+        .map((feature) => dungeonFeatureLabel(feature))
+        .join(", ");
+      roomTitle.textContent = [
+        `Sala ${room.number}: ${room.role}.`,
+        featureSummary ? `Marcadores do mestre: ${featureSummary}.` : "",
+      ].filter(Boolean).join(" ");
+      group.appendChild(roomTitle);
+
+      const rect = document.createElementNS(namespace, "rect");
+      rect.setAttribute("x", String(room.x - 28));
+      rect.setAttribute("y", String(room.y - 22));
+      rect.setAttribute("width", "56");
+      rect.setAttribute("height", "44");
+      rect.setAttribute("rx", "8");
+      group.appendChild(rect);
+
+      const number = document.createElementNS(namespace, "text");
+      number.setAttribute("x", String(room.x));
+      number.setAttribute("y", String(room.y + 5));
+      number.setAttribute("text-anchor", "middle");
+      number.setAttribute("class", "rpg-dungeon-map-number");
+      number.textContent = String(room.number).padStart(2, "0");
+      group.appendChild(number);
+
+      if (room.features.length > 0) {
+        const marker = document.createElementNS(namespace, "text");
+        marker.setAttribute("x", String(room.x + 23));
+        marker.setAttribute("y", String(room.y - 14));
+        marker.setAttribute("text-anchor", "middle");
+        marker.setAttribute("class", "rpg-dungeon-map-marker");
+        marker.textContent = room.features
+          .map((feature) => dungeonFeatureLabel(feature).charAt(0))
+          .join("");
+        group.appendChild(marker);
+      }
+
+      const role = document.createElementNS(namespace, "text");
+      role.setAttribute("x", String(room.x));
+      role.setAttribute("y", String(room.y + 39));
+      role.setAttribute("text-anchor", "middle");
+      role.setAttribute("class", "rpg-dungeon-map-role");
+      role.textContent = room.role;
+      group.appendChild(role);
+      svg.appendChild(group);
+    }
+
+    frame.appendChild(svg);
+    container.createEl("p", {
+      cls: "rpg-dungeon-map-legend",
+      text: "Linhas tracejadas indicam atalhos. Marcadores: S segredo, A armadilha, E encontro, R recompensa.",
+    });
   }
 
   private removeRenderComponent(): void {
