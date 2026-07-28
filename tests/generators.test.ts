@@ -4,6 +4,8 @@ import { PEOPLE } from "../src/names";
 import { Random } from "../src/random";
 import {
   COMPLEXITY_IDS,
+  DUNGEON_MODE_IDS,
+  DUNGEON_SIZES,
   ENVIRONMENT_IDS,
   GENERATOR_IDS,
   TONE_IDS,
@@ -146,14 +148,53 @@ describe("motor option-aware de geração", () => {
     expect(detailed.content.markdown).toContain(`**Verdade para o mestre:** ${truth}`);
   });
 
-  it("mantém a masmorra temporária com exatamente cinco salas narrativas", () => {
-    for (const complexity of COMPLEXITY_IDS) {
-      const result = generate("dungeon", source(0.2), { tone: "heroic", environment: "wilderness", complexity, ancestry: null });
-      const roomLines = result.content.plainText.split("\n").filter((line) => /^\d+\. /.test(line));
-      expect(roomLines).toHaveLength(5);
-      expect(roomLines.map((line) => line.slice(0, 3))).toEqual(["1. ", "2. ", "3. ", "4. ", "5. "]);
-      expect(result.content.plainText).not.toMatch(/mapa|modo|tamanho|topologia|sala secreta extra/i);
+  it("cobre modos e tamanhos do M3 com conteúdo de mestre", () => {
+    for (const mode of DUNGEON_MODE_IDS) {
+      for (const size of DUNGEON_SIZES) {
+        const result = generate("dungeon", source(0.2), {
+          tone: "heroic",
+          environment: "wilderness",
+          complexity: "detailed",
+          ancestry: null,
+          dungeonMode: mode,
+          dungeonSize: size,
+        });
+        const roomLines = result.content.plainText
+          .split("\n")
+          .filter((line) => /^\d+\. /.test(line));
+        expect(roomLines).toHaveLength(size);
+        expect(result.dungeon?.mode).toBe(mode);
+        expect(result.dungeon?.size).toBe(size);
+        expect(result.content.plainText).toContain("Mestre [SEGREDO]");
+        expect(result.content.plainText).toContain("Mestre [ARMADILHA]");
+        expect(result.content.plainText).toContain("Mestre [ENCONTRO]");
+        expect(result.content.plainText).toContain("Mestre [RECOMPENSA]");
+        if (mode === "mapped") {
+          expect(result.dungeon?.map).not.toBeNull();
+          expect(result.content.plainText).toContain("Mapa abstrato (ASCII):");
+          expect(result.content.markdown).toContain("```text");
+        } else {
+          expect(result.dungeon?.map).toBeNull();
+          expect(result.content.plainText).not.toContain("Mapa abstrato (ASCII):");
+        }
+      }
     }
+  });
+
+  it("faz modo e tamanho alterarem materialmente a masmorra", () => {
+    const outputs = DUNGEON_MODE_IDS.flatMap((dungeonMode) =>
+      DUNGEON_SIZES.map((dungeonSize) =>
+        generate("dungeon", source(0.37), {
+          tone: "mysterious",
+          environment: "ruins",
+          complexity: "quick",
+          ancestry: null,
+          dungeonMode,
+          dungeonSize,
+        }).content.plainText
+      )
+    );
+    expect(new Set(outputs).size).toBe(DUNGEON_MODE_IDS.length * DUNGEON_SIZES.length);
   });
 
   it("preserva metadados selecionados, resolvidos e marcados como aleatórios", () => {
