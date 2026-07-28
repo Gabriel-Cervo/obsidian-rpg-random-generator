@@ -1,3 +1,4 @@
+"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -23,6 +24,46 @@ __export(main_exports, {
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian3 = require("obsidian");
+
+// src/application/readable-store.ts
+var MutableStore = class {
+  constructor(value) {
+    this.value = value;
+    this.listeners = /* @__PURE__ */ new Set();
+  }
+  get() {
+    return this.value;
+  }
+  set(value) {
+    this.value = value;
+    this.notify();
+  }
+  notify() {
+    for (const listener of this.listeners) listener();
+  }
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+};
+
+// src/application/settings-repository.ts
+var SettingsRepository = class {
+  constructor(current, write) {
+    this.current = current;
+    this.write = write;
+    this.queue = Promise.resolve();
+  }
+  save(settings) {
+    const next = { ...settings };
+    const save = this.queue.catch(() => void 0).then(async () => {
+      await this.write(next);
+      this.current.outputFolder = next.outputFolder;
+    });
+    this.queue = save.catch(() => void 0);
+    return save;
+  }
+};
 
 // src/settings-tab.ts
 var import_obsidian = require("obsidian");
@@ -100,7 +141,8 @@ var DESCRIPTION = "Pasta relativa ao vault onde as notas geradas ser\xE3o salvas
 var RpgRandomGeneratorSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin, dependencies) {
     super(app, plugin);
-    this.saveQueue = Promise.resolve();
+    this.pendingSaveTimer = null;
+    this.pendingSave = null;
     this.settings = dependencies.settings;
     this.saveSettings = dependencies.saveSettings;
   }
@@ -115,20 +157,35 @@ var RpgRandomGeneratorSettingTab = class extends import_obsidian.PluginSettingTa
       });
     });
   }
-  async handleOutputFolderChange(setting, input) {
+  hide() {
+    this.flushPendingSave();
+  }
+  handleOutputFolderChange(setting, input) {
     const validation = validateOutputFolder(input);
     if (!validation.valid) {
       this.showValidationError(setting, validation);
       return;
     }
-    const nextSettings = { outputFolder: validation.value };
-    const save = this.saveQueue.catch(() => void 0).then(async () => {
-      await this.saveSettings(nextSettings);
-      this.settings.outputFolder = nextSettings.outputFolder;
-    });
-    this.saveQueue = save.catch(() => void 0);
+    this.pendingSave = {
+      setting,
+      settings: { outputFolder: validation.value }
+    };
+    if (this.pendingSaveTimer !== null) window.clearTimeout(this.pendingSaveTimer);
+    this.pendingSaveTimer = window.setTimeout(() => this.flushPendingSave(), 250);
+  }
+  flushPendingSave() {
+    if (this.pendingSaveTimer !== null) {
+      window.clearTimeout(this.pendingSaveTimer);
+      this.pendingSaveTimer = null;
+    }
+    const pending = this.pendingSave;
+    this.pendingSave = null;
+    if (!pending) return;
+    void this.persistSettings(pending.setting, pending.settings);
+  }
+  async persistSettings(setting, settings) {
     try {
-      await save;
+      await this.saveSettings(settings);
       setting.setDesc(DESCRIPTION);
     } catch (e) {
       setting.setDesc("A pasta de sa\xEDda n\xE3o p\xF4de ser salva. Tente novamente.");
@@ -384,6 +441,7 @@ function markovName(samples, random, tone) {
     for (let index = 0; index < padded.length - 2; index += 1) {
       const key = padded.slice(index, index + 2);
       const next = padded[index + 2];
+      if (next === void 0) continue;
       const values = (_a = transitions.get(key)) != null ? _a : [];
       values.push(next);
       transitions.set(key, values);
@@ -484,6 +542,114 @@ var ENVIRONMENT_IDS = [
   "underground"
 ];
 var COMPLEXITY_IDS = ["quick", "detailed"];
+var DUNGEON_MODE_IDS = ["story", "mapped"];
+var DUNGEON_SIZES = [5, 8, 12];
+
+// src/options.ts
+var TONE_LABELS = {
+  grim: "Sombrio",
+  whimsical: "Extravagante",
+  heroic: "Heroico",
+  mysterious: "Misterioso"
+};
+var ENVIRONMENT_LABELS = {
+  wilderness: "Terras selvagens",
+  forest: "Florestas",
+  city: "Cidade",
+  coast: "Litoral",
+  ruins: "Ru\xEDnas",
+  underground: "Subterr\xE2neo"
+};
+var COMPLEXITY_LABELS = {
+  quick: "R\xE1pido",
+  detailed: "Detalhado"
+};
+var DUNGEON_MODE_LABELS = {
+  story: "Narrativa",
+  mapped: "Mapeada"
+};
+var DUNGEON_SIZE_LABELS = {
+  5: "5 salas",
+  8: "8 salas",
+  12: "12 salas"
+};
+var RANDOM_LABEL = "Aleat\xF3rio";
+var RANDOM_ANCESTRY_LABEL = "Aleat\xF3ria";
+var TONES = TONE_IDS;
+var ENVIRONMENTS = ENVIRONMENT_IDS;
+var COMPLEXITIES = COMPLEXITY_IDS;
+var DUNGEON_MODES = DUNGEON_MODE_IDS;
+var DUNGEON_ROOM_COUNTS = DUNGEON_SIZES;
+var DEFAULT_GENERATION_OPTIONS = Object.freeze({
+  tone: "random",
+  environment: "random",
+  complexity: "random",
+  ancestry: "random",
+  dungeonMode: null,
+  dungeonSize: null
+});
+var toneSet = new Set(TONE_IDS);
+var environmentSet = new Set(ENVIRONMENT_IDS);
+var complexitySet = new Set(COMPLEXITY_IDS);
+var peopleSet = new Set(PEOPLE.map((person) => person.id));
+var dungeonModeSet = new Set(DUNGEON_MODE_IDS);
+var dungeonSizeSet = new Set(DUNGEON_SIZES);
+var generatorSet = new Set(GENERATOR_IDS);
+function validSelection(value, values, fallback) {
+  return value === "random" || typeof value === "string" && values.has(value) ? value : fallback;
+}
+function isNpc(generatorId) {
+  return generatorId === "npc";
+}
+function isDungeon(generatorId) {
+  return generatorId === "dungeon";
+}
+function normalizeGenerationOptions(input = {}, generatorId) {
+  const value = typeof input === "object" && input !== null ? input : {};
+  const ancestry = isNpc(generatorId) ? validSelection(value.ancestry, peopleSet, "random") : generatorId === void 0 ? validSelection(value.ancestry, peopleSet, "random") : null;
+  return {
+    tone: validSelection(value.tone, toneSet, "random"),
+    environment: validSelection(value.environment, environmentSet, "random"),
+    complexity: validSelection(value.complexity, complexitySet, "random"),
+    ancestry,
+    dungeonMode: isDungeon(generatorId) ? typeof value.dungeonMode === "string" && dungeonModeSet.has(value.dungeonMode) ? value.dungeonMode : "story" : generatorId === void 0 ? typeof value.dungeonMode === "string" && dungeonModeSet.has(value.dungeonMode) ? value.dungeonMode : null : null,
+    dungeonSize: isDungeon(generatorId) ? typeof value.dungeonSize === "number" && dungeonSizeSet.has(value.dungeonSize) ? value.dungeonSize : 5 : generatorId === void 0 ? typeof value.dungeonSize === "number" && dungeonSizeSet.has(value.dungeonSize) ? value.dungeonSize : null : null
+  };
+}
+function pick(selection, values, random) {
+  return selection === "random" ? random.pick(values) : selection;
+}
+function resolveGenerationOptions(options = DEFAULT_GENERATION_OPTIONS, random = new Random(), generatorId) {
+  const selected = normalizeGenerationOptions(options, generatorId);
+  return {
+    tone: pick(selected.tone, TONE_IDS, random),
+    environment: pick(selected.environment, ENVIRONMENT_IDS, random),
+    complexity: pick(selected.complexity, COMPLEXITY_IDS, random),
+    ancestry: selected.ancestry === null ? null : pick(selected.ancestry, PEOPLE.map((person) => person.id), random),
+    dungeonMode: selected.dungeonMode,
+    dungeonSize: selected.dungeonSize
+  };
+}
+function getToneLabel(value) {
+  return value === "random" ? RANDOM_LABEL : TONE_LABELS[value];
+}
+function getEnvironmentLabel(value) {
+  return value === "random" ? RANDOM_LABEL : ENVIRONMENT_LABELS[value];
+}
+function getComplexityLabel(value) {
+  return value === "random" ? RANDOM_LABEL : COMPLEXITY_LABELS[value];
+}
+function getPeopleLabel(value) {
+  const person = PEOPLE.find((candidate) => candidate.id === value);
+  if (!person) throw new Error(`Unknown people profile: ${value}`);
+  return person.label;
+}
+function getDungeonModeLabel(value) {
+  return DUNGEON_MODE_LABELS[value];
+}
+function getDungeonSizeLabel(value) {
+  return DUNGEON_SIZE_LABELS[value];
+}
 
 // src/content-selection.ts
 var ContentSelectionError = class extends Error {
@@ -517,7 +683,7 @@ function matches(entry, cell, fallback) {
   }
   return tagMatches(tone, cell.tone) && tagMatches(environment, cell.environment) && tagMatches(complexity, cell.complexity);
 }
-function cellKey(cell) {
+function catalogCellKey(cell) {
   return `${cell.tone}/${cell.environment}/${cell.complexity}`;
 }
 function allCells() {
@@ -529,16 +695,6 @@ function allCells() {
 }
 function toCompatibility(value) {
   return { tone: value.tone, environment: value.environment, complexity: value.complexity };
-}
-function selectCompatibleContent(entries, compatibility, random = new Random()) {
-  const cell = toCompatibility(compatibility);
-  const normal = entries.filter((entry) => !isFallback(entry) && matches(entry, cell, false));
-  if (normal.length > 0) return random.pick(normal);
-  const fallback = entries.filter((entry) => isFallback(entry) && matches(entry, cell, true));
-  if (fallback.length > 0) return random.pick(fallback);
-  throw new ContentSelectionError(
-    `Nenhuma entrada compat\xEDvel para ${cellKey(cell)} (normal ou fallback).`
-  );
 }
 function validateCatalogCoverage(entries) {
   const seen = /* @__PURE__ */ new Set();
@@ -563,7 +719,7 @@ function validateCatalogCoverage(entries) {
 function assertCatalogCoverage(entries) {
   const coverage = validateCatalogCoverage(entries);
   if (!coverage.valid) {
-    const missing = coverage.missing.map(cellKey).join(", ");
+    const missing = coverage.missing.map(catalogCellKey).join(", ");
     const duplicates = coverage.duplicateIds.join(", ");
     const invalid2 = coverage.invalidEntryIds.join(", ");
     const details = [
@@ -574,83 +730,32 @@ function assertCatalogCoverage(entries) {
     throw new ContentSelectionError(`Cat\xE1logo incompleto: ${details}`);
   }
 }
-
-// src/options.ts
-var TONE_LABELS = {
-  grim: "Sombrio",
-  whimsical: "Extravagante",
-  heroic: "Heroico",
-  mysterious: "Misterioso"
-};
-var ENVIRONMENT_LABELS = {
-  wilderness: "Terras selvagens",
-  forest: "Florestas",
-  city: "Cidade",
-  coast: "Litoral",
-  ruins: "Ru\xEDnas",
-  underground: "Subterr\xE2neo"
-};
-var COMPLEXITY_LABELS = {
-  quick: "R\xE1pido",
-  detailed: "Detalhado"
-};
-var RANDOM_LABEL = "Aleat\xF3rio";
-var RANDOM_ANCESTRY_LABEL = "Aleat\xF3ria";
-var TONES = TONE_IDS;
-var ENVIRONMENTS = ENVIRONMENT_IDS;
-var COMPLEXITIES = COMPLEXITY_IDS;
-var DEFAULT_GENERATION_OPTIONS = Object.freeze({
-  tone: "random",
-  environment: "random",
-  complexity: "random",
-  ancestry: "random"
-});
-var toneSet = new Set(TONE_IDS);
-var environmentSet = new Set(ENVIRONMENT_IDS);
-var complexitySet = new Set(COMPLEXITY_IDS);
-var peopleSet = new Set(PEOPLE.map((person) => person.id));
-var generatorSet = new Set(GENERATOR_IDS);
-function validSelection(value, values, fallback) {
-  return value === "random" || typeof value === "string" && values.has(value) ? value : fallback;
-}
-function isNpc(generatorId) {
-  return generatorId === "npc";
-}
-function normalizeGenerationOptions(input = {}, generatorId) {
-  const value = typeof input === "object" && input !== null ? input : {};
-  const ancestry = isNpc(generatorId) ? validSelection(value.ancestry, peopleSet, "random") : generatorId === void 0 ? validSelection(value.ancestry, peopleSet, "random") : null;
+function compileContentCatalog(entries) {
+  assertCatalogCoverage(entries);
+  const candidates = /* @__PURE__ */ new Map();
+  for (const cell of allCells()) {
+    candidates.set(catalogCellKey(cell), {
+      normal: entries.filter((entry) => !isFallback(entry) && matches(entry, cell, false)),
+      fallback: entries.filter((entry) => isFallback(entry) && matches(entry, cell, true))
+    });
+  }
   return {
-    tone: validSelection(value.tone, toneSet, "random"),
-    environment: validSelection(value.environment, environmentSet, "random"),
-    complexity: validSelection(value.complexity, complexitySet, "random"),
-    ancestry
+    entries,
+    select(compatibility, random = new Random()) {
+      const cell = toCompatibility(compatibility);
+      const cellCandidates = candidates.get(catalogCellKey(cell));
+      if (!cellCandidates) {
+        throw new ContentSelectionError(
+          `Nenhuma c\xE9lula compilada para ${catalogCellKey(cell)}.`
+        );
+      }
+      if (cellCandidates.normal.length > 0) return random.pick(cellCandidates.normal);
+      if (cellCandidates.fallback.length > 0) return random.pick(cellCandidates.fallback);
+      throw new ContentSelectionError(
+        `Nenhuma entrada compat\xEDvel para ${catalogCellKey(cell)} (normal ou fallback).`
+      );
+    }
   };
-}
-function pick(selection, values, random) {
-  return selection === "random" ? random.pick(values) : selection;
-}
-function resolveGenerationOptions(options = DEFAULT_GENERATION_OPTIONS, random = new Random(), generatorId) {
-  const selected2 = normalizeGenerationOptions(options, generatorId);
-  return {
-    tone: pick(selected2.tone, TONE_IDS, random),
-    environment: pick(selected2.environment, ENVIRONMENT_IDS, random),
-    complexity: pick(selected2.complexity, COMPLEXITY_IDS, random),
-    ancestry: selected2.ancestry === null ? null : pick(selected2.ancestry, PEOPLE.map((person) => person.id), random)
-  };
-}
-function getToneLabel(value) {
-  return value === "random" ? RANDOM_LABEL : TONE_LABELS[value];
-}
-function getEnvironmentLabel(value) {
-  return value === "random" ? RANDOM_LABEL : ENVIRONMENT_LABELS[value];
-}
-function getComplexityLabel(value) {
-  return value === "random" ? RANDOM_LABEL : COMPLEXITY_LABELS[value];
-}
-function getPeopleLabel(value) {
-  const person = PEOPLE.find((candidate) => candidate.id === value);
-  if (!person) throw new Error(`Unknown people profile: ${value}`);
-  return person.label;
 }
 
 // src/catalogs/pt-BR/generated-content.ts
@@ -768,21 +873,24 @@ function matrix(prefix2, make) {
   const entries = [];
   for (const tone of TONE_IDS) {
     for (const environment of ENVIRONMENT_IDS) {
-      for (const complexity of COMPLEXITY_IDS) {
-        const cell = { tone, environment, complexity };
-        const content = make(cell);
-        entries.push({ id: `${prefix2}-${tone}-${environment}-${complexity}-normal`, tone, environment, complexity, content });
-        entries.push({
-          id: `${prefix2}-${tone}-${environment}-${complexity}-fallback`,
-          tone,
-          environment,
-          complexity,
-          fallback: true,
-          content
-        });
-      }
+      entries.push({
+        id: `${prefix2}-${tone}-${environment}`,
+        tone,
+        environment,
+        complexity: COMPLEXITY_IDS,
+        content: make({ tone, environment, complexity: "quick" })
+      });
     }
   }
+  entries.push({
+    id: `${prefix2}-fallback`,
+    fallback: true,
+    content: make({
+      tone: "mysterious",
+      environment: "ruins",
+      complexity: "quick"
+    })
+  });
   return entries;
 }
 function context(cell) {
@@ -808,7 +916,7 @@ var LOCATION_CONTENT = matrix("location", (cell) => {
   return {
     name: environment.name,
     type: `um ponto de passagem com aspecto ${tone.color}`,
-    atmosphere: `${tone.event[0].toLocaleUpperCase("pt-BR")}${tone.event.slice(1)}. ${environment.texture}`,
+    atmosphere: `${tone.event.charAt(0).toLocaleUpperCase("pt-BR")}${tone.event.slice(1)}. ${environment.texture}`,
     feature: `Um marco local registra mudan\xE7as na regi\xE3o e guarda sinais de que ${tone.threat} se aproxima.`,
     hook: `Algu\xE9m procura ajuda para entender o perigo antes que ele alcance os moradores.`,
     inhabitants: environment.inhabitants,
@@ -885,17 +993,291 @@ var DUNGEON_CONTENT = matrix("dungeon", (cell) => {
   ];
   return { theme, overview, rooms, detailedRooms };
 });
-for (const entries of [NPC_CONTENT, LOCATION_CONTENT, QUEST_CONTENT, ENCOUNTER_CONTENT, RUMOR_CONTENT, DUNGEON_CONTENT]) {
-  assertCatalogCoverage(entries);
-}
-var CONTENT_CATALOGS = {
-  npc: NPC_CONTENT,
-  location: LOCATION_CONTENT,
-  quest: QUEST_CONTENT,
-  encounter: ENCOUNTER_CONTENT,
-  rumor: RUMOR_CONTENT,
-  dungeon: DUNGEON_CONTENT
+var COMPILED_CONTENT_CATALOGS = {
+  npc: compileContentCatalog(NPC_CONTENT),
+  location: compileContentCatalog(LOCATION_CONTENT),
+  quest: compileContentCatalog(QUEST_CONTENT),
+  encounter: compileContentCatalog(ENCOUNTER_CONTENT),
+  rumor: compileContentCatalog(RUMOR_CONTENT),
+  dungeon: compileContentCatalog(DUNGEON_CONTENT)
 };
+
+// src/dungeon/engine.ts
+var DungeonMappingError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+    this.name = "DungeonMappingError";
+  }
+};
+var ROLE_SEQUENCE = {
+  5: ["Entrada", "Desafio", "Contratempo", "Confronto", "Recompensa"],
+  8: [
+    "Entrada",
+    "Explora\xE7\xE3o",
+    "Desafio",
+    "Segredo",
+    "Contratempo",
+    "Encontro",
+    "Confronto",
+    "Recompensa"
+  ],
+  12: [
+    "Entrada",
+    "Explora\xE7\xE3o",
+    "Desafio",
+    "Encruzilhada",
+    "Segredo",
+    "Armadilha",
+    "Ref\xFAgio",
+    "Contratempo",
+    "Encontro",
+    "Revela\xE7\xE3o",
+    "Confronto",
+    "Recompensa"
+  ]
+};
+var ROLE_DETAILS = {
+  Entrada: "A primeira escolha determina como o grupo poder\xE1 recuar.",
+  Explora\u00E7\u00E3o: "Vest\xEDgios mostram duas leituras poss\xEDveis para o caminho adiante.",
+  Desafio: "O obst\xE1culo responde melhor \xE0 observa\xE7\xE3o do que \xE0 for\xE7a.",
+  Encruzilhada: "Rotas rivais oferecem vantagens que n\xE3o podem ser reunidas.",
+  Segredo: "Uma passagem discreta guarda a origem de parte do conflito.",
+  Armadilha: "O mecanismo pode ser percebido por mudan\xE7as sutis no ambiente.",
+  Ref\u00FAgio: "O abrigo permite recuperar o f\xF4lego, mas n\xE3o permanecer sem custo.",
+  Contratempo: "A rota de retorno muda e for\xE7a uma decis\xE3o imediata.",
+  Encontro: "Uma presen\xE7a local tem objetivos pr\xF3prios e aceita conversar.",
+  Revela\u00E7\u00E3o: "As pistas anteriores formam uma verdade que altera o objetivo.",
+  Confronto: "A oposi\xE7\xE3o final oferece uma \xFAltima alternativa ao conflito direto.",
+  Recompensa: "O pr\xEAmio resolve uma necessidade e cria uma obriga\xE7\xE3o futura."
+};
+var FEATURE_BY_ROLE = {
+  Entrada: [],
+  Explora\u00E7\u00E3o: ["secret"],
+  Desafio: ["trap"],
+  Encruzilhada: ["secret"],
+  Segredo: ["secret"],
+  Armadilha: ["trap"],
+  Ref\u00FAgio: [],
+  Contratempo: ["secret"],
+  Encontro: ["encounter"],
+  Revela\u00E7\u00E3o: ["secret"],
+  Confronto: ["encounter"],
+  Recompensa: ["reward"]
+};
+var FEATURE_NOTES = {
+  secret: "Uma pista oculta conecta esta sala ao motivo central da masmorra.",
+  trap: "A amea\xE7a pode ser detectada e contornada; ela n\xE3o exige uma estat\xEDstica espec\xEDfica.",
+  encounter: "A oposi\xE7\xE3o tem um objetivo negoci\xE1vel e reage ao ambiente.",
+  reward: "A recompensa \xE9 \xFAtil agora, mas deixa uma consequ\xEAncia para a campanha."
+};
+var FEATURE_MARKERS = {
+  secret: "S",
+  trap: "A",
+  encounter: "E",
+  reward: "R"
+};
+function roomId(number) {
+  return `room-${number}`;
+}
+function roomPositions(size) {
+  const columns = size === 5 ? 5 : 4;
+  return Array.from({ length: size }, (_, index) => {
+    const row = Math.floor(index / columns);
+    const positionInRow = index % columns;
+    const column = row % 2 === 0 ? positionInRow : columns - positionInRow - 1;
+    return { x: 70 + column * 145, y: 65 + row * 125 };
+  });
+}
+function roomFeatures(role) {
+  var _a;
+  return (_a = FEATURE_BY_ROLE[role]) != null ? _a : [];
+}
+function createRooms(profile, options) {
+  const roles = ROLE_SEQUENCE[options.size];
+  const positions = roomPositions(options.size);
+  const sourceRooms = options.complexity === "detailed" ? profile.detailedRooms : profile.rooms;
+  return roles.map((role, index) => {
+    var _a;
+    const base = sourceRooms[index % sourceRooms.length];
+    const position = positions[index];
+    if (!base || !position) {
+      throw new DungeonMappingError("room-count", "N\xE3o foi poss\xEDvel montar todas as salas.");
+    }
+    const features = roomFeatures(role);
+    const detail = (_a = ROLE_DETAILS[role]) != null ? _a : "O ambiente apresenta uma decis\xE3o relevante.";
+    return {
+      id: roomId(index + 1),
+      number: index + 1,
+      role,
+      description: `${base} ${detail}`,
+      features,
+      gmNotes: features.map((feature) => FEATURE_NOTES[feature]),
+      x: position.x,
+      y: position.y
+    };
+  });
+}
+function edge(from, to, kind) {
+  return { from: roomId(from), to: roomId(to), kind };
+}
+function createEdges(size, environment) {
+  const edges = [];
+  for (let number = 1; number < size; number += 1) {
+    edges.push(edge(number, number + 1, "path"));
+  }
+  if (environment === "underground") return edges;
+  const shortcuts = environment === "wilderness" || environment === "forest" ? [[2, 4], [5, 7], [8, 10]] : [[1, 3], [4, 6], [7, 9], [9, 11]];
+  for (const [from, to] of shortcuts) {
+    if (to <= size) edges.push(edge(from, to, "shortcut"));
+  }
+  return edges;
+}
+function degreeMap(map) {
+  var _a, _b;
+  const degrees = new Map(map.rooms.map((room) => [room.id, 0]));
+  for (const edgeItem of map.edges) {
+    degrees.set(edgeItem.from, ((_a = degrees.get(edgeItem.from)) != null ? _a : 0) + 1);
+    degrees.set(edgeItem.to, ((_b = degrees.get(edgeItem.to)) != null ? _b : 0) + 1);
+  }
+  return degrees;
+}
+function assertConnected(map) {
+  const first = map.rooms[0];
+  if (!first) throw new DungeonMappingError("room-count", "O mapa n\xE3o cont\xE9m salas.");
+  const visited = /* @__PURE__ */ new Set([first.id]);
+  const queue = [first.id];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+    for (const edgeItem of map.edges) {
+      const next = edgeItem.from === current ? edgeItem.to : edgeItem.to === current ? edgeItem.from : null;
+      if (next && !visited.has(next)) {
+        visited.add(next);
+        queue.push(next);
+      }
+    }
+  }
+  if (visited.size !== map.rooms.length) {
+    throw new DungeonMappingError("disconnected", "O mapa cont\xE9m salas desconectadas.");
+  }
+}
+function validateDungeonMap(map, expectedSize) {
+  if (map.rooms.length !== expectedSize) {
+    throw new DungeonMappingError("room-count", "O mapa n\xE3o tem o n\xFAmero esperado de salas.");
+  }
+  const ids = new Set(map.rooms.map((room) => room.id));
+  const edgeKeys = /* @__PURE__ */ new Set();
+  for (const edgeItem of map.edges) {
+    if (!ids.has(edgeItem.from) || !ids.has(edgeItem.to) || edgeItem.from === edgeItem.to) {
+      throw new DungeonMappingError("unknown-room", "Uma conex\xE3o aponta para uma sala inv\xE1lida.");
+    }
+    const key = [edgeItem.from, edgeItem.to].sort().join("/");
+    if (edgeKeys.has(key)) {
+      throw new DungeonMappingError("duplicate-edge", "O mapa cont\xE9m uma conex\xE3o duplicada.");
+    }
+    edgeKeys.add(key);
+  }
+  const positions = new Set(map.rooms.map((room) => `${room.x}/${room.y}`));
+  if (positions.size !== map.rooms.length) {
+    throw new DungeonMappingError("duplicate-position", "Duas salas ocupam a mesma posi\xE7\xE3o.");
+  }
+  assertConnected(map);
+  const degrees = [...degreeMap(map).values()];
+  const maxDegree = Math.max(...degrees);
+  if (map.environment === "underground") {
+    if (map.edges.length !== map.rooms.length - 1 || maxDegree > 2) {
+      throw new DungeonMappingError(
+        "environment-topology",
+        "O subterr\xE2neo exige uma rota linear sem atalhos."
+      );
+    }
+  } else if (map.environment === "wilderness" || map.environment === "forest") {
+    if (maxDegree < 3) {
+      throw new DungeonMappingError(
+        "environment-topology",
+        "Este ambiente exige pelo menos uma ramifica\xE7\xE3o."
+      );
+    }
+  } else if (map.edges.length < map.rooms.length) {
+    throw new DungeonMappingError(
+      "environment-topology",
+      "Este ambiente exige ao menos um circuito alternativo."
+    );
+  }
+}
+function roomToken(room) {
+  const marker = room.features[0] ? FEATURE_MARKERS[room.features[0]] : " ";
+  return `[${String(room.number).padStart(2, "0")}${marker}]`;
+}
+function renderDungeonAscii(rooms, edges) {
+  var _a;
+  const rows = /* @__PURE__ */ new Map();
+  for (const room of rooms) {
+    const values = (_a = rows.get(room.y)) != null ? _a : [];
+    values.push(room);
+    rows.set(room.y, values);
+  }
+  const lines = [];
+  const sortedRows = [...rows.entries()].sort(([a], [b]) => a - b);
+  sortedRows.forEach(([, row], rowIndex) => {
+    const sorted = [...row].sort((a, b) => a.x - b.x);
+    lines.push(sorted.map(roomToken).join("---"));
+    if (rowIndex < sortedRows.length - 1) {
+      const connectorAtRight = rowIndex % 2 === 0;
+      lines.push(connectorAtRight ? `${" ".repeat(Math.max(0, sorted.length * 8 - 4))}|` : "  |");
+    }
+  });
+  const shortcuts = edges.filter((edgeItem) => edgeItem.kind === "shortcut");
+  if (shortcuts.length > 0) {
+    const roomById = new Map(rooms.map((room) => [room.id, room.number]));
+    lines.push(
+      `Atalhos: ${shortcuts.map(
+        (item) => `${String(roomById.get(item.from)).padStart(2, "0")}--${String(roomById.get(item.to)).padStart(2, "0")}`
+      ).join(", ")}`
+    );
+  }
+  lines.push("Marcadores: S segredo, A armadilha, E encontro, R recompensa");
+  return lines.join("\n");
+}
+function accessibleMapLabel(rooms, edges) {
+  const entrance = rooms.find((room) => room.role === "Entrada");
+  const reward = rooms.find((room) => room.role === "Recompensa");
+  return [
+    `Mapa abstrato de masmorra com ${rooms.length} salas e ${edges.length} conex\xF5es.`,
+    entrance ? `A entrada \xE9 a sala ${entrance.number}.` : "",
+    reward ? `A recompensa fica na sala ${reward.number}.` : "",
+    "Marcadores identificam segredos, armadilhas, encontros e recompensas para o mestre."
+  ].filter(Boolean).join(" ");
+}
+function buildDungeonArtifact(profile, options) {
+  const rooms = createRooms(profile, options);
+  if (options.mode === "story") {
+    return { mode: options.mode, size: options.size, rooms, map: null };
+  }
+  const edges = createEdges(options.size, options.environment);
+  const map = {
+    environment: options.environment,
+    rooms,
+    edges,
+    ascii: renderDungeonAscii(rooms, edges),
+    accessibleLabel: accessibleMapLabel(rooms, edges)
+  };
+  validateDungeonMap(map, options.size);
+  return { mode: options.mode, size: options.size, rooms, map };
+}
+function dungeonFeatureLabel(feature) {
+  switch (feature) {
+    case "secret":
+      return "SEGREDO";
+    case "trap":
+      return "ARMADILHA";
+    case "encounter":
+      return "ENCONTRO";
+    case "reward":
+      return "RECOMPENSA";
+  }
+}
 
 // src/structured-output.ts
 function prefix(field) {
@@ -914,8 +1296,8 @@ function renderFields(fields) {
   };
 }
 
-// src/generators.ts
-var LABELS = {
+// src/generators/shared.ts
+var GENERATOR_LABELS = {
   npc: "NPCs",
   location: "Locais",
   quest: "Miss\xF5es",
@@ -924,24 +1306,186 @@ var LABELS = {
   dungeon: "Masmorra"
 };
 function finish(id, title, fields, metadata) {
-  const content = renderFields(fields);
-  return { id, label: LABELS[id], title, content, options: metadata };
+  return {
+    id,
+    label: GENERATOR_LABELS[id],
+    title,
+    content: renderFields(fields),
+    options: metadata
+  };
 }
-function begin(id, random, options) {
-  const selected2 = normalizeGenerationOptions(options, id);
-  const resolved = resolveGenerationOptions(selected2, random, id);
-  return { selected: selected2, resolved };
+function begin(id, random, options = DEFAULT_GENERATION_OPTIONS) {
+  const selected = normalizeGenerationOptions(options, id);
+  const resolved = resolveGenerationOptions(selected, random, id);
+  return { selected, resolved };
 }
-function selected(entries, resolved, random) {
-  return selectCompatibleContent(entries, resolved, random).content;
+function selectProfile(catalog, resolved, random) {
+  return catalog.select(resolved, random).content;
 }
-function variation(random) {
+function selectVariation(random) {
   return random.pick(VARIATION_BEATS);
 }
+function sentenceCase(value) {
+  return value.length === 0 ? value : value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
+}
+
+// src/generators/dungeon.ts
+function dungeonFields(profile, artifact, beat) {
+  const modeSummary = artifact.mode === "mapped" ? `Estrutura mapeada com ${artifact.size} salas e conex\xF5es validadas.` : `Estrutura narrativa com ${artifact.size} salas.`;
+  const fields = [
+    { label: "Tema", value: profile.theme },
+    { label: "Vis\xE3o geral", value: `${profile.overview} ${modeSummary} ${beat.text}` }
+  ];
+  for (const room of artifact.rooms) {
+    const gm = room.gmNotes.length > 0 ? ` Mestre [${room.features.map(dungeonFeatureLabel).join(", ")}]: ${room.gmNotes.join(" ")}` : "";
+    fields.push({
+      label: room.role,
+      value: `${room.description}${gm}`,
+      number: room.number
+    });
+  }
+  return fields;
+}
+function generateDungeon(random, options = DEFAULT_GENERATION_OPTIONS) {
+  const metadata = begin("dungeon", random, options);
+  const profile = selectProfile(
+    COMPILED_CONTENT_CATALOGS.dungeon,
+    metadata.resolved,
+    random
+  );
+  const beat = selectVariation(random);
+  const { dungeonMode, dungeonSize } = metadata.resolved;
+  if (dungeonMode === null || dungeonSize === null) {
+    throw new Error("Masmorra exige modo e tamanho resolvidos");
+  }
+  const artifact = buildDungeonArtifact(profile, {
+    mode: dungeonMode,
+    size: dungeonSize,
+    environment: metadata.resolved.environment,
+    complexity: metadata.resolved.complexity
+  });
+  const result = finish(
+    "dungeon",
+    `Masmorra - ${profile.theme}`,
+    dungeonFields(profile, artifact, beat),
+    metadata
+  );
+  if (!artifact.map) return { ...result, dungeon: artifact };
+  return {
+    ...result,
+    content: {
+      plainText: `${result.content.plainText}
+
+Mapa abstrato (ASCII):
+${artifact.map.ascii}`,
+      markdown: `${result.content.markdown}
+
+**Mapa abstrato (ASCII):**
+
+\`\`\`text
+${artifact.map.ascii}
+\`\`\``
+    },
+    dungeon: artifact
+  };
+}
+var DUNGEON_GENERATOR = {
+  id: "dungeon",
+  label: GENERATOR_LABELS.dungeon,
+  icon: "box",
+  generate: generateDungeon
+};
+
+// src/generators/encounter.ts
+function encounterFields(profile, beat, detailed) {
+  const fields = [
+    { label: "Situa\xE7\xE3o", value: profile.situation },
+    { label: "Amea\xE7a imediata", value: profile.immediateThreat },
+    { label: "Reviravolta", value: `${profile.twist} ${beat.text}` },
+    { label: "Escolha significativa", value: profile.choice }
+  ];
+  if (detailed) {
+    fields.push(
+      { label: "Prepara\xE7\xE3o", value: profile.setup },
+      { label: "Atores", value: profile.actors },
+      { label: "Escalada", value: profile.escalation },
+      { label: "Intera\xE7\xE3o com o ambiente", value: profile.interaction },
+      { label: "Desfechos prov\xE1veis", value: profile.outcomes },
+      { label: "Depois", value: profile.aftermath }
+    );
+  }
+  return fields;
+}
+function generateEncounter(random, options = DEFAULT_GENERATION_OPTIONS) {
+  const metadata = begin("encounter", random, options);
+  const profile = selectProfile(
+    COMPILED_CONTENT_CATALOGS.encounter,
+    metadata.resolved,
+    random
+  );
+  const beat = selectVariation(random);
+  return finish(
+    "encounter",
+    `Encontro - ${profile.title}`,
+    encounterFields(profile, beat, metadata.resolved.complexity === "detailed"),
+    metadata
+  );
+}
+var ENCOUNTER_GENERATOR = {
+  id: "encounter",
+  label: GENERATOR_LABELS.encounter,
+  icon: "target",
+  generate: generateEncounter
+};
+
+// src/generators/location.ts
+function locationFields(profile, beat, detailed) {
+  const fields = [
+    { label: "Nome", value: profile.name },
+    { label: "Tipo", value: profile.type },
+    { label: "Atmosfera", value: profile.atmosphere },
+    { label: "Caracter\xEDstica", value: profile.feature },
+    { label: "Gancho", value: `${profile.hook} ${beat.text}` }
+  ];
+  if (detailed) {
+    fields.push(
+      { label: "Habitantes", value: profile.inhabitants },
+      { label: "Hist\xF3ria", value: profile.history },
+      { label: "Tens\xE3o atual", value: profile.tension },
+      { label: "Perigo", value: profile.danger },
+      { label: "Segredo", value: profile.secret },
+      { label: "Oportunidades", value: profile.opportunities }
+    );
+  }
+  return fields;
+}
+function generateLocation(random, options = DEFAULT_GENERATION_OPTIONS) {
+  const metadata = begin("location", random, options);
+  const profile = selectProfile(
+    COMPILED_CONTENT_CATALOGS.location,
+    metadata.resolved,
+    random
+  );
+  const beat = selectVariation(random);
+  return finish(
+    "location",
+    `Local - ${profile.name}`,
+    locationFields(profile, beat, metadata.resolved.complexity === "detailed"),
+    metadata
+  );
+}
+var LOCATION_GENERATOR = {
+  id: "location",
+  label: GENERATOR_LABELS.location,
+  icon: "map",
+  generate: generateLocation
+};
+
+// src/generators/npc.ts
 function generateNpc(random, options = DEFAULT_GENERATION_OPTIONS) {
   const metadata = begin("npc", random, options);
-  const profile = selected(CONTENT_CATALOGS.npc, metadata.resolved, random);
-  const beat = variation(random);
+  const profile = selectProfile(COMPILED_CONTENT_CATALOGS.npc, metadata.resolved, random);
+  const beat = selectVariation(random);
   const ancestry = metadata.resolved.ancestry;
   if (ancestry === null) throw new Error("NPC exige uma ancestralidade resolvida");
   const people = getPeopleProfile(ancestry);
@@ -961,35 +1505,21 @@ function generateNpc(random, options = DEFAULT_GENERATION_OPTIONS) {
       { label: "Segredo", value: profile.secret },
       { label: "Rela\xE7\xE3o", value: profile.relationship }
     );
-    if (beat.companion) fields.push({ label: "Companheiro compat\xEDvel", value: profile.companion });
+    if (beat.companion) {
+      fields.push({ label: "Companheiro compat\xEDvel", value: profile.companion });
+    }
   }
   fields.push({ label: "Gancho imediato", value: `${profile.immediateHook} ${beat.text}` });
   return finish("npc", `NPC - ${name}`, fields, metadata);
 }
-function locationFields(profile, beat, detailed) {
-  const fields = [
-    { label: "Nome", value: profile.name },
-    { label: "Tipo", value: profile.type },
-    { label: "Atmosfera", value: profile.atmosphere },
-    { label: "Caracter\xEDstica", value: profile.feature },
-    { label: "Gancho", value: `${profile.hook} ${beat.text}` }
-  ];
-  if (detailed) fields.push(
-    { label: "Habitantes", value: profile.inhabitants },
-    { label: "Hist\xF3ria", value: profile.history },
-    { label: "Tens\xE3o atual", value: profile.tension },
-    { label: "Perigo", value: profile.danger },
-    { label: "Segredo", value: profile.secret },
-    { label: "Oportunidades", value: profile.opportunities }
-  );
-  return fields;
-}
-function generateLocation(random, options = DEFAULT_GENERATION_OPTIONS) {
-  const metadata = begin("location", random, options);
-  const profile = selected(CONTENT_CATALOGS.location, metadata.resolved, random);
-  const beat = variation(random);
-  return finish("location", `Local - ${profile.name}`, locationFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
-}
+var NPC_GENERATOR = {
+  id: "npc",
+  label: GENERATOR_LABELS.npc,
+  icon: "user-round",
+  generate: generateNpc
+};
+
+// src/generators/quest.ts
 function questFields(profile, beat, detailed) {
   const fields = [
     { label: "Contratante", value: profile.giver },
@@ -998,97 +1528,81 @@ function questFields(profile, beat, detailed) {
     { label: "Complica\xE7\xE3o", value: `${profile.complication} ${beat.text}` },
     { label: "Recompensa", value: profile.reward }
   ];
-  if (detailed) fields.push(
-    { label: "Contexto", value: profile.context },
-    { label: "Etapas", value: profile.stages },
-    { label: "Oposi\xE7\xE3o", value: profile.opposition },
-    { label: "Escalada", value: profile.escalation },
-    { label: "Consequ\xEAncia do fracasso", value: profile.failure },
-    { label: "Resolu\xE7\xE3o alternativa", value: profile.alternative }
-  );
+  if (detailed) {
+    fields.push(
+      { label: "Contexto", value: profile.context },
+      { label: "Etapas", value: profile.stages },
+      { label: "Oposi\xE7\xE3o", value: profile.opposition },
+      { label: "Escalada", value: profile.escalation },
+      { label: "Consequ\xEAncia do fracasso", value: profile.failure },
+      { label: "Resolu\xE7\xE3o alternativa", value: profile.alternative }
+    );
+  }
   return fields;
 }
 function generateQuest(random, options = DEFAULT_GENERATION_OPTIONS) {
   const metadata = begin("quest", random, options);
-  const profile = selected(CONTENT_CATALOGS.quest, metadata.resolved, random);
-  const beat = variation(random);
-  return finish("quest", `Miss\xE3o - ${sentenceCase(profile.objective)}`, questFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
-}
-function encounterFields(profile, beat, detailed) {
-  const fields = [
-    { label: "Situa\xE7\xE3o", value: profile.situation },
-    { label: "Amea\xE7a imediata", value: profile.immediateThreat },
-    { label: "Reviravolta", value: `${profile.twist} ${beat.text}` },
-    { label: "Escolha significativa", value: profile.choice }
-  ];
-  if (detailed) fields.push(
-    { label: "Prepara\xE7\xE3o", value: profile.setup },
-    { label: "Atores", value: profile.actors },
-    { label: "Escalada", value: profile.escalation },
-    { label: "Intera\xE7\xE3o com o ambiente", value: profile.interaction },
-    { label: "Desfechos prov\xE1veis", value: profile.outcomes },
-    { label: "Depois", value: profile.aftermath }
+  const profile = selectProfile(COMPILED_CONTENT_CATALOGS.quest, metadata.resolved, random);
+  const beat = selectVariation(random);
+  return finish(
+    "quest",
+    `Miss\xE3o - ${sentenceCase(profile.objective)}`,
+    questFields(profile, beat, metadata.resolved.complexity === "detailed"),
+    metadata
   );
-  return fields;
 }
-function generateEncounter(random, options = DEFAULT_GENERATION_OPTIONS) {
-  const metadata = begin("encounter", random, options);
-  const profile = selected(CONTENT_CATALOGS.encounter, metadata.resolved, random);
-  const beat = variation(random);
-  return finish("encounter", `Encontro - ${profile.title}`, encounterFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
-}
+var QUEST_GENERATOR = {
+  id: "quest",
+  label: GENERATOR_LABELS.quest,
+  icon: "file-text",
+  generate: generateQuest
+};
+
+// src/generators/rumor.ts
 function rumorFields(profile, beat, detailed) {
   const fields = [
     { label: "Boato", value: `${profile.subject} ${profile.claim}.` },
     { label: "Verdade para o mestre", value: profile.truth },
     { label: "Desdobramento", value: beat.text }
   ];
-  if (detailed) fields.push(
-    { label: "Fonte", value: profile.source },
-    { label: "Varia\xE7\xF5es", value: profile.variations },
-    { label: "Pistas", value: profile.clues },
-    { label: "Interessados", value: profile.interestedParties },
-    { label: "Consequ\xEAncia da investiga\xE7\xE3o", value: profile.investigationConsequence },
-    { label: "Contexto", value: profile.context }
-  );
+  if (detailed) {
+    fields.push(
+      { label: "Fonte", value: profile.source },
+      { label: "Varia\xE7\xF5es", value: profile.variations },
+      { label: "Pistas", value: profile.clues },
+      { label: "Interessados", value: profile.interestedParties },
+      { label: "Consequ\xEAncia da investiga\xE7\xE3o", value: profile.investigationConsequence },
+      { label: "Contexto", value: profile.context }
+    );
+  }
   return fields;
 }
 function generateRumor(random, options = DEFAULT_GENERATION_OPTIONS) {
   const metadata = begin("rumor", random, options);
-  const profile = selected(CONTENT_CATALOGS.rumor, metadata.resolved, random);
-  const beat = variation(random);
-  return finish("rumor", `Rumor - ${profile.subject}`, rumorFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
+  const profile = selectProfile(COMPILED_CONTENT_CATALOGS.rumor, metadata.resolved, random);
+  const beat = selectVariation(random);
+  return finish(
+    "rumor",
+    `Rumor - ${profile.subject}`,
+    rumorFields(profile, beat, metadata.resolved.complexity === "detailed"),
+    metadata
+  );
 }
-function sentenceCase(value) {
-  return value.length === 0 ? value : value[0].toLocaleUpperCase("pt-BR") + value.slice(1);
-}
-function dungeonFields(profile, beat, detailed) {
-  const rooms = detailed ? profile.detailedRooms : profile.rooms;
-  const fields = [
-    { label: "Tema", value: profile.theme },
-    { label: "Vis\xE3o geral", value: `${profile.overview} ${beat.text}` }
-  ];
-  const roles = ["Entrada", "Desafio", "Contratempo", "Confronto", "Recompensa"];
-  rooms.forEach((room, index) => {
-    const role = roles[index];
-    if (!role) throw new Error("Masmorra exige cinco pap\xE9is de sala");
-    fields.push({ label: role, value: room, number: index + 1 });
-  });
-  return fields;
-}
-function generateDungeon(random, options = DEFAULT_GENERATION_OPTIONS) {
-  const metadata = begin("dungeon", random, options);
-  const profile = selected(CONTENT_CATALOGS.dungeon, metadata.resolved, random);
-  const beat = variation(random);
-  return finish("dungeon", `Masmorra - ${profile.theme}`, dungeonFields(profile, beat, metadata.resolved.complexity === "detailed"), metadata);
-}
+var RUMOR_GENERATOR = {
+  id: "rumor",
+  label: GENERATOR_LABELS.rumor,
+  icon: "message-circle",
+  generate: generateRumor
+};
+
+// src/generators.ts
 var GENERATORS = [
-  { id: "npc", label: LABELS.npc, icon: "user-round", generate: generateNpc },
-  { id: "location", label: LABELS.location, icon: "map", generate: generateLocation },
-  { id: "quest", label: LABELS.quest, icon: "file-text", generate: generateQuest },
-  { id: "encounter", label: LABELS.encounter, icon: "target", generate: generateEncounter },
-  { id: "rumor", label: LABELS.rumor, icon: "message-circle", generate: generateRumor },
-  { id: "dungeon", label: LABELS.dungeon, icon: "box", generate: generateDungeon }
+  NPC_GENERATOR,
+  LOCATION_GENERATOR,
+  QUEST_GENERATOR,
+  ENCOUNTER_GENERATOR,
+  RUMOR_GENERATOR,
+  DUNGEON_GENERATOR
 ];
 var generatorMap = new Map(GENERATORS.map((definition) => [definition.id, definition]));
 function getGenerator(id) {
@@ -1099,6 +1613,60 @@ function getGenerator(id) {
 function generate(id, random = new Random(), options = DEFAULT_GENERATION_OPTIONS) {
   return getGenerator(id).generate(random, options);
 }
+
+// src/application/generation-session.ts
+var GenerationSessionController = class {
+  constructor(generateResult = generate) {
+    this.generateResult = generateResult;
+    this.state = this.initialState();
+  }
+  get snapshot() {
+    return this.state;
+  }
+  reset() {
+    this.state = this.initialState();
+  }
+  selectGenerator(id) {
+    if (id === this.state.selectedId) return false;
+    this.state = { ...this.state, selectedId: id, currentResult: null };
+    return true;
+  }
+  updateOption(key, value) {
+    this.state = {
+      ...this.state,
+      options: { ...this.state.options, [key]: value },
+      currentResult: null
+    };
+  }
+  clearResult() {
+    if (this.state.currentResult === null) return;
+    this.state = { ...this.state, currentResult: null };
+  }
+  generate(random = new Random()) {
+    try {
+      const result = this.generateResult(
+        this.state.selectedId,
+        random,
+        this.state.options
+      );
+      this.state = { ...this.state, currentResult: result };
+      return { ok: true, result };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+  setCreatingNote(creatingNote) {
+    this.state = { ...this.state, creatingNote };
+  }
+  initialState() {
+    return {
+      selectedId: "npc",
+      options: { ...DEFAULT_GENERATION_OPTIONS },
+      currentResult: null,
+      creatingNote: false
+    };
+  }
+};
 
 // src/formatters.ts
 function normalizeTitle(title) {
@@ -1112,19 +1680,25 @@ function safeMetadataValue(value) {
   return value.replace(/[\r\n\u0000-\u001f\u007f]/g, " ").replace(/[\\|]/g, "\\$&");
 }
 function metadataLines(metadata) {
-  const selected2 = metadata.selected;
+  const selected = metadata.selected;
   const resolved = metadata.resolved;
   const suffix = (selection) => selection === "random" ? " (aleat\xF3rio)" : "";
   const lines = [
-    ["Tom", `${getToneLabel(resolved.tone)}${suffix(selected2.tone)}`],
-    ["Ambiente", `${getEnvironmentLabel(resolved.environment)}${suffix(selected2.environment)}`],
-    ["Complexidade", `${getComplexityLabel(resolved.complexity)}${suffix(selected2.complexity)}`]
+    ["Tom", `${getToneLabel(resolved.tone)}${suffix(selected.tone)}`],
+    ["Ambiente", `${getEnvironmentLabel(resolved.environment)}${suffix(selected.environment)}`],
+    ["Complexidade", `${getComplexityLabel(resolved.complexity)}${suffix(selected.complexity)}`]
   ];
   if (resolved.ancestry !== null) {
     lines.push([
       "Ancestralidade",
-      `${getPeopleLabel(resolved.ancestry)}${selected2.ancestry === "random" ? " (aleat\xF3rio)" : ""}`
+      `${getPeopleLabel(resolved.ancestry)}${selected.ancestry === "random" ? " (aleat\xF3rio)" : ""}`
     ]);
+  }
+  if (resolved.dungeonMode !== null && resolved.dungeonSize !== null) {
+    lines.push(
+      ["Modo", getDungeonModeLabel(resolved.dungeonMode)],
+      ["Salas", getDungeonSizeLabel(resolved.dungeonSize)]
+    );
   }
   return lines.map(([label, value]) => [safeMetadataValue(label), safeMetadataValue(value)]);
 }
@@ -1170,8 +1744,30 @@ var OutputFolderConflictError = class extends Error {
     this.path = path;
   }
 };
+var OutputCollisionLimitError = class extends Error {
+  constructor() {
+    super("N\xE3o foi poss\xEDvel encontrar um nome de nota dispon\xEDvel.");
+    this.name = "OutputCollisionLimitError";
+  }
+};
 var FALLBACK_MARKDOWN_TITLE = "Sem t\xEDtulo";
 var INVALID_FILENAME_CHARACTERS = /[\\/:*?"<>|\u0000-\u001f\u007f]/g;
+var RESERVED_WINDOWS_NAME = /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$/i;
+var MAX_STEM_UTF8_BYTES = 220;
+var MAX_COLLISION_SUFFIX = 9999;
+var MAX_CREATE_ATTEMPTS = 8;
+function truncateUtf8(value, maxBytes) {
+  const encoder = new TextEncoder();
+  let bytes = 0;
+  let result = "";
+  for (const character of value) {
+    const size = encoder.encode(character).length;
+    if (bytes + size > maxBytes) break;
+    result += character;
+    bytes += size;
+  }
+  return result;
+}
 function entryKind(entry) {
   if ("type" in entry) return entry.type;
   return entry.kind;
@@ -1185,7 +1781,11 @@ function assertValidOutputFolder(outputFolder) {
   return validation.value;
 }
 function sanitizeMarkdownTitle(title) {
-  const sanitized = title.replace(INVALID_FILENAME_CHARACTERS, "-").replace(/\s+/g, " ").trim().replace(/[. ]+$/g, "").replace(/^-+|-+$/g, "").trim();
+  let sanitized = title.normalize("NFC").replace(INVALID_FILENAME_CHARACTERS, "-").replace(/\s+/g, " ").trim().replace(/[. ]+$/g, "").replace(/^-+|-+$/g, "").trim();
+  if (RESERVED_WINDOWS_NAME.test(sanitized)) {
+    sanitized = `_${sanitized}`;
+  }
+  sanitized = truncateUtf8(sanitized, MAX_STEM_UTF8_BYTES).replace(/[. ]+$/g, "").trim();
   if (sanitized.length === 0 || sanitized === "." || sanitized === "..") {
     return FALLBACK_MARKDOWN_TITLE;
   }
@@ -1212,17 +1812,25 @@ async function ensureOutputFolder(vault, outputFolder) {
 async function findAvailableMarkdownPath(vault, outputFolder, title) {
   const normalizedFolder = assertValidOutputFolder(outputFolder);
   const stem = sanitizeMarkdownTitle(title);
-  for (let suffix = 1; ; suffix += 1) {
+  for (let suffix = 1; suffix <= MAX_COLLISION_SUFFIX; suffix += 1) {
     const filename = suffix === 1 ? `${stem}.md` : `${stem} - ${suffix}.md`;
     const path = joinVaultPath(normalizedFolder, filename);
     if (vault.getEntry(path) == null) return { path, filename };
   }
+  throw new OutputCollisionLimitError();
 }
 async function createMarkdownOutput(vault, options) {
   const outputFolder = await ensureOutputFolder(vault, options.outputFolder);
-  const available = await findAvailableMarkdownPath(vault, outputFolder, options.title);
-  await vault.createFile(available.path, options.content);
-  return available;
+  for (let attempt = 0; attempt < MAX_CREATE_ATTEMPTS; attempt += 1) {
+    const available = await findAvailableMarkdownPath(vault, outputFolder, options.title);
+    try {
+      await vault.createFile(available.path, options.content);
+      return available;
+    } catch (error) {
+      if (vault.getEntry(available.path) == null) throw error;
+    }
+  }
+  throw new OutputCollisionLimitError();
 }
 var OutputService = class {
   constructor(vault) {
@@ -1266,10 +1874,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
   constructor(leaf, dependencies) {
     super(leaf);
     this.dependencies = dependencies;
-    this.selectedId = "npc";
-    this.generationOptions = { ...DEFAULT_GENERATION_OPTIONS };
-    this.currentResult = null;
-    this.resultKey = 0;
+    this.session = new GenerationSessionController();
     this.renderVersion = 0;
     this.primaryButton = null;
     this.resultHeader = null;
@@ -1284,12 +1889,8 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     this.categoryButtons = /* @__PURE__ */ new Map();
     this.optionSelects = null;
     this.renderComponent = null;
-    this.creatingNote = false;
-    this.registerEvent(
-      this.app.workspace.on("active-leaf-change", () => this.updateInsertionTarget())
-    );
-    this.registerEvent(
-      this.app.workspace.on("layout-change", () => this.updateInsertionTarget())
+    this.register(
+      this.dependencies.subscribeEditableTarget(() => this.updateInsertionTarget())
     );
   }
   getViewType() {
@@ -1319,14 +1920,11 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     this.renderView();
   }
   resetEphemeralState() {
-    this.selectedId = "npc";
-    this.generationOptions = { ...DEFAULT_GENERATION_OPTIONS };
-    this.currentResult = null;
-    this.resultKey += 1;
+    this.session.reset();
     this.renderVersion += 1;
   }
   renderView() {
-    var _a;
+    var _a, _b, _c;
     this.contentEl.empty();
     this.contentEl.addClass("rpg-generator-view");
     this.categoryButtons.clear();
@@ -1340,15 +1938,15 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     categories.setAttr("role", "radiogroup");
     categories.setAttr("aria-labelledby", "rpg-generator-question");
     for (const definition of GENERATORS) {
-      const selected2 = definition.id === this.selectedId;
+      const selected = definition.id === this.session.snapshot.selectedId;
       const button = categories.createEl("button", {
-        cls: ["rpg-generator-category", ...selected2 ? ["is-selected"] : []],
+        cls: ["rpg-generator-category", ...selected ? ["is-selected"] : []],
         attr: {
           type: "button",
           role: "radio",
-          "aria-checked": String(selected2),
-          tabindex: selected2 ? "0" : "-1",
-          "aria-label": definition.id === "dungeon" ? "Masmorra de cinco salas" : definition.label
+          "aria-checked": String(selected),
+          tabindex: selected ? "0" : "-1",
+          "aria-label": definition.label
         }
       });
       button.createSpan({ cls: "rpg-generator-category-label", text: definition.label });
@@ -1372,7 +1970,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
       "rpg-generator-tone",
       "Tom",
       [{ value: "random", label: RANDOM_LABEL }, ...TONES.map((id) => ({ value: id, label: TONE_LABELS[id] }))],
-      this.generationOptions.tone,
+      this.session.snapshot.options.tone,
       (value) => this.updateGenerationOption("tone", value)
     );
     const environment = this.createOptionSelect(
@@ -1380,7 +1978,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
       "rpg-generator-environment",
       "Ambiente",
       [{ value: "random", label: RANDOM_LABEL }, ...ENVIRONMENTS.map((id) => ({ value: id, label: ENVIRONMENT_LABELS[id] }))],
-      this.generationOptions.environment,
+      this.session.snapshot.options.environment,
       (value) => this.updateGenerationOption("environment", value)
     );
     const complexity = this.createOptionSelect(
@@ -1388,7 +1986,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
       "rpg-generator-complexity",
       "Complexidade",
       [{ value: "random", label: RANDOM_LABEL }, ...COMPLEXITIES.map((id) => ({ value: id, label: COMPLEXITY_LABELS[id] }))],
-      this.generationOptions.complexity,
+      this.session.snapshot.options.complexity,
       (value) => this.updateGenerationOption("complexity", value)
     );
     const ancestryField = this.createOptionField(optionGrid, "rpg-generator-ancestry", "Ancestralidade");
@@ -1403,9 +2001,66 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     this.addSelectOptions(ancestry, [
       { value: "random", label: RANDOM_ANCESTRY_LABEL },
       ...PEOPLE.map((person) => ({ value: person.id, label: person.label }))
-    ], (_a = this.generationOptions.ancestry) != null ? _a : "random");
-    ancestryField.hidden = this.selectedId !== "npc";
-    this.optionSelects = { tone, environment, complexity, ancestry, ancestryField };
+    ], (_a = this.session.snapshot.options.ancestry) != null ? _a : "random");
+    ancestryField.hidden = this.session.snapshot.selectedId !== "npc";
+    const dungeonModeField = this.createOptionField(
+      optionGrid,
+      "rpg-generator-dungeon-mode",
+      "Modo"
+    );
+    const dungeonMode = dungeonModeField.createEl("select", {
+      cls: "rpg-generator-option-select",
+      attr: { id: "rpg-generator-dungeon-mode" }
+    });
+    this.addSelectOptions(
+      dungeonMode,
+      DUNGEON_MODES.map((id) => ({ value: id, label: DUNGEON_MODE_LABELS[id] })),
+      (_b = this.session.snapshot.options.dungeonMode) != null ? _b : "story"
+    );
+    dungeonMode.addEventListener(
+      "change",
+      () => this.updateGenerationOption(
+        "dungeonMode",
+        dungeonMode.value
+      )
+    );
+    dungeonModeField.hidden = this.session.snapshot.selectedId !== "dungeon";
+    const dungeonSizeField = this.createOptionField(
+      optionGrid,
+      "rpg-generator-dungeon-size",
+      "Tamanho"
+    );
+    const dungeonSize = dungeonSizeField.createEl("select", {
+      cls: "rpg-generator-option-select",
+      attr: { id: "rpg-generator-dungeon-size" }
+    });
+    this.addSelectOptions(
+      dungeonSize,
+      DUNGEON_ROOM_COUNTS.map((size) => ({
+        value: String(size),
+        label: DUNGEON_SIZE_LABELS[size]
+      })),
+      String((_c = this.session.snapshot.options.dungeonSize) != null ? _c : 5)
+    );
+    dungeonSize.addEventListener(
+      "change",
+      () => this.updateGenerationOption(
+        "dungeonSize",
+        Number(dungeonSize.value)
+      )
+    );
+    dungeonSizeField.hidden = this.session.snapshot.selectedId !== "dungeon";
+    this.optionSelects = {
+      tone,
+      environment,
+      complexity,
+      ancestry,
+      ancestryField,
+      dungeonMode,
+      dungeonModeField,
+      dungeonSize,
+      dungeonSizeField
+    };
     this.primaryButton = this.contentEl.createEl("button", {
       cls: ["mod-cta", "rpg-generator-primary"],
       attr: { type: "button" }
@@ -1473,28 +2128,30 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     }
   }
   updateGenerationOption(key, value) {
-    this.generationOptions = { ...this.generationOptions, [key]: value };
+    this.session.updateOption(key, value);
     this.clearCurrentResult("Resultado limpo ao alterar op\xE7\xF5es");
   }
   clearCurrentResult(status) {
     var _a;
-    this.currentResult = null;
-    this.resultKey += 1;
+    this.session.clearResult();
     this.renderVersion += 1;
     this.updateControls();
     this.updateResultText();
     (_a = this.liveStatus) == null ? void 0 : _a.setText(status);
   }
   selectCategory(id) {
-    if (id === this.selectedId) return;
-    this.selectedId = id;
+    if (!this.session.selectGenerator(id)) return;
     for (const [categoryId, button] of this.categoryButtons.entries()) {
-      const selected2 = categoryId === id;
-      button.setAttr("aria-checked", String(selected2));
-      button.setAttr("tabindex", selected2 ? "0" : "-1");
-      button.toggleClass("is-selected", selected2);
+      const selected = categoryId === id;
+      button.setAttr("aria-checked", String(selected));
+      button.setAttr("tabindex", selected ? "0" : "-1");
+      button.toggleClass("is-selected", selected);
     }
-    if (this.optionSelects) this.optionSelects.ancestryField.hidden = id !== "npc";
+    if (this.optionSelects) {
+      this.optionSelects.ancestryField.hidden = id !== "npc";
+      this.optionSelects.dungeonModeField.hidden = id !== "dungeon";
+      this.optionSelects.dungeonSizeField.hidden = id !== "dungeon";
+    }
     this.clearCurrentResult("Resultado limpo ao trocar de categoria");
   }
   handleCategoryKeydown(event, id) {
@@ -1523,33 +2180,54 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     }
     event.preventDefault();
     const nextId = ids[nextIndex];
+    if (!nextId) return;
     this.selectCategory(nextId);
     (_a = this.categoryButtons.get(nextId)) == null ? void 0 : _a.focus();
   }
   generateResult() {
     var _a;
-    try {
-      const result = generate(this.selectedId, new Random(), this.generationOptions);
-      this.currentResult = result;
-      this.resultKey += 1;
-      this.updateControls();
-      this.updateResultText();
-      (_a = this.liveStatus) == null ? void 0 : _a.setText(`Novo resultado de ${result.label} gerado`);
-    } catch (e) {
-      new import_obsidian2.Notice("N\xE3o foi poss\xEDvel gerar o resultado");
+    const attempt = this.session.generate(new Random());
+    if (!attempt.ok) {
+      this.handleGenerationError(attempt.error);
+      return;
     }
+    const result = attempt.result;
+    this.updateControls();
+    this.updateResultText();
+    (_a = this.liveStatus) == null ? void 0 : _a.setText(`Novo resultado de ${result.label} gerado`);
+  }
+  handleGenerationError(error) {
+    var _a, _b;
+    if (error instanceof DungeonMappingError) {
+      console.error("[Gerador de RPG] Falha de mapeamento de masmorra", {
+        code: error.code,
+        message: error.message
+      });
+      (_a = this.liveStatus) == null ? void 0 : _a.setText(
+        "Falha ao mapear a masmorra; o resultado anterior foi preservado"
+      );
+      new import_obsidian2.Notice(
+        "N\xE3o foi poss\xEDvel mapear a masmorra. O resultado anterior foi preservado."
+      );
+      return;
+    }
+    console.error("[Gerador de RPG] Falha de gera\xE7\xE3o", error);
+    (_b = this.liveStatus) == null ? void 0 : _b.setText(
+      "Falha ao gerar; o resultado anterior foi preservado"
+    );
+    new import_obsidian2.Notice("N\xE3o foi poss\xEDvel gerar o resultado. O resultado anterior foi preservado.");
   }
   updateControls() {
-    var _a;
     if (this.primaryButton) {
-      const label = ((_a = this.currentResult) == null ? void 0 : _a.id) === this.selectedId ? "Rerrolar" : "Gerar";
+      const currentResult = this.session.snapshot.currentResult;
+      const label = (currentResult == null ? void 0 : currentResult.id) === this.session.snapshot.selectedId ? "Rerrolar" : "Gerar";
       this.primaryButton.setText(label);
     }
-    const hasResult = this.currentResult !== null;
+    const hasResult = this.session.snapshot.currentResult !== null;
     const target = this.dependencies.getEditableTarget();
     if (this.copyTextButton) this.copyTextButton.disabled = !hasResult;
     if (this.copyMarkdownButton) this.copyMarkdownButton.disabled = !hasResult;
-    if (this.createButton) this.createButton.disabled = !hasResult || this.creatingNote;
+    if (this.createButton) this.createButton.disabled = !hasResult || this.session.snapshot.creatingNote;
     if (this.insertButton) this.insertButton.disabled = !hasResult || target === null;
     this.setInsertionTarget(target);
   }
@@ -1557,7 +2235,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     const target = this.dependencies.getEditableTarget();
     this.setInsertionTarget(target);
     if (this.insertButton) {
-      this.insertButton.disabled = this.currentResult === null || target === null;
+      this.insertButton.disabled = this.session.snapshot.currentResult === null || target === null;
     }
   }
   setInsertionTarget(target) {
@@ -1569,7 +2247,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
   updateResultText() {
     if (!this.resultText || !this.resultHeader) return;
     this.removeRenderComponent();
-    const result = this.currentResult;
+    const result = this.session.snapshot.currentResult;
     const renderVersion = ++this.renderVersion;
     this.resultText.empty();
     if (!result) {
@@ -1590,6 +2268,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
         if (renderVersion !== this.renderVersion || this.renderComponent !== renderComponent || !this.resultText) return;
         this.resultText.empty();
         while (rendered.firstChild) this.resultText.appendChild(rendered.firstChild);
+        this.appendDungeonMap(result);
       }).catch(() => {
         var _a;
         if (renderVersion !== this.renderVersion || this.renderComponent !== renderComponent || !this.resultText) return;
@@ -1603,13 +2282,102 @@ var GeneratorView = class extends import_obsidian2.ItemView {
       }
     }
   }
+  appendDungeonMap(result) {
+    var _a;
+    const map = (_a = result.dungeon) == null ? void 0 : _a.map;
+    if (!map || !this.resultText) return;
+    const namespace = "http://www.w3.org/2000/svg";
+    const roomById = new Map(map.rooms.map((room) => [room.id, room]));
+    const maxX = Math.max(...map.rooms.map((room) => room.x));
+    const maxY = Math.max(...map.rooms.map((room) => room.y));
+    const container = this.resultText.createDiv({ cls: "rpg-dungeon-map" });
+    container.createEl("h4", { text: "Mapa abstrato" });
+    const frame = container.createDiv({ cls: "rpg-dungeon-map-frame" });
+    const svg = document.createElementNS(namespace, "svg");
+    const titleId = `rpg-dungeon-map-title-${this.renderVersion}`;
+    const descriptionId = `rpg-dungeon-map-description-${this.renderVersion}`;
+    svg.setAttribute("viewBox", `0 0 ${maxX + 70} ${maxY + 65}`);
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-labelledby", `${titleId} ${descriptionId}`);
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    const title = document.createElementNS(namespace, "title");
+    title.setAttribute("id", titleId);
+    title.textContent = "Mapa abstrato da masmorra";
+    svg.appendChild(title);
+    const description = document.createElementNS(namespace, "desc");
+    description.setAttribute("id", descriptionId);
+    description.textContent = map.accessibleLabel;
+    svg.appendChild(description);
+    for (const connection of map.edges) {
+      const from = roomById.get(connection.from);
+      const to = roomById.get(connection.to);
+      if (!from || !to) continue;
+      const line = document.createElementNS(namespace, "line");
+      line.setAttribute("x1", String(from.x));
+      line.setAttribute("y1", String(from.y));
+      line.setAttribute("x2", String(to.x));
+      line.setAttribute("y2", String(to.y));
+      line.setAttribute(
+        "class",
+        connection.kind === "shortcut" ? "rpg-dungeon-map-edge is-shortcut" : "rpg-dungeon-map-edge"
+      );
+      svg.appendChild(line);
+    }
+    for (const room of map.rooms) {
+      const group = document.createElementNS(namespace, "g");
+      group.setAttribute("class", "rpg-dungeon-map-room");
+      const roomTitle = document.createElementNS(namespace, "title");
+      const featureSummary = room.features.map((feature) => dungeonFeatureLabel(feature)).join(", ");
+      roomTitle.textContent = [
+        `Sala ${room.number}: ${room.role}.`,
+        featureSummary ? `Marcadores do mestre: ${featureSummary}.` : ""
+      ].filter(Boolean).join(" ");
+      group.appendChild(roomTitle);
+      const rect = document.createElementNS(namespace, "rect");
+      rect.setAttribute("x", String(room.x - 28));
+      rect.setAttribute("y", String(room.y - 22));
+      rect.setAttribute("width", "56");
+      rect.setAttribute("height", "44");
+      rect.setAttribute("rx", "8");
+      group.appendChild(rect);
+      const number = document.createElementNS(namespace, "text");
+      number.setAttribute("x", String(room.x));
+      number.setAttribute("y", String(room.y + 5));
+      number.setAttribute("text-anchor", "middle");
+      number.setAttribute("class", "rpg-dungeon-map-number");
+      number.textContent = String(room.number).padStart(2, "0");
+      group.appendChild(number);
+      if (room.features.length > 0) {
+        const marker = document.createElementNS(namespace, "text");
+        marker.setAttribute("x", String(room.x + 23));
+        marker.setAttribute("y", String(room.y - 14));
+        marker.setAttribute("text-anchor", "middle");
+        marker.setAttribute("class", "rpg-dungeon-map-marker");
+        marker.textContent = room.features.map((feature) => dungeonFeatureLabel(feature).charAt(0)).join("");
+        group.appendChild(marker);
+      }
+      const role = document.createElementNS(namespace, "text");
+      role.setAttribute("x", String(room.x));
+      role.setAttribute("y", String(room.y + 39));
+      role.setAttribute("text-anchor", "middle");
+      role.setAttribute("class", "rpg-dungeon-map-role");
+      role.textContent = room.role;
+      group.appendChild(role);
+      svg.appendChild(group);
+    }
+    frame.appendChild(svg);
+    container.createEl("p", {
+      cls: "rpg-dungeon-map-legend",
+      text: "Linhas tracejadas indicam atalhos. Marcadores: S segredo, A armadilha, E encontro, R recompensa."
+    });
+  }
   removeRenderComponent() {
     if (!this.renderComponent) return;
     this.removeChild(this.renderComponent);
     this.renderComponent = null;
   }
   async copyResult(format) {
-    const result = this.currentResult;
+    const result = this.session.snapshot.currentResult;
     if (!result) return;
     const content = format === "text" ? toPlainText(result) : toMarkdown(result, 1);
     try {
@@ -1621,7 +2389,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
   }
   insertResult() {
     var _a;
-    const result = this.currentResult;
+    const result = this.session.snapshot.currentResult;
     if (!result) return;
     const target = this.dependencies.getEditableTarget();
     this.setInsertionTarget(target);
@@ -1651,9 +2419,9 @@ var GeneratorView = class extends import_obsidian2.ItemView {
     return insertionText(before, after, markdown);
   }
   async createNote() {
-    const result = this.currentResult;
-    if (!result || this.creatingNote) return;
-    this.creatingNote = true;
+    const result = this.session.snapshot.currentResult;
+    if (!result || this.session.snapshot.creatingNote) return;
+    this.session.setCreatingNote(true);
     this.updateControls();
     try {
       const vaultAdapter = {
@@ -1691,7 +2459,7 @@ var GeneratorView = class extends import_obsidian2.ItemView {
       const detail = error instanceof Error && error.message ? `: ${error.message}` : "";
       new import_obsidian2.Notice(`N\xE3o foi poss\xEDvel criar a nota${detail}`);
     } finally {
-      this.creatingNote = false;
+      this.session.setCreatingNote(false);
       this.updateControls();
     }
   }
@@ -1702,37 +2470,41 @@ var RpgRandomGeneratorPlugin = class extends import_obsidian3.Plugin {
   constructor() {
     super(...arguments);
     this.lastEditableTarget = null;
-    this.settingsSaveQueue = Promise.resolve();
+    this.editableTargetChanges = new MutableStore(0);
   }
   async onload() {
-    this.rpgSettings = normalizeSettings(await this.loadData());
+    const settings = normalizeSettings(await this.loadData());
+    this.settingsRepository = new SettingsRepository(settings, async (next) => {
+      await this.saveData({ outputFolder: next.outputFolder });
+    });
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", (leaf) => this.captureFromLeaf(leaf))
     );
     this.registerEvent(
-      this.app.workspace.on("layout-change", () => this.captureFromActiveLeaf())
+      this.app.workspace.on("layout-change", () => {
+        const version = this.editableTargetChanges.get();
+        this.captureFromActiveLeaf();
+        if (this.editableTargetChanges.get() === version) {
+          this.editableTargetChanges.notify();
+        }
+      })
     );
     this.registerEvent(
       this.app.workspace.on("file-open", () => this.captureFromActiveLeaf())
-    );
-    this.registerEvent(
-      this.app.workspace.on(
-        "editor-change",
-        (editor, info) => this.captureFromEditorChange(editor, info)
-      )
     );
     this.captureFromActiveLeaf();
     this.registerView(
       VIEW_TYPE_RPG_GENERATOR,
       (leaf) => new GeneratorView(leaf, {
-        settings: this.rpgSettings,
-        getEditableTarget: () => this.getEditableTarget()
+        settings: this.settingsRepository.current,
+        getEditableTarget: () => this.getEditableTarget(),
+        subscribeEditableTarget: (listener) => this.editableTargetChanges.subscribe(listener)
       })
     );
     this.addSettingTab(
       new RpgRandomGeneratorSettingTab(this.app, this, {
-        settings: this.rpgSettings,
-        saveSettings: (settings) => this.saveSettings(settings)
+        settings: this.settingsRepository.current,
+        saveSettings: (settings2) => this.saveSettings(settings2)
       })
     );
     this.addRibbonIcon("dice-5", "Abrir Gerador de RPG", () => {
@@ -1745,12 +2517,7 @@ var RpgRandomGeneratorPlugin = class extends import_obsidian3.Plugin {
     });
   }
   async saveSettings(settings) {
-    const save = this.settingsSaveQueue.catch(() => void 0).then(async () => {
-      await this.saveData({ outputFolder: settings.outputFolder });
-      this.rpgSettings.outputFolder = settings.outputFolder;
-    });
-    this.settingsSaveQueue = save.catch(() => void 0);
-    await save;
+    await this.settingsRepository.save(settings);
   }
   captureFromActiveLeaf() {
     var _a;
@@ -1759,20 +2526,6 @@ var RpgRandomGeneratorPlugin = class extends import_obsidian3.Plugin {
   captureFromLeaf(leaf) {
     if (!leaf || !(leaf.view instanceof import_obsidian3.MarkdownView)) return;
     this.captureFromMarkdownView(leaf, leaf.view.editor);
-  }
-  captureFromEditorChange(editor, info) {
-    var _a, _b;
-    if (info instanceof import_obsidian3.MarkdownView) {
-      let matchingLeaf = null;
-      this.app.workspace.iterateAllLeaves((leaf) => {
-        if (!matchingLeaf && leaf.view === info) matchingLeaf = leaf;
-      });
-      if (matchingLeaf) this.captureFromMarkdownView(matchingLeaf, editor);
-      return;
-    }
-    const activeLeaf = this.app.workspace.activeLeaf;
-    if (!activeLeaf || !(activeLeaf.view instanceof import_obsidian3.MarkdownView) || activeLeaf.view.editor !== editor || ((_a = activeLeaf.view.file) == null ? void 0 : _a.path) !== ((_b = info.file) == null ? void 0 : _b.path)) return;
-    this.captureFromMarkdownView(activeLeaf, editor);
   }
   captureFromMarkdownView(leaf, viewEditor) {
     const view = leaf.view;
@@ -1783,6 +2536,7 @@ var RpgRandomGeneratorPlugin = class extends import_obsidian3.Plugin {
       file: view.file,
       leaf
     };
+    this.editableTargetChanges.set(this.editableTargetChanges.get() + 1);
   }
   getEditableTarget() {
     const target = this.lastEditableTarget;
@@ -1798,8 +2552,9 @@ var RpgRandomGeneratorPlugin = class extends import_obsidian3.Plugin {
   }
   async activateView() {
     const existingLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_RPG_GENERATOR);
-    if (existingLeaves.length > 0) {
-      this.app.workspace.revealLeaf(existingLeaves[0]);
+    const existingLeaf = existingLeaves[0];
+    if (existingLeaf) {
+      this.app.workspace.revealLeaf(existingLeaf);
       return;
     }
     const leaf = this.app.workspace.getRightLeaf(false);
