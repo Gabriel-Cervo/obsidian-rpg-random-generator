@@ -3,6 +3,7 @@ import {
   type DungeonContent,
   type VariationBeat,
 } from "../catalogs/pt-BR/generated-content";
+import { getQuickVariation } from "../catalogs/pt-BR/quick-variations";
 import {
   buildDungeonArtifact,
   dungeonFeatureLabel,
@@ -28,7 +29,24 @@ function dungeonFields(
   profile: DungeonContent,
   artifact: DungeonArtifact,
   beat: VariationBeat,
+  detailed: boolean,
 ): StructuredField[] {
+  if (!detailed) {
+    const quickBeat = getQuickVariation(beat.id);
+    const fields: StructuredField[] = [
+      { label: "Tema", value: profile.theme },
+      { label: "Visão geral", value: profile.quickOverview },
+      { label: "Pressão", value: quickBeat.dungeon },
+    ];
+    for (const room of artifact.rooms) {
+      fields.push({
+        label: room.role,
+        value: room.description,
+        number: room.number,
+      });
+    }
+    return fields;
+  }
   const modeSummary = artifact.mode === "mapped"
     ? `Estrutura mapeada com ${artifact.size} salas e conexões validadas.`
     : `Estrutura narrativa com ${artifact.size} salas.`;
@@ -73,7 +91,12 @@ export function generateDungeon(
   const result = finish(
     "dungeon",
     `Masmorra - ${profile.theme}`,
-    dungeonFields(profile, artifact, beat),
+    dungeonFields(
+      profile,
+      artifact,
+      beat,
+      metadata.resolved.complexity === "detailed",
+    ),
     metadata,
   );
   if (!artifact.map) return { ...result, dungeon: artifact };

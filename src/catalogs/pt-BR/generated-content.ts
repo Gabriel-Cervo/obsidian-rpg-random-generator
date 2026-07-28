@@ -24,6 +24,7 @@ import {
 } from "./variations";
 
 export interface NpcContent {
+  quickTrait: string;
   role: string;
   trait: string;
   appearance: string;
@@ -38,6 +39,8 @@ export interface NpcContent {
 
 export interface LocationContent {
   name: string;
+  quickDescription: string;
+  quickTension: string;
   type: string;
   atmosphere: string;
   feature: string;
@@ -52,6 +55,8 @@ export interface LocationContent {
 
 export interface QuestContent {
   title: string;
+  quickComplication: string;
+  quickReward: string;
   giver: string;
   objective: string;
   location: string;
@@ -67,6 +72,9 @@ export interface QuestContent {
 
 export interface EncounterContent {
   title: string;
+  quickSituation: string;
+  quickThreat: string;
+  quickChoice: string;
   situation: string;
   immediateThreat: string;
   twist: string;
@@ -81,6 +89,8 @@ export interface EncounterContent {
 
 export interface RumorContent {
   subject: string;
+  quickClaim: string;
+  quickTruth: string;
   claim: string;
   truth: string;
   source: string;
@@ -93,7 +103,9 @@ export interface RumorContent {
 
 export interface DungeonContent {
   theme: string;
+  quickOverview: string;
   overview: string;
+  quickRooms: DungeonRoomDescriptions;
   rooms: DungeonRoomDescriptions;
   detailedRooms: DungeonRoomDescriptions;
 }
@@ -146,6 +158,43 @@ function context(cell: Cell): WritingContext {
   };
 }
 
+function asClause(value: string, lowercase: boolean): string {
+  const clause = value.trim().replace(/[.!?]+$/u, "");
+  if (!lowercase || clause.length === 0) return clause;
+  return clause.charAt(0).toLocaleLowerCase("pt-BR") + clause.slice(1);
+}
+
+function mergeAsSentence(...values: readonly string[]): string {
+  const sentences = values.flatMap((value) =>
+    value.trim().split(/(?<=[.!?])\s+/u).filter(Boolean)
+  );
+  return `${sentences
+    .map((sentence, index) => asClause(sentence, index > 0))
+    .join("; ")}.`;
+}
+
+function openingSentence(value: string): string {
+  return value.trim().split(/(?<=[.!?])\s+/u)[0] ?? value;
+}
+
+function quickRooms(rooms: DungeonRoomDescriptions): DungeonRoomDescriptions {
+  const compact = (role: DungeonRoomRole): string => mergeAsSentence(rooms[role]);
+  return {
+    Entrada: compact("Entrada"),
+    Exploração: compact("Exploração"),
+    Desafio: compact("Desafio"),
+    Encruzilhada: compact("Encruzilhada"),
+    Segredo: compact("Segredo"),
+    Armadilha: compact("Armadilha"),
+    Refúgio: compact("Refúgio"),
+    Contratempo: compact("Contratempo"),
+    Encontro: compact("Encontro"),
+    Revelação: compact("Revelação"),
+    Confronto: compact("Confronto"),
+    Recompensa: compact("Recompensa"),
+  };
+}
+
 function detailedRooms(
   rooms: DungeonRoomDescriptions,
 ): DungeonRoomDescriptions {
@@ -170,6 +219,7 @@ function detailedRooms(
 export const NPC_CONTENT = matrix<NpcContent>("npc", (cell) => {
   const { tone, environment } = context(cell);
   return {
+    quickTrait: tone.quickNpc,
     role: environment.npcRole,
     trait: `Mantém um jeito ${tone.npcColor}. Observa primeiro quem precisa de ajuda.`,
     appearance: `Carrega sinais de viagem e trabalho. ${environment.texture}`,
@@ -187,6 +237,8 @@ export const LOCATION_CONTENT = matrix<LocationContent>("location", (cell) => {
   const { tone, environment } = context(cell);
   return {
     name: environment.name,
+    quickDescription: mergeAsSentence(environment.location.type, tone.quickLocation),
+    quickTension: environment.location.conflict,
     type: environment.location.type,
     atmosphere: `${environment.texture} ${tone.locationMood}`,
     feature: `${environment.location.landmark} ${tone.locationLandmark}`,
@@ -204,6 +256,8 @@ export const QUEST_CONTENT = matrix<QuestContent>("quest", (cell) => {
   const { tone, environment } = context(cell);
   return {
     title: environment.quest.title,
+    quickComplication: environment.quest.complication,
+    quickReward: mergeAsSentence(environment.quest.reward, tone.quickQuestReward),
     giver: environment.quest.giver,
     objective: environment.quest.objective,
     location: environment.name,
@@ -222,6 +276,9 @@ export const ENCOUNTER_CONTENT = matrix<EncounterContent>("encounter", (cell) =>
   const { tone, environment } = context(cell);
   return {
     title: environment.encounter.title,
+    quickSituation: openingSentence(environment.encounter.situation),
+    quickThreat: mergeAsSentence(environment.encounter.threat, tone.quickEncounterThreat),
+    quickChoice: environment.encounter.choice,
     situation: environment.encounter.situation,
     immediateThreat: `${environment.encounter.threat} ${tone.encounterPressure}`,
     twist: `${environment.encounter.twist} ${tone.encounterTwist}`,
@@ -239,6 +296,8 @@ export const RUMOR_CONTENT = matrix<RumorContent>("rumor", (cell) => {
   const { tone, environment } = context(cell);
   return {
     subject: environment.rumor.subject,
+    quickClaim: environment.rumor.claim,
+    quickTruth: mergeAsSentence(environment.rumor.quickTruth, tone.quickRumorTruth),
     claim: `${environment.rumor.claim} ${tone.rumorClaim}`,
     truth: `${environment.rumor.truth} ${tone.rumorTruth}`,
     source: environment.rumor.source,
@@ -254,7 +313,9 @@ export const DUNGEON_CONTENT = matrix<DungeonContent>("dungeon", (cell) => {
   const { tone, environment } = context(cell);
   return {
     theme: `${environment.dungeon.name}: ${tone.dungeonTheme}`,
+    quickOverview: mergeAsSentence(environment.dungeon.overview),
     overview: `${environment.dungeon.overview} ${tone.dungeonOverview} ${tone.dungeonRoom}`,
+    quickRooms: quickRooms(environment.dungeon.rooms),
     rooms: environment.dungeon.rooms,
     detailedRooms: detailedRooms(environment.dungeon.rooms),
   };

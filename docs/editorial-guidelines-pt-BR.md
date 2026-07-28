@@ -106,3 +106,17 @@ Tom e ambiente também são camadas separadas:
 - **Variação:** acrescenta um desenvolvimento acionável ao campo correto.
 
 As 4.800 combinações editoriais são verificadas automaticamente. Os testes procuram inícios de frase em minúscula, espaços duplicados, expressões vagas, frases repetidas no mesmo campo e sentenças acima do limite editorial.
+
+## Projeção rápida
+
+O modo rápido não recorta caracteres da saída detalhada. Ele seleciona fatos atômicos e possui variações próprias, escritas para consulta durante a sessão.
+
+- Cada campo rápido contém uma única frase.
+- NPCs ocupam de 30 a 45 palavras.
+- Locais ocupam de 45 a 65 palavras.
+- Missões ocupam de 55 a 80 palavras.
+- Encontros ocupam de 55 a 82 palavras.
+- Rumores ocupam de 45 a 68 palavras.
+- Salas rápidas ocupam de 15 a 30 palavras.
+
+Tom, ambiente e variação continuam alterando o resultado. O tom aparece numa cláusula curta; o ambiente fornece os fatos centrais; a variação rápida acrescenta apenas uma mudança acionável. A versão detalhada continua usando as camadas editoriais completas.

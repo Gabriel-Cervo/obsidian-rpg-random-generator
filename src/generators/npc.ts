@@ -1,6 +1,7 @@
 import {
   COMPILED_CONTENT_CATALOGS,
 } from "../catalogs/pt-BR/generated-content";
+import { getQuickVariation } from "../catalogs/pt-BR/quick-variations";
 import { generateName, getPeopleProfile } from "../names";
 import { DEFAULT_GENERATION_OPTIONS } from "../options";
 import { Random } from "../random";
@@ -29,10 +30,10 @@ export function generateNpc(
     { label: "Nome", value: name },
     { label: "Ancestralidade", value: people.label },
     { label: "Papel", value: profile.role },
-    { label: "Traço definidor", value: profile.trait },
   ];
   if (metadata.resolved.complexity === "detailed") {
     fields.push(
+      { label: "Traço definidor", value: profile.trait },
       { label: "Aparência", value: profile.appearance },
       { label: "Personalidade", value: profile.personality },
       { label: "Motivação", value: profile.motivation },
@@ -43,8 +44,14 @@ export function generateNpc(
     if (beat.companion) {
       fields.push({ label: "Companheiro compatível", value: profile.companion });
     }
+    fields.push({ label: "Gancho imediato", value: `${profile.immediateHook} ${beat.npc}` });
+  } else {
+    const quickBeat = getQuickVariation(beat.id);
+    fields.push(
+      { label: "Postura", value: profile.quickTrait },
+      { label: "Gancho", value: quickBeat.npc },
+    );
   }
-  fields.push({ label: "Gancho imediato", value: `${profile.immediateHook} ${beat.npc}` });
   return finish("npc", `NPC - ${name}`, fields, metadata);
 }
 

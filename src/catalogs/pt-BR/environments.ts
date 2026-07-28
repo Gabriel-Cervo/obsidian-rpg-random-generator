@@ -49,6 +49,7 @@ interface RumorWriting {
   subject: string;
   claim: string;
   truth: string;
+  quickTruth: string;
   source: string;
   variations: string;
   clues: string;
@@ -149,6 +150,7 @@ export const ENVIRONMENT_WRITING: Readonly<Record<EnvironmentId, EnvironmentWrit
       subject: "As luzes do Poço Sem Lua",
       claim: "Dizem que luzes azuis percorrem os campos durante a madrugada e param sobre poços cuja água desaparecerá antes do amanhecer.",
       truth: "As luzes vêm de lanternas cobertas usadas por ladrões de água. O grupo marca os poços escolhidos com sais que brilham quando recebem orvalho.",
+      quickTruth: "Ladrões de água usam lanternas cobertas e sais luminosos para marcar os poços escolhidos.",
       source: "Uma pastora viu as luzes de uma elevação distante e encontrou o reservatório de sua família quase vazio no dia seguinte.",
       variations: "Alguns juram que as luzes caminham sozinhas; outros afirmam ouvir rodas, vozes abafadas ou o choro de animais sedentos.",
       clues: "Sulcos estreitos de carroça, gotas de cera azul e marcas recentes de corda aparecem junto aos poços afetados.",
@@ -223,6 +225,7 @@ export const ENVIRONMENT_WRITING: Readonly<Record<EnvironmentId, EnvironmentWrit
       subject: "O coro sob as raízes",
       claim: "Caçadores afirmam que vozes chamam pessoas pelo nome sob as árvores mais antigas e oferecem caminhos que não existiam no dia anterior.",
       truth: "Tubos de madeira enterrados conectam antigos postos de vigia. Alguém voltou a usá-los para conduzir viajantes longe de uma área proibida.",
+      quickTruth: "Alguém usa antigos tubos de comunicação para conduzir viajantes para longe de uma área proibida.",
       source: "Uma coletora ouviu a voz de sua irmã falecida e seguiu as instruções até encontrar uma trilha recém-bloqueada.",
       variations: "Alguns ouvem parentes mortos; outros escutam a própria voz ou assobios conhecidos apenas pelos guardiões.",
       clues: "Pequenos furos nos troncos, resina removida recentemente e cordões de fibra ligam árvores distantes.",
@@ -297,6 +300,7 @@ export const ENVIRONMENT_WRITING: Readonly<Record<EnvironmentId, EnvironmentWrit
       subject: "A oitava janela",
       claim: "Moradores juram que uma oitava janela aparece em paredes diferentes depois da meia-noite e recebe cartas destinadas a pessoas desaparecidas.",
       truth: "A janela é uma moldura portátil usada por mensageiros clandestinos para marcar pontos de coleta sem revelar a rede completa.",
+      quickTruth: "Mensageiros clandestinos usam uma moldura portátil para marcar pontos de coleta sem revelar a rede completa.",
       source: "Um aprendiz entregou uma carta no local indicado e, na manhã seguinte, encontrou apenas uma parede recém-pintada.",
       variations: "Alguns dizem que a janela muda de bairro; outros afirmam que ela surge apenas para quem escreveu um nome proibido.",
       clues: "Resíduos da mesma tinta, marcas de ganchos e envelopes dobrados de maneira idêntica aparecem nos locais citados.",
@@ -371,6 +375,7 @@ export const ENVIRONMENT_WRITING: Readonly<Record<EnvironmentId, EnvironmentWrit
       subject: "O sino debaixo da maré",
       claim: "Nas noites sem vento, um sino toca sob a água e cada badalada anuncia o retorno de um navio que nunca chegou ao porto.",
       truth: "O sino pertence a uma torre submersa e é acionado por correntes alteradas depois que mergulhadores removeram parte de sua estrutura.",
+      quickTruth: "Correntes alteradas por mergulhadores acionam o sino de uma torre submersa.",
       source: "Uma barqueira contou as badaladas e percebeu que sempre começam pouco antes de caixas clandestinas aparecerem na praia.",
       variations: "Alguns associam cada toque a um naufrágio; outros juram ver luzes movendo-se sob a superfície.",
       clues: "Fragmentos de bronze, cordas novas e marcas de arrasto aparecem na praia após as noites em que o sino toca.",
@@ -445,6 +450,7 @@ export const ENVIRONMENT_WRITING: Readonly<Record<EnvironmentId, EnvironmentWrit
       subject: "A rainha sem rosto",
       claim: "Viajantes dizem que uma figura coroada percorre as ruínas ao entardecer e apaga o rosto de estátuas que pronunciam seu verdadeiro nome.",
       truth: "Alguém remove traços específicos das estátuas para ocultar a linhagem representada no mosaico central.",
+      quickTruth: "Alguém desfigura as estátuas para ocultar a linhagem representada no mosaico central.",
       source: "Uma vigia viu a figura trabalhando e encontrou pó de pedra, ferramentas finas e uma lista de monumentos.",
       variations: "Alguns descrevem um espírito; outros falam numa pessoa mascarada ou em várias figuras usando o mesmo manto.",
       clues: "As estátuas danificadas pertencem ao mesmo período, e todas conservam marcas de um cinzel fabricado recentemente.",
@@ -519,6 +525,7 @@ export const ENVIRONMENT_WRITING: Readonly<Record<EnvironmentId, EnvironmentWrit
       subject: "A estação abaixo da estação",
       claim: "Mineiros dizem ouvir outro turno trabalhando sob a cisterna, embora as plantas mostrem apenas rocha maciça naquele nível.",
       truth: "Uma instalação clandestina funciona abaixo da estação e transmite vibrações pelos antigos trilhos de carga.",
+      quickTruth: "Uma instalação clandestina transmite sons de trabalho pelos antigos trilhos sob a estação.",
       source: "Uma operadora de guincho reconheceu a sequência de golpes usada para anunciar troca de equipe e respondeu sem receber retorno.",
       variations: "Alguns falam em mineiros mortos; outros descrevem máquinas, cantos ou pedidos de socorro sob a água.",
       clues: "Poeira recente sobe por fendas, o nível da cisterna baixa durante a noite e ferramentas somem sempre no mesmo turno.",

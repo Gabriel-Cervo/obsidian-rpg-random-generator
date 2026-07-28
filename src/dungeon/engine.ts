@@ -130,7 +130,7 @@ function createRooms(
   const positions = roomPositions(options.size);
   const sourceRooms = options.complexity === "detailed"
     ? profile.detailedRooms
-    : profile.rooms;
+    : profile.quickRooms;
 
   return roles.map((role, index) => {
     const base = sourceRooms[role];

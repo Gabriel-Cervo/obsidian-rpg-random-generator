@@ -3,6 +3,7 @@ import {
   type RumorContent,
   type VariationBeat,
 } from "../catalogs/pt-BR/generated-content";
+import { getQuickVariation } from "../catalogs/pt-BR/quick-variations";
 import { DEFAULT_GENERATION_OPTIONS } from "../options";
 import { Random } from "../random";
 import type { StructuredField } from "../structured-output";
@@ -20,22 +21,25 @@ function rumorFields(
   beat: VariationBeat,
   detailed: boolean,
 ): StructuredField[] {
-  const fields: StructuredField[] = [
+  if (!detailed) {
+    const quickBeat = getQuickVariation(beat.id);
+    return [
+      { label: "Boato", value: profile.quickClaim },
+      { label: "Verdade para o mestre", value: profile.quickTruth },
+      { label: "Pista", value: quickBeat.rumor },
+    ];
+  }
+  return [
     { label: "Boato", value: profile.claim },
     { label: "Verdade para o mestre", value: profile.truth },
     { label: "Desdobramento", value: beat.rumor },
+    { label: "Fonte", value: profile.source },
+    { label: "Variações", value: profile.variations },
+    { label: "Pistas", value: profile.clues },
+    { label: "Interessados", value: profile.interestedParties },
+    { label: "Consequência da investigação", value: profile.investigationConsequence },
+    { label: "Contexto", value: profile.context },
   ];
-  if (detailed) {
-    fields.push(
-      { label: "Fonte", value: profile.source },
-      { label: "Variações", value: profile.variations },
-      { label: "Pistas", value: profile.clues },
-      { label: "Interessados", value: profile.interestedParties },
-      { label: "Consequência da investigação", value: profile.investigationConsequence },
-      { label: "Contexto", value: profile.context },
-    );
-  }
-  return fields;
 }
 
 export function generateRumor(

@@ -3,6 +3,7 @@ import {
   type LocationContent,
   type VariationBeat,
 } from "../catalogs/pt-BR/generated-content";
+import { getQuickVariation } from "../catalogs/pt-BR/quick-variations";
 import { DEFAULT_GENERATION_OPTIONS } from "../options";
 import { Random } from "../random";
 import type { StructuredField } from "../structured-output";
@@ -20,24 +21,28 @@ function locationFields(
   beat: VariationBeat,
   detailed: boolean,
 ): StructuredField[] {
-  const fields: StructuredField[] = [
+  if (!detailed) {
+    const quickBeat = getQuickVariation(beat.id);
+    return [
+      { label: "Nome", value: profile.name },
+      { label: "Descrição", value: profile.quickDescription },
+      { label: "Tensão", value: profile.quickTension },
+      { label: "Gancho", value: quickBeat.location },
+    ];
+  }
+  return [
     { label: "Nome", value: profile.name },
     { label: "Tipo", value: profile.type },
     { label: "Atmosfera", value: profile.atmosphere },
     { label: "Característica", value: profile.feature },
     { label: "Gancho", value: `${profile.hook} ${beat.location}` },
+    { label: "Habitantes", value: profile.inhabitants },
+    { label: "História", value: profile.history },
+    { label: "Tensão atual", value: profile.tension },
+    { label: "Perigo", value: profile.danger },
+    { label: "Segredo", value: profile.secret },
+    { label: "Oportunidades", value: profile.opportunities },
   ];
-  if (detailed) {
-    fields.push(
-      { label: "Habitantes", value: profile.inhabitants },
-      { label: "História", value: profile.history },
-      { label: "Tensão atual", value: profile.tension },
-      { label: "Perigo", value: profile.danger },
-      { label: "Segredo", value: profile.secret },
-      { label: "Oportunidades", value: profile.opportunities },
-    );
-  }
-  return fields;
 }
 
 export function generateLocation(

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ENVIRONMENT_WRITING } from "../src/catalogs/pt-BR/environments";
+import { QUICK_VARIATION_BEATS } from "../src/catalogs/pt-BR/quick-variations";
 import { VARIATION_BEATS } from "../src/catalogs/pt-BR/variations";
 import { generate } from "../src/generators";
 import { Random } from "../src/random";
@@ -26,6 +27,7 @@ const LOWERCASE_AFTER_SENTENCE = /[.!?]\s+[a-záéíóúâêôãõç]/u;
 function sentences(line: string): string[] {
   return line
     .replace(/^\d+\.\s+/, "")
+    .replace(/^[^:]+:\s*/, "")
     .split(/(?<=[.!?])\s+/u)
     .map((sentence) => sentence.trim().toLocaleLowerCase("pt-BR"))
     .filter(Boolean);
@@ -37,12 +39,20 @@ function wordCount(value: string): number {
 
 describe("qualidade editorial pt-BR", () => {
   it("mantém as variações específicas e únicas em cada categoria", () => {
-    for (const field of ["location", "quest", "encounter", "rumor", "dungeon"] as const) {
+    for (const field of ["npc", "location", "quest", "encounter", "rumor", "dungeon"] as const) {
       expect(
         new Set(VARIATION_BEATS.map((beat) => beat[field])).size,
         field,
       ).toBe(VARIATION_BEATS.length);
+      expect(
+        new Set(QUICK_VARIATION_BEATS.map((beat) => beat[field])).size,
+        `quick/${field}`,
+      ).toBe(QUICK_VARIATION_BEATS.length);
+      expect(QUICK_VARIATION_BEATS.every((beat) => beat[field].trim().length > 0)).toBe(true);
     }
+    expect(QUICK_VARIATION_BEATS.map((beat) => beat.id)).toEqual(
+      VARIATION_BEATS.map((beat) => beat.id),
+    );
   });
 
   it("mantém doze salas autorais por ambiente, sem reciclar descrições", () => {
@@ -90,5 +100,45 @@ describe("qualidade editorial pt-BR", () => {
       }
     }
     expect(checked).toBe(4_800);
+  });
+
+  it("mantém cada campo rápido em uma única frase curta", () => {
+    const expectedFields: Readonly<Record<GeneratorId, number>> = {
+      npc: 5,
+      location: 4,
+      quest: 4,
+      encounter: 4,
+      rumor: 3,
+      dungeon: 15,
+    };
+    for (const id of [...EDITORIAL_GENERATORS, "npc"] as const) {
+      for (const tone of TONE_IDS) {
+        for (const environment of ENVIRONMENT_IDS) {
+          for (let variation = 0; variation < VARIATION_BEATS.length; variation += 1) {
+            const result = generate(
+              id,
+              new Random(() => (variation + 0.5) / VARIATION_BEATS.length),
+              {
+                tone,
+                environment,
+                complexity: "quick",
+                ancestry: id === "npc" ? "humanos" : null,
+                dungeonMode: id === "dungeon" ? "story" : null,
+                dungeonSize: id === "dungeon" ? 12 : null,
+              },
+            );
+            const lines = result.content.plainText.split("\n").filter(Boolean);
+            const context = `${id}/${tone}/${environment}/${variation}`;
+            expect(lines, context).toHaveLength(expectedFields[id]);
+            for (const line of lines) {
+              const fieldSentences = sentences(line);
+              expect(fieldSentences, `${context}: ${line}`).toHaveLength(1);
+              expect(wordCount(fieldSentences[0] ?? ""), `${context}: ${line}`)
+                .toBeLessThanOrEqual(28);
+            }
+          }
+        }
+      }
+    }
   });
 });

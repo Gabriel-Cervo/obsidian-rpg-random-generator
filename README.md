@@ -54,14 +54,14 @@ As salas distribuem segredos, armadilhas, encontros e recompensas. Esses element
 
 | Gerador | **Rápido** | **Detalhado** |
 | --- | --- | --- |
-| **NPCs** | Nome, ancestralidade, papel, traço definidor e gancho imediato. | Acrescenta aparência, personalidade, motivação, complicação, segredo, relação e um possível companheiro. |
-| **Locais** | Nome, tipo, atmosfera, característica e gancho. | Acrescenta habitantes, história, tensão atual, perigo, segredo e oportunidades. |
-| **Missões** | Contratante, objetivo, local, complicação e recompensa. | Acrescenta contexto, etapas, oposição, escalada, consequência do fracasso e resolução alternativa. |
-| **Encontros** | Situação, ameaça imediata, reviravolta e escolha significativa. | Acrescenta preparação, atores, escalada, interação ambiental, desfechos e consequências. |
-| **Rumores** | Boato, verdade para o mestre e desdobramento. | Acrescenta fonte, variações, pistas, interessados, consequência da investigação e contexto. |
-| **Masmorra** | Tema, visão geral e salas com descrições diretas. | Mantém o tamanho escolhido e desenvolve as descrições de cada sala. |
+| **NPCs** | Nome, ancestralidade, papel, postura e um gancho curto. | Acrescenta traço, aparência, personalidade, motivação, complicação, segredo, relação e um possível companheiro. |
+| **Locais** | Descrição, tensão e gancho em quatro linhas. | Acrescenta atmosfera, característica, habitantes, história, perigo, segredo e oportunidades. |
+| **Missões** | Objetivo, complicação, virada e recompensa. | Acrescenta contratante, local, contexto, etapas, oposição, escalada, consequência do fracasso e resolução alternativa. |
+| **Encontros** | Situação, perigo, virada e escolha. | Acrescenta preparação, atores, escalada, interação ambiental, desfechos e consequências. |
+| **Rumores** | Boato, verdade resumida e uma pista. | Acrescenta a explicação completa, fonte, variações, pistas, interessados, consequência da investigação e contexto. |
+| **Masmorra** | Visão geral curta e uma frase por sala. | Mantém o tamanho escolhido e desenvolve cada sala com sinais, escolhas e notas para o mestre. |
 
-Os nomes passam por validação antes de entrar no resultado. Os catálogos usam frases completas em pt-BR. Um modelo de campos compartilhado preserva a ordem e o conteúdo entre texto puro e Markdown. O resultado mantém o nível de detalhe da opção escolhida.
+O modo rápido funciona como um cartão de consulta: cada campo possui uma única frase e evita explicações secundárias. O detalhado preserva todo o material de preparação. Os nomes passam por validação antes de entrar no resultado. Os catálogos usam frases completas em pt-BR. Um modelo de campos compartilhado preserva a ordem e o conteúdo entre texto puro e Markdown.
 
 ### Saída e fluxo de uso
 
@@ -76,7 +76,7 @@ O resumo dos parâmetros de entrada fica visível no Markdown gerado como um cal
 > Complexidade: Detalhado
 ```
 
-Para NPCs, o callout também inclui `Ancestralidade`. Para masmorras, inclui `Modo` e `Salas`. Se uma escolha foi **Aleatório**, o valor exibido identifica isso, por exemplo `Tom: Sombrio (aleatório)`. A versão em **Texto puro** não usa sintaxe de Markdown. Ela mantém um bloco legível com `Parâmetros` e linhas como `Tom: Sombrio`. A verdade para o mestre aparece tanto no rumor rápido quanto no detalhado, com o mesmo valor. O companheiro compatível do NPC detalhado é opcional: o campo é omitido quando não há companheiro.
+Para NPCs, o callout também inclui `Ancestralidade`. Para masmorras, inclui `Modo` e `Salas`. Se uma escolha foi **Aleatório**, o valor exibido identifica isso, por exemplo `Tom: Sombrio (aleatório)`. A versão em **Texto puro** não usa sintaxe de Markdown. Ela mantém um bloco legível com `Parâmetros` e linhas como `Tom: Sombrio`. A verdade para o mestre aparece resumida no rumor rápido e desenvolvida no detalhado. O companheiro compatível do NPC detalhado é opcional: o campo é omitido quando não há companheiro.
 
 O resultado pode ser copiado em representações separadas pelas ações **Copiar texto** e **Copiar Markdown**:
 
@@ -121,7 +121,7 @@ npm run check     # typecheck + testes + build de produção
 
 `main.js` é um artefato gerado e versionado neste repositório. Nunca o edite manualmente. Faça alterações nos arquivos-fonte e use o build para regenerá-lo. O comando `npm run check` inclui o build de produção e pode modificar o `main.js` rastreado.
 
-Os catálogos pt-BR são compostos em `src/catalogs/pt-BR/generated-content.ts`. Os fatos de cada ambiente ficam em `environments.ts`, as camadas de tom em `tones.ts` e as variações específicas por categoria em `variations.ts`. O [guia editorial](docs/editorial-guidelines-pt-BR.md) documenta os critérios de linguagem e de preparação de jogo. Os catálogos são compilados para índices de consulta no carregamento. `src/tables.ts` permanece apenas como fronteira de compatibilidade. `src/generators.ts` registra as estratégias separadas em `src/generators/`. O motor e as regras de topologia das masmorras ficam em `src/dungeon/engine.ts`. O modelo estrutural compartilhado fica em `src/structured-output.ts`.
+Os catálogos pt-BR são compostos em `src/catalogs/pt-BR/generated-content.ts`. Os fatos de cada ambiente ficam em `environments.ts`, as camadas de tom em `tones.ts`, as variações completas em `variations.ts` e as variações de consulta em `quick-variations.ts`. O [guia editorial](docs/editorial-guidelines-pt-BR.md) documenta os critérios de linguagem e de preparação de jogo. Os catálogos são compilados para índices de consulta no carregamento. `src/tables.ts` permanece apenas como fronteira de compatibilidade. `src/generators.ts` registra as estratégias separadas em `src/generators/`. O motor e as regras de topologia das masmorras ficam em `src/dungeon/engine.ts`. O modelo estrutural compartilhado fica em `src/structured-output.ts`.
 
 Os tipos e rótulos das opções ficam em `src/types.ts` e `src/options.ts`. A formatação dos parâmetros fica em `src/formatters.ts`. Os perfis de nomes são separados por povo em `src/names.ts`. O estado efêmero da geração é controlado por `src/application/generation-session.ts`.
 

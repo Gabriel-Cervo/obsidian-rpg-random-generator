@@ -3,6 +3,7 @@ import {
   type EncounterContent,
   type VariationBeat,
 } from "../catalogs/pt-BR/generated-content";
+import { getQuickVariation } from "../catalogs/pt-BR/quick-variations";
 import { DEFAULT_GENERATION_OPTIONS } from "../options";
 import { Random } from "../random";
 import type { StructuredField } from "../structured-output";
@@ -20,23 +21,27 @@ function encounterFields(
   beat: VariationBeat,
   detailed: boolean,
 ): StructuredField[] {
-  const fields: StructuredField[] = [
+  if (!detailed) {
+    const quickBeat = getQuickVariation(beat.id);
+    return [
+      { label: "Situação", value: profile.quickSituation },
+      { label: "Perigo", value: profile.quickThreat },
+      { label: "Virada", value: quickBeat.encounter },
+      { label: "Escolha", value: profile.quickChoice },
+    ];
+  }
+  return [
     { label: "Situação", value: profile.situation },
     { label: "Ameaça imediata", value: profile.immediateThreat },
     { label: "Reviravolta", value: `${profile.twist} ${beat.encounter}` },
     { label: "Escolha significativa", value: profile.choice },
+    { label: "Preparação", value: profile.setup },
+    { label: "Atores", value: profile.actors },
+    { label: "Escalada", value: profile.escalation },
+    { label: "Interação com o ambiente", value: profile.interaction },
+    { label: "Desfechos prováveis", value: profile.outcomes },
+    { label: "Depois", value: profile.aftermath },
   ];
-  if (detailed) {
-    fields.push(
-      { label: "Preparação", value: profile.setup },
-      { label: "Atores", value: profile.actors },
-      { label: "Escalada", value: profile.escalation },
-      { label: "Interação com o ambiente", value: profile.interaction },
-      { label: "Desfechos prováveis", value: profile.outcomes },
-      { label: "Depois", value: profile.aftermath },
-    );
-  }
-  return fields;
 }
 
 export function generateEncounter(

@@ -18,11 +18,11 @@ import {
 const source = (value: number) => new Random(() => value);
 const wordCount = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
 const wordTargets = {
-  npc: { quick: [60, 90], detailed: [165, 215] },
-  location: { quick: [110, 170], detailed: [240, 330] },
-  quest: { quick: [95, 150], detailed: [280, 370] },
-  encounter: { quick: [120, 175], detailed: [260, 330] },
-  rumor: { quick: [70, 120], detailed: [220, 290] },
+  npc: { quick: [30, 45], detailed: [165, 215] },
+  location: { quick: [45, 65], detailed: [240, 330] },
+  quest: { quick: [55, 80], detailed: [280, 370] },
+  encounter: { quick: [55, 82], detailed: [260, 330] },
+  rumor: { quick: [45, 68], detailed: [220, 290] },
 } as const;
 const optionsFor = (tone: ToneId, environment: EnvironmentId, complexity: ComplexityId, id: GeneratorId) => ({
   tone,
@@ -145,14 +145,16 @@ describe("motor option-aware de geração", () => {
     }
   });
 
-  it("mantém a verdade do mestre, inclusive no rumor rápido", () => {
+  it("mantém a verdade do mestre em versões resumida e detalhada", () => {
     const quick = generate("rumor", source(0.4), { tone: "mysterious", environment: "coast", complexity: "quick", ancestry: null });
     const detailed = generate("rumor", source(0.4), { tone: "mysterious", environment: "coast", complexity: "detailed", ancestry: null });
-    const truth = quick.content.plainText.match(/^Verdade para o mestre: (.+)$/m)?.[1];
-    expect(truth).toBeTruthy();
-    expect(detailed.content.plainText).toContain(`Verdade para o mestre: ${truth}`);
-    expect(quick.content.markdown).toContain(`**Verdade para o mestre:** ${truth}`);
-    expect(detailed.content.markdown).toContain(`**Verdade para o mestre:** ${truth}`);
+    const quickTruth = quick.content.plainText.match(/^Verdade para o mestre: (.+)$/m)?.[1];
+    const detailedTruth = detailed.content.plainText.match(/^Verdade para o mestre: (.+)$/m)?.[1];
+    expect(quickTruth).toBeTruthy();
+    expect(detailedTruth).toBeTruthy();
+    expect(wordCount(quickTruth ?? "")).toBeLessThan(wordCount(detailedTruth ?? ""));
+    expect(quick.content.markdown).toContain(`**Verdade para o mestre:** ${quickTruth}`);
+    expect(detailed.content.markdown).toContain(`**Verdade para o mestre:** ${detailedTruth}`);
   });
 
   it("cobre modos e tamanhos do M3 com conteúdo de mestre", () => {
@@ -256,7 +258,10 @@ describe("motor option-aware de geração", () => {
             expect(wordCount(detailed.content.plainText)).toBeGreaterThanOrEqual(target.detailed[0]);
             expect(wordCount(detailed.content.plainText)).toBeLessThanOrEqual(target.detailed[1]);
           } else {
-            for (const line of quick.content.plainText.split("\n").filter((value) => /^\d+\. /.test(value))) expect(wordCount(line)).toBeGreaterThanOrEqual(20);
+            for (const line of quick.content.plainText.split("\n").filter((value) => /^\d+\. /.test(value))) {
+              expect(wordCount(line)).toBeGreaterThanOrEqual(15);
+              expect(wordCount(line)).toBeLessThanOrEqual(30);
+            }
             for (const line of detailed.content.plainText.split("\n").filter((value) => /^\d+\. /.test(value))) expect(wordCount(line)).toBeGreaterThanOrEqual(42);
           }
         }

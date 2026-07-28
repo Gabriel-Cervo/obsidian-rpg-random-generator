@@ -1,6 +1,11 @@
 import type { ToneId } from "../../types";
 
 export interface ToneWritingProfile {
+  quickNpc: string;
+  quickLocation: string;
+  quickQuestReward: string;
+  quickEncounterThreat: string;
+  quickRumorTruth: string;
   npcFrame: string;
   npcColor: string;
   npcMotive: string;
@@ -35,6 +40,11 @@ export interface ToneWritingProfile {
 
 export const TONE_WRITING: Readonly<Record<ToneId, ToneWritingProfile>> = {
   grim: {
+    quickNpc: "Age com cautela e espera que outra perda aconteça.",
+    quickLocation: "o medo domina as conversas",
+    quickQuestReward: "parte do pagamento repara um dano antigo",
+    quickEncounterThreat: "uma pessoa ferida perde forças",
+    quickRumorTruth: "a causa nasceu de uma tentativa desesperada de evitar outra perda",
     npcFrame: "uma perda que ninguém conseguiu reparar",
     npcColor: "contido, atento e marcado por noites mal dormidas",
     npcMotive: "impedir que outra família pague pelo mesmo erro",
@@ -67,6 +77,11 @@ export const TONE_WRITING: Readonly<Record<ToneId, ToneWritingProfile>> = {
     dungeonRoom: "Sinais recentes mostram que o perigo continua ativo e que alguém será atingido se o grupo simplesmente recuar.",
   },
   whimsical: {
+    quickNpc: "Trata uma confusão crescente como parte da rotina.",
+    quickLocation: "o absurdo já faz parte da rotina",
+    quickQuestReward: "o pagamento inclui um favor improvável",
+    quickEncounterThreat: "cada solução apressada cria outro problema",
+    quickRumorTruth: "a explicação envolve erros acumulados, não uma grande conspiração",
     npcFrame: "uma confusão que ganhou regras próprias",
     npcColor: "cordial, inquieto e cheio de hábitos difíceis de explicar",
     npcMotive: "resolver a trapalhada antes que alguém a transforme em tradição",
@@ -99,6 +114,11 @@ export const TONE_WRITING: Readonly<Record<ToneId, ToneWritingProfile>> = {
     dungeonRoom: "O perigo é evidente o bastante para ser levado a sério, embora seu funcionamento revele uma lógica deliciosamente equivocada.",
   },
   heroic: {
+    quickNpc: "Divide responsabilidades e protege quem não pode agir.",
+    quickLocation: "os moradores mantêm o lugar funcionando juntos",
+    quickQuestReward: "a recompensa também fortalece a comunidade",
+    quickEncounterThreat: "pessoas vulneráveis precisam de uma rota segura",
+    quickRumorTruth: "a verdade oferece uma vantagem a quem cooperar",
     npcFrame: "uma oportunidade concreta de proteger a região",
     npcColor: "franco, disciplinado e disposto a dividir responsabilidades",
     npcMotive: "garantir que outras pessoas possam escolher o próprio futuro",
@@ -131,6 +151,11 @@ export const TONE_WRITING: Readonly<Record<ToneId, ToneWritingProfile>> = {
     dungeonRoom: "Cada obstáculo pode ser vencido pela cooperação e oferece uma vantagem concreta para quem protege os demais.",
   },
   mysterious: {
+    quickNpc: "Observa padrões que as outras pessoas ainda ignoram.",
+    quickLocation: "detalhes discretos mudam quando ninguém observa",
+    quickQuestReward: "a recompensa também responde a outra pergunta",
+    quickEncounterThreat: "alguém antecipa movimentos ao interpretar sinais ocultos",
+    quickRumorTruth: "testemunhas diferentes observaram partes do mesmo processo",
     npcFrame: "um padrão que aparece em acontecimentos separados",
     npcColor: "reservado, preciso e atento a detalhes que os outros ignoram",
     npcMotive: "compreender o padrão antes que sua última etapa se complete",
