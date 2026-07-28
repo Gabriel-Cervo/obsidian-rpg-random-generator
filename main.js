@@ -842,6 +842,7 @@ var ENVIRONMENT_WRITING = {
       subject: "As luzes do Po\xE7o Sem Lua",
       claim: "Dizem que luzes azuis percorrem os campos durante a madrugada e param sobre po\xE7os cuja \xE1gua desaparecer\xE1 antes do amanhecer.",
       truth: "As luzes v\xEAm de lanternas cobertas usadas por ladr\xF5es de \xE1gua. O grupo marca os po\xE7os escolhidos com sais que brilham quando recebem orvalho.",
+      quickTruth: "Ladr\xF5es de \xE1gua usam lanternas cobertas e sais luminosos para marcar os po\xE7os escolhidos.",
       source: "Uma pastora viu as luzes de uma eleva\xE7\xE3o distante e encontrou o reservat\xF3rio de sua fam\xEDlia quase vazio no dia seguinte.",
       variations: "Alguns juram que as luzes caminham sozinhas; outros afirmam ouvir rodas, vozes abafadas ou o choro de animais sedentos.",
       clues: "Sulcos estreitos de carro\xE7a, gotas de cera azul e marcas recentes de corda aparecem junto aos po\xE7os afetados.",
@@ -916,6 +917,7 @@ var ENVIRONMENT_WRITING = {
       subject: "O coro sob as ra\xEDzes",
       claim: "Ca\xE7adores afirmam que vozes chamam pessoas pelo nome sob as \xE1rvores mais antigas e oferecem caminhos que n\xE3o existiam no dia anterior.",
       truth: "Tubos de madeira enterrados conectam antigos postos de vigia. Algu\xE9m voltou a us\xE1-los para conduzir viajantes longe de uma \xE1rea proibida.",
+      quickTruth: "Algu\xE9m usa antigos tubos de comunica\xE7\xE3o para conduzir viajantes para longe de uma \xE1rea proibida.",
       source: "Uma coletora ouviu a voz de sua irm\xE3 falecida e seguiu as instru\xE7\xF5es at\xE9 encontrar uma trilha rec\xE9m-bloqueada.",
       variations: "Alguns ouvem parentes mortos; outros escutam a pr\xF3pria voz ou assobios conhecidos apenas pelos guardi\xF5es.",
       clues: "Pequenos furos nos troncos, resina removida recentemente e cord\xF5es de fibra ligam \xE1rvores distantes.",
@@ -990,6 +992,7 @@ var ENVIRONMENT_WRITING = {
       subject: "A oitava janela",
       claim: "Moradores juram que uma oitava janela aparece em paredes diferentes depois da meia-noite e recebe cartas destinadas a pessoas desaparecidas.",
       truth: "A janela \xE9 uma moldura port\xE1til usada por mensageiros clandestinos para marcar pontos de coleta sem revelar a rede completa.",
+      quickTruth: "Mensageiros clandestinos usam uma moldura port\xE1til para marcar pontos de coleta sem revelar a rede completa.",
       source: "Um aprendiz entregou uma carta no local indicado e, na manh\xE3 seguinte, encontrou apenas uma parede rec\xE9m-pintada.",
       variations: "Alguns dizem que a janela muda de bairro; outros afirmam que ela surge apenas para quem escreveu um nome proibido.",
       clues: "Res\xEDduos da mesma tinta, marcas de ganchos e envelopes dobrados de maneira id\xEAntica aparecem nos locais citados.",
@@ -1064,6 +1067,7 @@ var ENVIRONMENT_WRITING = {
       subject: "O sino debaixo da mar\xE9",
       claim: "Nas noites sem vento, um sino toca sob a \xE1gua e cada badalada anuncia o retorno de um navio que nunca chegou ao porto.",
       truth: "O sino pertence a uma torre submersa e \xE9 acionado por correntes alteradas depois que mergulhadores removeram parte de sua estrutura.",
+      quickTruth: "Correntes alteradas por mergulhadores acionam o sino de uma torre submersa.",
       source: "Uma barqueira contou as badaladas e percebeu que sempre come\xE7am pouco antes de caixas clandestinas aparecerem na praia.",
       variations: "Alguns associam cada toque a um naufr\xE1gio; outros juram ver luzes movendo-se sob a superf\xEDcie.",
       clues: "Fragmentos de bronze, cordas novas e marcas de arrasto aparecem na praia ap\xF3s as noites em que o sino toca.",
@@ -1138,6 +1142,7 @@ var ENVIRONMENT_WRITING = {
       subject: "A rainha sem rosto",
       claim: "Viajantes dizem que uma figura coroada percorre as ru\xEDnas ao entardecer e apaga o rosto de est\xE1tuas que pronunciam seu verdadeiro nome.",
       truth: "Algu\xE9m remove tra\xE7os espec\xEDficos das est\xE1tuas para ocultar a linhagem representada no mosaico central.",
+      quickTruth: "Algu\xE9m desfigura as est\xE1tuas para ocultar a linhagem representada no mosaico central.",
       source: "Uma vigia viu a figura trabalhando e encontrou p\xF3 de pedra, ferramentas finas e uma lista de monumentos.",
       variations: "Alguns descrevem um esp\xEDrito; outros falam numa pessoa mascarada ou em v\xE1rias figuras usando o mesmo manto.",
       clues: "As est\xE1tuas danificadas pertencem ao mesmo per\xEDodo, e todas conservam marcas de um cinzel fabricado recentemente.",
@@ -1212,6 +1217,7 @@ var ENVIRONMENT_WRITING = {
       subject: "A esta\xE7\xE3o abaixo da esta\xE7\xE3o",
       claim: "Mineiros dizem ouvir outro turno trabalhando sob a cisterna, embora as plantas mostrem apenas rocha maci\xE7a naquele n\xEDvel.",
       truth: "Uma instala\xE7\xE3o clandestina funciona abaixo da esta\xE7\xE3o e transmite vibra\xE7\xF5es pelos antigos trilhos de carga.",
+      quickTruth: "Uma instala\xE7\xE3o clandestina transmite sons de trabalho pelos antigos trilhos sob a esta\xE7\xE3o.",
       source: "Uma operadora de guincho reconheceu a sequ\xEAncia de golpes usada para anunciar troca de equipe e respondeu sem receber retorno.",
       variations: "Alguns falam em mineiros mortos; outros descrevem m\xE1quinas, cantos ou pedidos de socorro sob a \xE1gua.",
       clues: "Poeira recente sobe por fendas, o n\xEDvel da cisterna baixa durante a noite e ferramentas somem sempre no mesmo turno.",
@@ -1243,6 +1249,11 @@ var ENVIRONMENT_WRITING = {
 // src/catalogs/pt-BR/tones.ts
 var TONE_WRITING = {
   grim: {
+    quickNpc: "Age com cautela e espera que outra perda aconte\xE7a.",
+    quickLocation: "o medo domina as conversas",
+    quickQuestReward: "parte do pagamento repara um dano antigo",
+    quickEncounterThreat: "uma pessoa ferida perde for\xE7as",
+    quickRumorTruth: "a causa nasceu de uma tentativa desesperada de evitar outra perda",
     npcFrame: "uma perda que ningu\xE9m conseguiu reparar",
     npcColor: "contido, atento e marcado por noites mal dormidas",
     npcMotive: "impedir que outra fam\xEDlia pague pelo mesmo erro",
@@ -1275,6 +1286,11 @@ var TONE_WRITING = {
     dungeonRoom: "Sinais recentes mostram que o perigo continua ativo e que algu\xE9m ser\xE1 atingido se o grupo simplesmente recuar."
   },
   whimsical: {
+    quickNpc: "Trata uma confus\xE3o crescente como parte da rotina.",
+    quickLocation: "o absurdo j\xE1 faz parte da rotina",
+    quickQuestReward: "o pagamento inclui um favor improv\xE1vel",
+    quickEncounterThreat: "cada solu\xE7\xE3o apressada cria outro problema",
+    quickRumorTruth: "a explica\xE7\xE3o envolve erros acumulados, n\xE3o uma grande conspira\xE7\xE3o",
     npcFrame: "uma confus\xE3o que ganhou regras pr\xF3prias",
     npcColor: "cordial, inquieto e cheio de h\xE1bitos dif\xEDceis de explicar",
     npcMotive: "resolver a trapalhada antes que algu\xE9m a transforme em tradi\xE7\xE3o",
@@ -1307,6 +1323,11 @@ var TONE_WRITING = {
     dungeonRoom: "O perigo \xE9 evidente o bastante para ser levado a s\xE9rio, embora seu funcionamento revele uma l\xF3gica deliciosamente equivocada."
   },
   heroic: {
+    quickNpc: "Divide responsabilidades e protege quem n\xE3o pode agir.",
+    quickLocation: "os moradores mant\xEAm o lugar funcionando juntos",
+    quickQuestReward: "a recompensa tamb\xE9m fortalece a comunidade",
+    quickEncounterThreat: "pessoas vulner\xE1veis precisam de uma rota segura",
+    quickRumorTruth: "a verdade oferece uma vantagem a quem cooperar",
     npcFrame: "uma oportunidade concreta de proteger a regi\xE3o",
     npcColor: "franco, disciplinado e disposto a dividir responsabilidades",
     npcMotive: "garantir que outras pessoas possam escolher o pr\xF3prio futuro",
@@ -1339,6 +1360,11 @@ var TONE_WRITING = {
     dungeonRoom: "Cada obst\xE1culo pode ser vencido pela coopera\xE7\xE3o e oferece uma vantagem concreta para quem protege os demais."
   },
   mysterious: {
+    quickNpc: "Observa padr\xF5es que as outras pessoas ainda ignoram.",
+    quickLocation: "detalhes discretos mudam quando ningu\xE9m observa",
+    quickQuestReward: "a recompensa tamb\xE9m responde a outra pergunta",
+    quickEncounterThreat: "algu\xE9m antecipa movimentos ao interpretar sinais ocultos",
+    quickRumorTruth: "testemunhas diferentes observaram partes do mesmo processo",
     npcFrame: "um padr\xE3o que aparece em acontecimentos separados",
     npcColor: "reservado, preciso e atento a detalhes que os outros ignoram",
     npcMotive: "compreender o padr\xE3o antes que sua \xFAltima etapa se complete",
@@ -1607,6 +1633,38 @@ function context(cell) {
     environment: ENVIRONMENT_WRITING[cell.environment]
   };
 }
+function asClause(value, lowercase) {
+  const clause = value.trim().replace(/[.!?]+$/u, "");
+  if (!lowercase || clause.length === 0) return clause;
+  return clause.charAt(0).toLocaleLowerCase("pt-BR") + clause.slice(1);
+}
+function mergeAsSentence(...values) {
+  const sentences = values.flatMap(
+    (value) => value.trim().split(/(?<=[.!?])\s+/u).filter(Boolean)
+  );
+  return `${sentences.map((sentence, index) => asClause(sentence, index > 0)).join("; ")}.`;
+}
+function openingSentence(value) {
+  var _a;
+  return (_a = value.trim().split(/(?<=[.!?])\s+/u)[0]) != null ? _a : value;
+}
+function quickRooms(rooms) {
+  const compact = (role) => mergeAsSentence(rooms[role]);
+  return {
+    Entrada: compact("Entrada"),
+    Explora\u00E7\u00E3o: compact("Explora\xE7\xE3o"),
+    Desafio: compact("Desafio"),
+    Encruzilhada: compact("Encruzilhada"),
+    Segredo: compact("Segredo"),
+    Armadilha: compact("Armadilha"),
+    Ref\u00FAgio: compact("Ref\xFAgio"),
+    Contratempo: compact("Contratempo"),
+    Encontro: compact("Encontro"),
+    Revela\u00E7\u00E3o: compact("Revela\xE7\xE3o"),
+    Confronto: compact("Confronto"),
+    Recompensa: compact("Recompensa")
+  };
+}
 function detailedRooms(rooms) {
   const expand = (role) => `${rooms[role]} ${ROOM_DEVELOPMENT[role]}`;
   return {
@@ -1627,6 +1685,7 @@ function detailedRooms(rooms) {
 var NPC_CONTENT = matrix("npc", (cell) => {
   const { tone, environment } = context(cell);
   return {
+    quickTrait: tone.quickNpc,
     role: environment.npcRole,
     trait: `Mant\xE9m um jeito ${tone.npcColor}. Observa primeiro quem precisa de ajuda.`,
     appearance: `Carrega sinais de viagem e trabalho. ${environment.texture}`,
@@ -1643,6 +1702,8 @@ var LOCATION_CONTENT = matrix("location", (cell) => {
   const { tone, environment } = context(cell);
   return {
     name: environment.name,
+    quickDescription: mergeAsSentence(environment.location.type, tone.quickLocation),
+    quickTension: environment.location.conflict,
     type: environment.location.type,
     atmosphere: `${environment.texture} ${tone.locationMood}`,
     feature: `${environment.location.landmark} ${tone.locationLandmark}`,
@@ -1659,6 +1720,8 @@ var QUEST_CONTENT = matrix("quest", (cell) => {
   const { tone, environment } = context(cell);
   return {
     title: environment.quest.title,
+    quickComplication: environment.quest.complication,
+    quickReward: mergeAsSentence(environment.quest.reward, tone.quickQuestReward),
     giver: environment.quest.giver,
     objective: environment.quest.objective,
     location: environment.name,
@@ -1676,6 +1739,9 @@ var ENCOUNTER_CONTENT = matrix("encounter", (cell) => {
   const { tone, environment } = context(cell);
   return {
     title: environment.encounter.title,
+    quickSituation: openingSentence(environment.encounter.situation),
+    quickThreat: mergeAsSentence(environment.encounter.threat, tone.quickEncounterThreat),
+    quickChoice: environment.encounter.choice,
     situation: environment.encounter.situation,
     immediateThreat: `${environment.encounter.threat} ${tone.encounterPressure}`,
     twist: `${environment.encounter.twist} ${tone.encounterTwist}`,
@@ -1692,6 +1758,8 @@ var RUMOR_CONTENT = matrix("rumor", (cell) => {
   const { tone, environment } = context(cell);
   return {
     subject: environment.rumor.subject,
+    quickClaim: environment.rumor.claim,
+    quickTruth: mergeAsSentence(environment.rumor.quickTruth, tone.quickRumorTruth),
     claim: `${environment.rumor.claim} ${tone.rumorClaim}`,
     truth: `${environment.rumor.truth} ${tone.rumorTruth}`,
     source: environment.rumor.source,
@@ -1706,7 +1774,9 @@ var DUNGEON_CONTENT = matrix("dungeon", (cell) => {
   const { tone, environment } = context(cell);
   return {
     theme: `${environment.dungeon.name}: ${tone.dungeonTheme}`,
+    quickOverview: mergeAsSentence(environment.dungeon.overview),
     overview: `${environment.dungeon.overview} ${tone.dungeonOverview} ${tone.dungeonRoom}`,
+    quickRooms: quickRooms(environment.dungeon.rooms),
     rooms: environment.dungeon.rooms,
     detailedRooms: detailedRooms(environment.dungeon.rooms)
   };
@@ -1719,6 +1789,198 @@ var COMPILED_CONTENT_CATALOGS = {
   rumor: compileContentCatalog(RUMOR_CONTENT),
   dungeon: compileContentCatalog(DUNGEON_CONTENT)
 };
+
+// src/catalogs/pt-BR/quick-variations.ts
+var QUICK_VARIATION_BEATS = [
+  {
+    id: "testemunha",
+    npc: "Uma testemunha reconheceu seu nome.",
+    location: "Uma testemunha viu o marco ser alterado.",
+    quest: "Uma testemunha exige prote\xE7\xE3o para falar.",
+    encounter: "A pessoa encurralada admite parte da culpa.",
+    rumor: "A testemunha nunca muda o hor\xE1rio do relato.",
+    dungeon: "Outro grupo entrou h\xE1 poucas horas."
+  },
+  {
+    id: "vestigio",
+    npc: "Seu equipamento contradiz a vers\xE3o p\xFAblica.",
+    location: "Cinzas mornas desmentem o abandono.",
+    quest: "Um vest\xEDgio denuncia uma emboscada.",
+    encounter: "A viol\xEAncia foi encenada para ocultar uma fuga.",
+    rumor: "Um objeto confirma o fato, mas aponta outro culpado.",
+    dungeon: "Cera fresca revela ocupantes recentes."
+  },
+  {
+    id: "acordo",
+    npc: "Um acordo antigo lhe concede autoridade.",
+    location: "Uma placa de pedra ainda obriga comunidades rivais.",
+    quest: "Um tratado esquecido pode evitar o confronto.",
+    encounter: "Os dois lados esperam que o outro ceda primeiro.",
+    rumor: "Um tratado guardado previu o acontecimento.",
+    dungeon: "Uma inscri\xE7\xE3o abre uma rota mais segura."
+  },
+  {
+    id: "prazo",
+    npc: "A \xFAnica testemunha parte ao amanhecer.",
+    location: "O acesso ficar\xE1 perigoso ao anoitecer.",
+    quest: "A prova perde valor ao amanhecer.",
+    encounter: "A amea\xE7a piora a cada minuto.",
+    rumor: "Os sinais confirmam um prazo at\xE9 o amanhecer.",
+    dungeon: "A passagem se fecha gradualmente."
+  },
+  {
+    id: "aliado",
+    npc: "Um antigo aliado oferece ajuda em segredo.",
+    location: "Uma moradora conhece um acesso seguro.",
+    quest: "Um aliado conhece a fraqueza da oposi\xE7\xE3o.",
+    encounter: "Algu\xE9m do lado advers\xE1rio tenta evitar a viol\xEAncia.",
+    rumor: "A melhor fonte trabalha para quem abafa o caso.",
+    dungeon: "Um habitante acuado conhece um atalho."
+  },
+  {
+    id: "objeto",
+    npc: "Um objeto comum cont\xE9m uma prova antiga.",
+    location: "Um objeto cotidiano esconde um mapa.",
+    quest: "A prova est\xE1 escondida num objeto banal.",
+    encounter: "O item disputado cont\xE9m uma mensagem.",
+    rumor: "Um objeto real deu origem \xE0 hist\xF3ria.",
+    dungeon: "Um utens\xEDlio abandonado funciona como chave."
+  },
+  {
+    id: "rota",
+    npc: "A rota segura atravessa terras de um rival.",
+    location: "Um caminho secund\xE1rio surge no momento certo.",
+    quest: "A rota mais segura exige pagar passagem.",
+    encounter: "Uma sa\xEDda \xE9 r\xE1pida; outra revela a origem do perigo.",
+    rumor: "Os rastros contradizem a rota citada.",
+    dungeon: "Uma passagem estreita contorna o obst\xE1culo."
+  },
+  {
+    id: "promessa",
+    npc: "Uma promessa p\xFAblica limita suas escolhas.",
+    location: "Os moradores aguardam uma promessa antiga.",
+    quest: "O contratante prometeu poupar a oposi\xE7\xE3o.",
+    encounter: "Uma das partes n\xE3o pode recuar.",
+    rumor: "A hist\xF3ria testa uma promessa antiga.",
+    dungeon: "Abrir uma porta sela outra passagem."
+  },
+  {
+    id: "sinal",
+    npc: "Um sinal repetido liga ocorr\xEAncias recentes.",
+    location: "O mesmo s\xEDmbolo aponta para tr\xEAs sa\xEDdas.",
+    quest: "Um sinal recorrente prev\xEA o pr\xF3ximo movimento.",
+    encounter: "A amea\xE7a reage a um gesto repetido.",
+    rumor: "Um detalhe aparece em todos os relatos.",
+    dungeon: "Marcas indicam quais superf\xEDcies s\xE3o seguras."
+  },
+  {
+    id: "preco",
+    npc: "Sua ajuda exige um compromisso futuro.",
+    location: "Retirar o recurso prejudicar\xE1 quem depende dele.",
+    quest: "A solu\xE7\xE3o r\xE1pida transfere o risco para inocentes.",
+    encounter: "A paz imediata exige uma perda irrevers\xEDvel.",
+    rumor: "O relato esconde o pre\xE7o j\xE1 cobrado.",
+    dungeon: "O mecanismo exige um objeto valioso."
+  },
+  {
+    id: "mensagem",
+    npc: "Uma mensagem incompleta pede sua presen\xE7a.",
+    location: "Uma frase interrompida s\xF3 aparece na sa\xEDda.",
+    quest: "A \xFAltima mensagem esconde o nome de um c\xFAmplice.",
+    encounter: "Uma mensagem prova que ambos ignoram parte da situa\xE7\xE3o.",
+    rumor: "O trecho ausente muda o sentido do aviso.",
+    dungeon: "As inscri\xE7\xF5es formam uma mensagem."
+  },
+  {
+    id: "silencio",
+    npc: "Seu sil\xEAncio protege um erro menor.",
+    location: "A pessoa mais informada deixa pistas sem falar.",
+    quest: "O contratante omite um nome importante.",
+    encounter: "A pessoa silenciosa controla a \xFAnica sa\xEDda.",
+    rumor: "O nome ausente revela quem controla as testemunhas.",
+    dungeon: "Sinos quebrados exigem uma travessia silenciosa."
+  },
+  {
+    id: "marca",
+    npc: "Uma marca liga seu equipamento a uma organiza\xE7\xE3o.",
+    location: "Um corte recente altera uma marca antiga.",
+    quest: "Uma falsa marca de fronteira amea\xE7a a paz.",
+    encounter: "Os advers\xE1rios usam a mesma marca.",
+    rumor: "A marca foi acrescentada para orientar algu\xE9m.",
+    dungeon: "S\xEDmbolos nas soleiras antecipam os perigos."
+  },
+  {
+    id: "disputa",
+    npc: "Duas testemunhas sinceras contam vers\xF5es incompat\xEDveis.",
+    location: "Duas comunidades apresentam reivindica\xE7\xF5es leg\xEDtimas.",
+    quest: "A ordem original favorece apenas uma das partes.",
+    encounter: "Os dois lados possuem raz\xF5es leg\xEDtimas.",
+    rumor: "Vers\xF5es contradit\xF3rias cont\xEAm partes da verdade.",
+    dungeon: "Grupos rivais precisam do mesmo recurso."
+  },
+  {
+    id: "refugio",
+    npc: "Seu abrigo coloca os moradores em risco.",
+    location: "Um ref\xFAgio oculto permite observar o perigo.",
+    quest: "O \xFAnico local seguro abriga fugitivos inocentes.",
+    encounter: "A \xE1rea protegida comporta apenas parte dos presentes.",
+    rumor: "A hist\xF3ria aponta para um ref\xFAgio real.",
+    dungeon: "Algu\xE9m conhece a sala defens\xE1vel."
+  },
+  {
+    id: "heranca",
+    npc: "Uma heran\xE7a traz direitos e d\xEDvidas.",
+    location: "O herdeiro desconhece que possui o lugar.",
+    quest: "A prova revela um herdeiro em perigo.",
+    encounter: "O suposto invasor possui um documento leg\xEDtimo.",
+    rumor: "A hist\xF3ria preservou o nome errado.",
+    dungeon: "Um selo de fam\xEDlia abre antigas defesas."
+  },
+  {
+    id: "ritual",
+    npc: "Ela pode conter a amea\xE7a uma \xFAnica vez.",
+    location: "Grupos rivais precisam concluir o ritual juntos.",
+    quest: "Um ritual pode adiar a amea\xE7a.",
+    encounter: "Um ritual incompleto parece um ataque.",
+    rumor: "Os gestos temidos pertencem a uma prote\xE7\xE3o.",
+    dungeon: "Objetos dispersos completam um ritual interrompido."
+  },
+  {
+    id: "devedor",
+    npc: "Um devedor troca acesso pelo perd\xE3o.",
+    location: "O respons\xE1vel desviou recursos para pagar uma d\xEDvida.",
+    quest: "Um devedor conhece a rotina da oposi\xE7\xE3o.",
+    encounter: "Uma cobran\xE7a leg\xEDtima virou um impasse.",
+    rumor: "O boato pressiona uma pessoa endividada.",
+    dungeon: "Registros revelam uma d\xEDvida antiga."
+  },
+  {
+    id: "memoria",
+    npc: "Uma lembran\xE7a compartilhada explica sua lealdade.",
+    location: "Todos recordam o mesmo som.",
+    quest: "Uma lembran\xE7a esquecida corrige a ordem dos fatos.",
+    encounter: "Algu\xE9m reconhece a repeti\xE7\xE3o de um desastre.",
+    rumor: "Uma imagem sobrevive em todas as vers\xF5es.",
+    dungeon: "Murais revelam uma rotina segura."
+  },
+  {
+    id: "escolha",
+    npc: "Ela pergunta quem receber\xE1 a informa\xE7\xE3o primeiro.",
+    location: "Duas necessidades competem pelo mesmo recurso.",
+    quest: "A prova pode ser entregue, destru\xEDda ou publicada.",
+    encounter: "O grupo n\xE3o consegue cumprir todos os objetivos.",
+    rumor: "Confirmar cedo ou divulgar agora produzem riscos diferentes.",
+    dungeon: "A rota final op\xF5e sa\xEDda e recompensa."
+  }
+];
+var quickVariationById = new Map(
+  QUICK_VARIATION_BEATS.map((variation) => [variation.id, variation])
+);
+function getQuickVariation(id) {
+  const variation = quickVariationById.get(id);
+  if (!variation) throw new Error(`Varia\xE7\xE3o r\xE1pida desconhecida: ${id}`);
+  return variation;
+}
 
 // src/dungeon/engine.ts
 var DungeonMappingError = class extends Error {
@@ -1807,7 +2069,7 @@ function roomFeatures(role) {
 function createRooms(profile, options) {
   const roles = ROLE_SEQUENCE[options.size];
   const positions = roomPositions(options.size);
-  const sourceRooms = options.complexity === "detailed" ? profile.detailedRooms : profile.rooms;
+  const sourceRooms = options.complexity === "detailed" ? profile.detailedRooms : profile.quickRooms;
   return roles.map((role, index) => {
     const base = sourceRooms[role];
     const position = positions[index];
@@ -2037,7 +2299,23 @@ function selectVariation(random) {
 }
 
 // src/generators/dungeon.ts
-function dungeonFields(profile, artifact, beat) {
+function dungeonFields(profile, artifact, beat, detailed) {
+  if (!detailed) {
+    const quickBeat = getQuickVariation(beat.id);
+    const fields2 = [
+      { label: "Tema", value: profile.theme },
+      { label: "Vis\xE3o geral", value: profile.quickOverview },
+      { label: "Press\xE3o", value: quickBeat.dungeon }
+    ];
+    for (const room of artifact.rooms) {
+      fields2.push({
+        label: room.role,
+        value: room.description,
+        number: room.number
+      });
+    }
+    return fields2;
+  }
   const modeSummary = artifact.mode === "mapped" ? `Estrutura mapeada com ${artifact.size} salas e conex\xF5es validadas.` : `Estrutura narrativa com ${artifact.size} salas.`;
   const fields = [
     { label: "Tema", value: profile.theme },
@@ -2074,7 +2352,12 @@ function generateDungeon(random, options = DEFAULT_GENERATION_OPTIONS) {
   const result = finish(
     "dungeon",
     `Masmorra - ${profile.theme}`,
-    dungeonFields(profile, artifact, beat),
+    dungeonFields(
+      profile,
+      artifact,
+      beat,
+      metadata.resolved.complexity === "detailed"
+    ),
     metadata
   );
   if (!artifact.map) return { ...result, dungeon: artifact };
@@ -2105,23 +2388,27 @@ var DUNGEON_GENERATOR = {
 
 // src/generators/encounter.ts
 function encounterFields(profile, beat, detailed) {
-  const fields = [
+  if (!detailed) {
+    const quickBeat = getQuickVariation(beat.id);
+    return [
+      { label: "Situa\xE7\xE3o", value: profile.quickSituation },
+      { label: "Perigo", value: profile.quickThreat },
+      { label: "Virada", value: quickBeat.encounter },
+      { label: "Escolha", value: profile.quickChoice }
+    ];
+  }
+  return [
     { label: "Situa\xE7\xE3o", value: profile.situation },
     { label: "Amea\xE7a imediata", value: profile.immediateThreat },
     { label: "Reviravolta", value: `${profile.twist} ${beat.encounter}` },
-    { label: "Escolha significativa", value: profile.choice }
+    { label: "Escolha significativa", value: profile.choice },
+    { label: "Prepara\xE7\xE3o", value: profile.setup },
+    { label: "Atores", value: profile.actors },
+    { label: "Escalada", value: profile.escalation },
+    { label: "Intera\xE7\xE3o com o ambiente", value: profile.interaction },
+    { label: "Desfechos prov\xE1veis", value: profile.outcomes },
+    { label: "Depois", value: profile.aftermath }
   ];
-  if (detailed) {
-    fields.push(
-      { label: "Prepara\xE7\xE3o", value: profile.setup },
-      { label: "Atores", value: profile.actors },
-      { label: "Escalada", value: profile.escalation },
-      { label: "Intera\xE7\xE3o com o ambiente", value: profile.interaction },
-      { label: "Desfechos prov\xE1veis", value: profile.outcomes },
-      { label: "Depois", value: profile.aftermath }
-    );
-  }
-  return fields;
 }
 function generateEncounter(random, options = DEFAULT_GENERATION_OPTIONS) {
   const metadata = begin("encounter", random, options);
@@ -2147,24 +2434,28 @@ var ENCOUNTER_GENERATOR = {
 
 // src/generators/location.ts
 function locationFields(profile, beat, detailed) {
-  const fields = [
+  if (!detailed) {
+    const quickBeat = getQuickVariation(beat.id);
+    return [
+      { label: "Nome", value: profile.name },
+      { label: "Descri\xE7\xE3o", value: profile.quickDescription },
+      { label: "Tens\xE3o", value: profile.quickTension },
+      { label: "Gancho", value: quickBeat.location }
+    ];
+  }
+  return [
     { label: "Nome", value: profile.name },
     { label: "Tipo", value: profile.type },
     { label: "Atmosfera", value: profile.atmosphere },
     { label: "Caracter\xEDstica", value: profile.feature },
-    { label: "Gancho", value: `${profile.hook} ${beat.location}` }
+    { label: "Gancho", value: `${profile.hook} ${beat.location}` },
+    { label: "Habitantes", value: profile.inhabitants },
+    { label: "Hist\xF3ria", value: profile.history },
+    { label: "Tens\xE3o atual", value: profile.tension },
+    { label: "Perigo", value: profile.danger },
+    { label: "Segredo", value: profile.secret },
+    { label: "Oportunidades", value: profile.opportunities }
   ];
-  if (detailed) {
-    fields.push(
-      { label: "Habitantes", value: profile.inhabitants },
-      { label: "Hist\xF3ria", value: profile.history },
-      { label: "Tens\xE3o atual", value: profile.tension },
-      { label: "Perigo", value: profile.danger },
-      { label: "Segredo", value: profile.secret },
-      { label: "Oportunidades", value: profile.opportunities }
-    );
-  }
-  return fields;
 }
 function generateLocation(random, options = DEFAULT_GENERATION_OPTIONS) {
   const metadata = begin("location", random, options);
@@ -2200,11 +2491,11 @@ function generateNpc(random, options = DEFAULT_GENERATION_OPTIONS) {
   const fields = [
     { label: "Nome", value: name },
     { label: "Ancestralidade", value: people.label },
-    { label: "Papel", value: profile.role },
-    { label: "Tra\xE7o definidor", value: profile.trait }
+    { label: "Papel", value: profile.role }
   ];
   if (metadata.resolved.complexity === "detailed") {
     fields.push(
+      { label: "Tra\xE7o definidor", value: profile.trait },
       { label: "Apar\xEAncia", value: profile.appearance },
       { label: "Personalidade", value: profile.personality },
       { label: "Motiva\xE7\xE3o", value: profile.motivation },
@@ -2215,8 +2506,14 @@ function generateNpc(random, options = DEFAULT_GENERATION_OPTIONS) {
     if (beat.companion) {
       fields.push({ label: "Companheiro compat\xEDvel", value: profile.companion });
     }
+    fields.push({ label: "Gancho imediato", value: `${profile.immediateHook} ${beat.npc}` });
+  } else {
+    const quickBeat = getQuickVariation(beat.id);
+    fields.push(
+      { label: "Postura", value: profile.quickTrait },
+      { label: "Gancho", value: quickBeat.npc }
+    );
   }
-  fields.push({ label: "Gancho imediato", value: `${profile.immediateHook} ${beat.npc}` });
   return finish("npc", `NPC - ${name}`, fields, metadata);
 }
 var NPC_GENERATOR = {
@@ -2228,24 +2525,28 @@ var NPC_GENERATOR = {
 
 // src/generators/quest.ts
 function questFields(profile, beat, detailed) {
-  const fields = [
+  if (!detailed) {
+    const quickBeat = getQuickVariation(beat.id);
+    return [
+      { label: "Objetivo", value: profile.objective },
+      { label: "Complica\xE7\xE3o", value: profile.quickComplication },
+      { label: "Virada", value: quickBeat.quest },
+      { label: "Recompensa", value: profile.quickReward }
+    ];
+  }
+  return [
     { label: "Contratante", value: profile.giver },
     { label: "Objetivo", value: profile.objective },
     { label: "Local", value: profile.location },
     { label: "Complica\xE7\xE3o", value: `${profile.complication} ${beat.quest}` },
-    { label: "Recompensa", value: profile.reward }
+    { label: "Recompensa", value: profile.reward },
+    { label: "Contexto", value: profile.context },
+    { label: "Etapas", value: profile.stages },
+    { label: "Oposi\xE7\xE3o", value: profile.opposition },
+    { label: "Escalada", value: profile.escalation },
+    { label: "Consequ\xEAncia do fracasso", value: profile.failure },
+    { label: "Resolu\xE7\xE3o alternativa", value: profile.alternative }
   ];
-  if (detailed) {
-    fields.push(
-      { label: "Contexto", value: profile.context },
-      { label: "Etapas", value: profile.stages },
-      { label: "Oposi\xE7\xE3o", value: profile.opposition },
-      { label: "Escalada", value: profile.escalation },
-      { label: "Consequ\xEAncia do fracasso", value: profile.failure },
-      { label: "Resolu\xE7\xE3o alternativa", value: profile.alternative }
-    );
-  }
-  return fields;
 }
 function generateQuest(random, options = DEFAULT_GENERATION_OPTIONS) {
   const metadata = begin("quest", random, options);
@@ -2267,22 +2568,25 @@ var QUEST_GENERATOR = {
 
 // src/generators/rumor.ts
 function rumorFields(profile, beat, detailed) {
-  const fields = [
+  if (!detailed) {
+    const quickBeat = getQuickVariation(beat.id);
+    return [
+      { label: "Boato", value: profile.quickClaim },
+      { label: "Verdade para o mestre", value: profile.quickTruth },
+      { label: "Pista", value: quickBeat.rumor }
+    ];
+  }
+  return [
     { label: "Boato", value: profile.claim },
     { label: "Verdade para o mestre", value: profile.truth },
-    { label: "Desdobramento", value: beat.rumor }
+    { label: "Desdobramento", value: beat.rumor },
+    { label: "Fonte", value: profile.source },
+    { label: "Varia\xE7\xF5es", value: profile.variations },
+    { label: "Pistas", value: profile.clues },
+    { label: "Interessados", value: profile.interestedParties },
+    { label: "Consequ\xEAncia da investiga\xE7\xE3o", value: profile.investigationConsequence },
+    { label: "Contexto", value: profile.context }
   ];
-  if (detailed) {
-    fields.push(
-      { label: "Fonte", value: profile.source },
-      { label: "Varia\xE7\xF5es", value: profile.variations },
-      { label: "Pistas", value: profile.clues },
-      { label: "Interessados", value: profile.interestedParties },
-      { label: "Consequ\xEAncia da investiga\xE7\xE3o", value: profile.investigationConsequence },
-      { label: "Contexto", value: profile.context }
-    );
-  }
-  return fields;
 }
 function generateRumor(random, options = DEFAULT_GENERATION_OPTIONS) {
   const metadata = begin("rumor", random, options);
